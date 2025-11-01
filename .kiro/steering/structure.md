@@ -7,7 +7,7 @@
 - Presentation Layer: Next.js App Router(Server/Client分離)
 - Game Logic Layer: Pure Functions(ビジネスロジック)
 - AI Engine Layer: WASM統合・Worker管理
-- LINE Integration Layer: プラットフォーム統合
+- LINE Integration Layer: LIFF SDK統合・Context管理
 
 サーバサイド(SSG)とクライアントサイド(動的ロジック)を明確に分離。
 
@@ -31,9 +31,11 @@
 
 - `/src/lib/game/`: ゲームドメインロジック(Pure Functions)
 - `/src/lib/ai/`: AI Engine、WASM統合、Fallback機能
+- `/src/lib/liff/`: LIFF SDK統合、型定義
 - `/src/workers/`: Web Worker(WASM実行隔離)
 - `/src/components/`: UIコンポーネント(GameBoard, ErrorBoundary, WASMErrorHandler)
-- `/src/hooks/`: カスタムReact Hooks(useGameState, useAIPlayer, useGameErrorHandler)
+- `/src/contexts/`: React Context(LiffContext, LiffProvider)
+- `/src/hooks/`: カスタムReact Hooks(useGameState, useAIPlayer, useGameErrorHandler, useLiff)
 
 ### Game Logic (`/src/lib/game/`)
 
@@ -89,7 +91,28 @@
 - `useGameState.ts`: ゲーム状態管理(board, player, validMoves)
 - `useAIPlayer.ts`: AI計算実行・Worker通信
 - `useGameErrorHandler.ts`: エラー状態・メッセージ管理
+- `useLiff.ts`: LIFF Context消費・状態アクセス
 - `__tests__/`: フックテスト
+
+### React Contexts (`/src/contexts/`)
+
+**Location**: `/src/contexts/`
+**Purpose**: グローバル状態共有、Context Provider管理
+**Example**:
+
+- `LiffContext.tsx`: LIFF状態Context定義
+- `LiffProvider.tsx`: LIFF初期化・状態管理Provider
+- `__tests__/`: Context/Providerテスト
+
+### LINE Integration (`/src/lib/liff/`)
+
+**Location**: `/src/lib/liff/`
+**Purpose**: LIFF SDK統合、型定義、クライアント操作
+**Example**:
+
+- `types.ts`: LIFF型定義(LiffProfile, LiffContextType)
+- `liff-client.ts`: LIFF SDK操作ラッパー(初期化、プロフィール取得)
+- `__tests__/`: LIFF統合テスト
 
 ### E2E Tests (`/e2e/`)
 
@@ -176,4 +199,11 @@ import { validateMove } from './move-validator';
 ---
 
 _created_at: 2025-10-21_
-_updated_at: 2025-10-25_
+_updated_at: 2025-11-02_
+
+**Recent Updates (2025-11-02)**:
+
+- Added LINE Integration Layer documentation (`/src/lib/liff/`)
+- Added React Contexts pattern (`/src/contexts/`)
+- Added `useLiff` hook to Custom Hooks section
+- Updated layer architecture to reflect LIFF SDK integration

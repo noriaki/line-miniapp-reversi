@@ -30,14 +30,19 @@ LINEミニアプリプラットフォーム上で動作するリバーシ(オセ
 
 ## Current Implementation Status
 
-- **LINE統合**: 現在はスタンドアロンWebアプリとして実装。LIFF SDK統合は将来的な拡張として計画中
+- **LINE統合**: LIFF SDK 2.x統合完了(2025-10-26実装)
+  - ユーザープロフィール表示(名前・アイコン)
+  - LINEアプリ内/外の環境自動検出
+  - エラーハンドリング・フォールバック機能
+  - スタンドアロンWebアプリとしても完全動作
 - **Focus**: ゲームロジック、AI統合、レスポンシブUIの完成度優先
 
 ---
 
 _created_at: 2025-10-21_
-_updated_at: 2025-10-26_
+_updated_at: 2025-11-02_
 
-**Recent Updates (2025-10-26)**:
+**Recent Updates (2025-11-02)**:
 
-- Clarified LINE integration current status (standalone web app, LIFF SDK planned for future)
+- Updated LIFF SDK integration status - fully implemented as of 2025-10-26
+- LIFF features: profile display, environment detection, error handling

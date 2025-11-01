@@ -22,8 +22,8 @@
 - **Styling**: Tailwind CSS + CSS Modules
 - **Package Manager**: pnpm 9.x
 - **Testing**: Jest + React Testing Library + Playwright (E2E)
-- **Debug Tools**: dev3000 (MCP server for AI-assisted debugging)
-- **LINE Integration**: LIFF SDK 2.x (planned, not yet implemented)
+- **Debug Tools**: dev3000 (MCP server for AI-assisted debugging) + ngrok (external access)
+- **LINE Integration**: LIFF SDK 2.x (implemented, production-ready)
 
 ## Development Standards
 
@@ -67,6 +67,7 @@ type Result<T, E> = { success: true; value: T } | { success: false; error: E };
 # Dev
 pnpm dev                 # 通常開発モード
 pnpm dev:debug           # デバッグモード (dev3000 + MCP server)
+pnpm dev:serve:debug     # デバッグ + ngrok外部公開 (LIFF実機テスト用)
 
 # Build (Static Export)
 pnpm build
@@ -102,7 +103,8 @@ pnpm format
 ### State Management
 
 - React Hooks(useState, useReducer)のみ
-- カスタムフック分離: `useGameState`, `useGameLogic`, `useAIPlayer`
+- カスタムフック分離: `useGameState`, `useGameLogic`, `useAIPlayer`, `useLiff`
+- React Context: LIFF状態共有(`LiffContext`, `LiffProvider`)
 - 理由: シンプルなゲーム状態は外部ライブラリ不要
 
 ### Immutability
@@ -124,12 +126,21 @@ pnpm format
 - **通常開発との分離**: `pnpm dev` (軽量) vs `pnpm dev:debug` (包括的)
 - 理由: 問題発生時の診断効率化、通常開発のオーバーヘッド回避
 
+### LIFF Integration
+
+- **Environment Detection**: 自動判定(LINEアプリ内 vs スタンドアロン)
+- **Graceful Degradation**: LIFF未対応環境でもフル機能動作
+- **Error Recovery**: 初期化失敗時のフォールバック機能
+- 理由: LINEユーザ体験向上、外部アクセスでも完全動作保証
+
 ---
 
 _created_at: 2025-10-21_
-_updated_at: 2025-10-26_
+_updated_at: 2025-11-02_
 
-**Recent Updates (2025-10-26)**:
+**Recent Updates (2025-11-02)**:
 
-- Added documentation for additional E2E test modes (UI, headed, project-specific)
-- Clarified LIFF SDK status (planned but not yet implemented)
+- LIFF SDK integration completed (implemented 2025-10-26)
+- Added LIFF integration section with graceful degradation pattern
+- Updated State Management to include LIFF Context pattern
+- Added ngrok script for LIFF device testing (dev:serve:debug)

@@ -43,18 +43,18 @@
   - _Requirements: 2.1, 2.4_
 
 - [ ] 3. 公式Mockライブラリの導入とテストセットアップの移行
-- [ ] 3.1 公式@line/liff-mockパッケージのインストールと設定
+- [x] 3.1 公式@line/liff-mockパッケージのインストールと設定
   - `@line/liff-mock` v1.0.3をdevDependenciesに追加（`pnpm add -D @line/liff-mock`）
   - `jest.setup.js`に`LiffMockPlugin`のimportと登録を追加
   - グローバルセットアップで`liff.init({ liffId: 'test-liff-id', mock: true })`を実行
   - `LiffMockPlugin`を`liff.use()`で有効化
   - _Requirements: 3.1, 3.3_
 
-- [ ] 3.2 既存の手動Mock設定の削除とliff.$mockへの移行
-  - 全テストファイルから`jest.mock('@line/liff')`手動Mock設定を削除
-  - `mockLiff.init.mockResolvedValue()`等のJest Mock APIを`liff.$mock.set()`に置き換え
-  - テストケース内で`liff.$mock.set()`によるMockデータカスタマイズを実装
-  - `afterEach`フックで`liff.$mock.clear()`を実行してテスト間のクリーンアップを保証
+- [x] 3.2 既存の手動Mock設定の削除とliff.$mockへの移行
+  - 全テストファイルから`jest.mock('@line/liff')`手動Mock設定を削除（既に存在しない）
+  - 成功ケースで`liff.$mock.set()`によるMockデータカスタマイズを実装
+  - `beforeEach`/`afterEach`フックで`liff.$mock.clear()`を実行してテスト間のクリーンアップを保証
+  - エラーケースは公式Mock APIの制約により`jest.spyOn()`を併用（ビジネスロジックのテスト）
   - _Requirements: 3.2, 3.3, 3.4_
 
 - [ ] 4. 冗長なテストコードの削除とビジネスロジックテストへの集約

@@ -3,50 +3,55 @@
  *
  * This test suite verifies TypeScript type definitions for LIFF integration:
  * - Official LIFF SDK type definitions are correctly used
- * - LIFF API return types are properly inferred
- * - Login state is managed in a type-safe manner
- * - Type errors are detected at compile time
- * - Type definition files have no circular dependencies
+ * - Project-specific types (LiffContextType) maintain type safety
+ * - Type compilation and inference work correctly
  *
- * Note: Per Requirement 9, LIFF SDK behavior tests are excluded.
- * These tests focus on TypeScript type inference and compile-time safety.
+ * Note: Per Requirements 1.1, 7.2, 7.4, we focus on project-specific type safety.
+ * Official Profile type field validation is the responsibility of @line/liff package.
  */
 
 import type { LiffContextType, Profile } from '../types';
 
 describe('LIFF Type Safety', () => {
-  describe('Official Type Definitions', () => {
-    it('should use official Profile type from @line/liff', () => {
-      // Verify official Profile type structure
-      const mockProfile: Profile = {
+  describe('Official Type Integration', () => {
+    it('should use official Profile type directly from @line/liff', () => {
+      // Verify we can create Profile instances using official type
+      const profile: Profile = {
+        userId: 'U1234567890',
+        displayName: 'Test User',
+      };
+
+      // Type compilation success is the primary verification
+      expect(profile).toBeDefined();
+      expect(profile.userId).toBe('U1234567890');
+      expect(profile.displayName).toBe('Test User');
+    });
+
+    it('should handle optional fields per official Profile specification', () => {
+      // Verify optional fields work as expected
+      const profileWithOptionals: Profile = {
         userId: 'U1234567890',
         displayName: 'Test User',
         pictureUrl: 'https://example.com/pic.jpg',
         statusMessage: 'Hello',
       };
 
-      expect(mockProfile.userId).toBe('U1234567890');
-      expect(mockProfile.displayName).toBe('Test User');
-      expect(mockProfile.pictureUrl).toBe('https://example.com/pic.jpg');
-      expect(mockProfile.statusMessage).toBe('Hello');
-    });
-
-    it('should allow optional fields in official Profile type', () => {
-      // Verify optional fields (pictureUrl, statusMessage)
-      const minimalProfile: Profile = {
+      const profileMinimal: Profile = {
         userId: 'U1234567890',
         displayName: 'Test User',
       };
 
-      expect(minimalProfile.userId).toBe('U1234567890');
-      expect(minimalProfile.displayName).toBe('Test User');
-      expect(minimalProfile.pictureUrl).toBeUndefined();
-      expect(minimalProfile.statusMessage).toBeUndefined();
+      expect(profileWithOptionals.pictureUrl).toBe(
+        'https://example.com/pic.jpg'
+      );
+      expect(profileMinimal.pictureUrl).toBeUndefined();
     });
+  });
 
-    it('should use official Profile type in LiffContextType', () => {
-      // Verify LiffContextType uses official Profile type
-      const contextState: Partial<LiffContextType> = {
+  describe('Project-Specific Type Safety (LiffContextType)', () => {
+    it('should maintain correct LiffContextType structure', () => {
+      // Verify project-specific LiffContextType uses official Profile type
+      const contextState: LiffContextType = {
         isReady: true,
         error: null,
         isInClient: true,
@@ -54,153 +59,109 @@ describe('LIFF Type Safety', () => {
         profile: {
           userId: 'U1234567890',
           displayName: 'Test User',
-          pictureUrl: 'https://example.com/pic.jpg',
-        } as Profile,
+        },
+        login: () => {},
+        logout: () => {},
       };
 
-      expect(contextState.profile?.userId).toBe('U1234567890');
-      expect(contextState.profile?.displayName).toBe('Test User');
+      expect(contextState.isReady).toBe(true);
+      expect(contextState.error).toBeNull();
+      expect(contextState.isInClient).toBe(true);
+      expect(contextState.isLoggedIn).toBe(true);
+      expect(contextState.profile).not.toBeNull();
+      expect(typeof contextState.login).toBe('function');
+      expect(typeof contextState.logout).toBe('function');
     });
-  });
 
-  describe('Login State Type Safety', () => {
-    it('should manage login state with official Profile | null Union type', () => {
-      // Verify Profile | null Union type for type-safe state management
+    it('should handle null states in LiffContextType', () => {
+      // Verify null handling for initialization states
+      const initialState: LiffContextType = {
+        isReady: false,
+        error: null,
+        isInClient: null,
+        isLoggedIn: null,
+        profile: null,
+        login: () => {},
+        logout: () => {},
+      };
+
+      expect(initialState.isReady).toBe(false);
+      expect(initialState.isInClient).toBeNull();
+      expect(initialState.isLoggedIn).toBeNull();
+      expect(initialState.profile).toBeNull();
+    });
+
+    it('should handle error state correctly', () => {
+      // Verify error state handling
+      const errorState: LiffContextType = {
+        isReady: true,
+        error: 'LIFF initialization failed',
+        isInClient: null,
+        isLoggedIn: null,
+        profile: null,
+        login: () => {},
+        logout: () => {},
+      };
+
+      expect(errorState.error).toBe('LIFF initialization failed');
+    });
+
+    it('should enforce Profile | null union type for profile field', () => {
+      // Verify type-safe state transitions
       let profile: Profile | null = null;
 
-      // Initially null (not logged in)
+      // Initial state (not logged in)
       expect(profile).toBeNull();
 
-      // After login (profile set)
+      // After login
       profile = {
         userId: 'U1234567890',
         displayName: 'Test User',
       };
       expect(profile.userId).toBe('U1234567890');
 
-      // After logout (profile reset to null)
+      // After logout
       profile = null;
       expect(profile).toBeNull();
-    });
-
-    it('should handle LiffContextType state structure with official Profile', () => {
-      // Verify LiffContextType structure
-      const initialState: Partial<LiffContextType> = {
-        isReady: false,
-        error: null,
-        isInClient: null,
-        isLoggedIn: null,
-        profile: null,
-      };
-
-      expect(initialState.isReady).toBe(false);
-      expect(initialState.error).toBeNull();
-      expect(initialState.isInClient).toBeNull();
-      expect(initialState.isLoggedIn).toBeNull();
-      expect(initialState.profile).toBeNull();
-
-      // After initialization with official Profile type
-      const readyState: Partial<LiffContextType> = {
-        isReady: true,
-        error: null,
-        isInClient: true,
-        isLoggedIn: true,
-        profile: {
-          userId: 'U1234567890',
-          displayName: 'Test User',
-        } as Profile,
-      };
-
-      expect(readyState.isReady).toBe(true);
-      expect(readyState.isInClient).toBe(true);
-      expect(readyState.isLoggedIn).toBe(true);
-      expect(readyState.profile).not.toBeNull();
-    });
-
-    it('should handle error state with Union types', () => {
-      // Verify error: string | null Union type
-      let error: string | null = null;
-
-      // No error
-      expect(error).toBeNull();
-
-      // Error occurred
-      error = 'LIFF initialization failed';
-      expect(error).toBe('LIFF initialization failed');
-
-      // Error cleared
-      error = null;
-      expect(error).toBeNull();
-    });
-  });
-
-  describe('Type Definition File Organization', () => {
-    it('should import official Profile type from @line/liff package', () => {
-      // Verify official Profile type can be imported directly
-      const profileType: Profile = {
-        userId: 'test',
-        displayName: 'test',
-      };
-      const contextType: Partial<LiffContextType> = {
-        isReady: false,
-        profile: null,
-      };
-
-      // If this test runs without TypeScript compilation errors,
-      // it confirms official types are correctly used
-      expect(profileType).toBeDefined();
-      expect(contextType).toBeDefined();
-    });
-
-    it('should follow single-direction dependency pattern with official types', () => {
-      // Dependency flow: @line/liff → types.ts → LiffContext → LiffProvider → useLiff → GameBoard
-      // This test verifies official Profile type is used directly
-
-      // Import official Profile type
-      const profile: Profile = {
-        userId: 'test',
-        displayName: 'test',
-      };
-
-      // If this compiles, it confirms official types are available
-      expect(profile).toBeDefined();
     });
   });
 
   describe('TypeScript Strict Mode Compliance', () => {
-    it('should enforce strict null checks with official Profile type', () => {
-      // Verify strict null checking is enforced
+    it('should enforce strict null checks for Profile type', () => {
+      // Verify strict null checking works correctly
       let profile: Profile | null = null;
 
-      // Initially null
       expect(profile).toBeNull();
 
-      // After setting profile
       profile = {
         userId: 'test',
         displayName: 'test',
       };
 
-      // TypeScript should require null check before accessing properties
+      // TypeScript requires null check before property access
       if (profile !== null) {
         expect(profile.userId).toBeDefined();
-      } else {
-        expect(profile).toBeNull();
       }
     });
 
-    it('should enforce strict type checking for optional fields in official Profile', () => {
-      // Verify optional fields require undefined check
+    it('should handle optional Profile fields with undefined checks', () => {
+      // Verify optional field handling
       const profile: Profile = {
         userId: 'test',
         displayName: 'test',
       };
 
-      // TypeScript should require undefined check for optional fields
+      // Optional fields can be undefined
       if (profile.pictureUrl !== undefined) {
         expect(profile.pictureUrl).toBeDefined();
       } else {
         expect(profile.pictureUrl).toBeUndefined();
+      }
+
+      if (profile.statusMessage !== undefined) {
+        expect(profile.statusMessage).toBeDefined();
+      } else {
+        expect(profile.statusMessage).toBeUndefined();
       }
     });
   });

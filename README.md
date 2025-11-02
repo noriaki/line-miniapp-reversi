@@ -18,8 +18,8 @@ LINEミニアプリプラットフォーム上で動作するリバーシ(オセ
 - **AI Engine**: WebAssembly (Egaroucid ai.wasm)
 - **Styling**: Tailwind CSS + CSS Modules
 - **Package Manager**: pnpm 9.x
-- **LINE Integration**: LIFF SDK 2.x
-- **Testing**: Jest + React Testing Library + Playwright
+- **LINE Integration**: LIFF SDK 2.x (official SDK with direct API usage, no wrapper classes)
+- **Testing**: Jest + React Testing Library + Playwright + @line/liff-mock
 
 ## Getting Started
 
@@ -101,6 +101,31 @@ pnpm dev:debug
 
 詳細なセットアップ手順と使用方法については、[/docs/DEBUG_SETUP.md](/docs/DEBUG_SETUP.md) を参照してください。
 
+## LIFF Integration
+
+本プロジェクトは **LIFF SDK 2.x** を使用し、公式 API を直接呼び出すシンプルな統合パターンを採用しています。
+
+### 設計方針
+
+- **公式型定義の直接利用**: `@line/liff` パッケージの型定義を直接使用（独自型ラッピングなし）
+- **直接 API 呼び出し**: `liff.init()`, `liff.getProfile()` 等を直接呼び出し（ラッパークラス削除済み）
+- **公式 Mock ライブラリ活用**: `@line/liff-mock` による統合テスト
+- **最小限の実装**: Next.js/React 統合に必要な最小限のコード（Provider, Context, Hook）のみ維持
+
+### アーキテクチャ
+
+```
+/src/contexts/
+  LiffContext.tsx   # React Context定義
+  LiffProvider.tsx  # LIFF初期化・状態管理（公式SDK直接使用）
+/src/hooks/
+  useLiff.ts        # LIFF Context消費Hook
+/src/lib/liff/
+  types.ts          # 型定義（公式Profileを再エクスポート）
+```
+
+詳細は `.kiro/steering/line-liff.md` を参照してください。
+
 ## Project Structure
 
 ```
@@ -109,12 +134,14 @@ pnpm dev:debug
   /lib/
     /game/          # Game domain logic (Pure Functions)
     /ai/            # AI Engine, WASM integration
+    /liff/          # LIFF type definitions (official types re-export)
+  /contexts/        # React Context (LiffProvider, LiffContext)
   /workers/         # Web Worker (WASM execution)
   /components/      # UI components
-  /hooks/           # Custom React Hooks
+  /hooks/           # Custom React Hooks (useLiff, useGameState, etc.)
 /docs/              # Project documentation
 /.kiro/             # Kiro development framework
-  /steering/        # Project memory (product, tech, structure)
+  /steering/        # Project memory (product, tech, structure, line-liff)
   /specs/           # Feature specifications
 ```
 

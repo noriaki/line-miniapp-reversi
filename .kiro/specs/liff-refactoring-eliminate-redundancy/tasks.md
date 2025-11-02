@@ -58,9 +58,9 @@
   - _Requirements: 3.2, 3.3, 3.4_
 
 - [ ] 4. 冗長なテストコードの削除とビジネスロジックテストへの集約
-- [ ] 4.1 LIFF SDK動作検証テストの削除
+- [x] 4.1 LIFF SDK動作検証テストの削除
   - `src/lib/liff/__tests__/liff-client.test.ts`を削除（`LiffClient`クラス削除に伴い不要）
-  - `src/lib/liff/__tests__/liff-mock-setup.test.ts`を削除（手動Mock管理削除により不要）
+  - `src/lib/liff/__tests__/liff-mock-setup.test.ts`を削除（手動Mock管理削除により不要、既に存在せず）
   - `src/lib/liff/__tests__/liff-setup.test.ts`を削除（SDK初期化動作は公式ライブラリの責任範囲）
   - `src/lib/liff/__tests__/static-export.test.ts`を削除（SSR環境検証は`LiffProvider`テストに統合）
   - _Requirements: 3.2, 7.1, 7.2_

@@ -46,7 +46,6 @@ module.exports = {
   - [ ] カバレッジ確認
 
 - [ ] **カバレッジ確認**: 目標 Statements 90%+
-- [ ] **フェーズ1 PR作成** (推奨)
 
 ### ステップ3: フェーズ2実装（中優先度）
 
@@ -62,7 +61,6 @@ module.exports = {
   - [ ] カバレッジ確認
 
 - [ ] **カバレッジ確認**: 目標 All 90%+
-- [ ] **フェーズ2 PR作成** (推奨)
 
 ### ステップ4: フェーズ3実装（低優先度）
 
@@ -75,130 +73,110 @@ module.exports = {
   - [ ] カバレッジ確認
 
 - [ ] **最終カバレッジ確認**
-- [ ] **フェーズ3 PR作成** (推奨)
 
 ### ステップ5: 完了
 
 - [ ] すべてのテストがパスすることを確認
 - [ ] カバレッジレポート生成
-- [ ] 各フェーズのPRがマージされたことを確認
 - [ ] ドキュメントの更新（達成したカバレッジ値）
+- [ ] すべてのコミットをプッシュ
 
 ---
 
-## PR戦略
+## コミット戦略
 
-### 推奨アプローチ: フェーズごとにPRを分割
+### 推奨アプローチ: 適切な粒度でのコミット分割
 
-各フェーズを個別のPRとして作成することを推奨します：
+各フェーズ内でファイル単位または機能単位でコミットを分割することを推奨します：
 
-#### PR 1: フェーズ1（高優先度）
+#### フェーズ1: 高優先度
 
-**タイトル**: `test: improve coverage for high-priority files (Phase 1)`
+1. **useAIPlayer.ts のテスト追加**
+   - コミットメッセージ例: `test(hooks): add tests for useAIPlayer (0% → 90%+)`
+   - 内容:
+     - Workerモックのセットアップ
+     - Worker初期化のテスト
+     - calculateMove関数のテスト
+     - クリーンアップのテスト
 
-**内容**:
+2. **WASMErrorHandler.tsx のテスト追加**
+   - コミットメッセージ例: `test(components): add missing tests for WASMErrorHandler`
+   - 内容:
+     - エラータイプの網羅テスト
+     - インタラクションテスト（リロード、ホバー）
 
-- `useAIPlayer.ts` のテスト追加（0% → 90%+）
-- `WASMErrorHandler.tsx` のテスト追加（64.7% → 90%+）
-- `wasm-loader.ts` のテスト追加（63.04% → 90%+）
+3. **wasm-loader.ts のテスト追加**
+   - コミットメッセージ例: `test(lib/ai): add edge case tests for wasm-loader`
+   - 内容:
+     - locateFileコールバックのテスト
+     - タイムアウトシナリオのテスト
+     - エラーハンドリングのテスト
 
-**期待される効果**:
+**フェーズ1完了後のカバレッジ確認コミット**:
 
-- 最大のカバレッジ改善（全指標 +10-15%）
-- 早期フィードバックの獲得
+- コミットメッセージ例: `docs(test): update coverage report after phase 1`
 
-#### PR 2: フェーズ2（中優先度）
+#### フェーズ2: 中優先度
 
-**タイトル**: `test: improve coverage for medium-priority files (Phase 2)`
+1. **ErrorBoundary.tsx のテスト追加**
+   - コミットメッセージ例: `test(components): add reload and hover tests for ErrorBoundary`
+   - 内容:
+     - リロード機能のテスト
+     - ホバーエフェクトのテスト
 
-**内容**:
+2. **GameBoard.tsx のテスト追加**
+   - コミットメッセージ例: `test(components): add edge case tests for GameBoard`
+   - 内容:
+     - LINEログインエラーのテスト
+     - パスロジックのエッジケース
+     - AIエラーハンドリング
 
-- `ErrorBoundary.tsx` のテスト追加（73.68% → 90%+）
-- `GameBoard.tsx` のテスト追加（81.13% → 90%+）
+**フェーズ2完了後のカバレッジ確認コミット**:
 
-**期待される効果**:
+- コミットメッセージ例: `docs(test): update coverage report after phase 2`
 
-- エッジケースの網羅
-- 90%目標の達成
+#### フェーズ3: 低優先度
 
-#### PR 3: フェーズ3（低優先度）
+1. **move-history.ts と index.ts のテスト追加**
+   - コミットメッセージ例: `test(lib): add remaining tests for move-history and ai/index`
+   - 内容:
+     - move-history.ts の範囲外エラーケース
+     - index.ts のエクスポート確認テスト
 
-**タイトル**: `test: improve coverage for low-priority files (Phase 3)`
+**フェーズ3完了後の最終コミット**:
 
-**内容**:
+- コミットメッセージ例: `docs(test): achieve 90%+ coverage across all metrics`
 
-- `move-history.ts` のテスト追加（72.72% → 90%+）
-- `index.ts` のテスト追加（42.85% Functions → 90%+）
+### コミット分割の指針
 
-**期待される効果**:
+1. **関連する変更をまとめる**: 1つのファイルのテスト追加は1コミット
+2. **論理的な単位で分割**: 大きなファイルは機能ごとに分割も可
+3. **意味のあるコミットメッセージ**: 何を追加したか明確に記述
+4. **カバレッジの節目でコミット**: 各フェーズ完了時にドキュメント更新
 
-- 細かい改善の完了
-- 全ファイル90%達成
+### コミットメッセージの形式
 
-### 分割のメリット
+Semantic Commit Messages 形式を使用：
 
-1. **レビューの容易さ**: 1つのPRが小さく、レビューしやすい
-2. **早期マージ**: 高優先度から順次マージできる
-3. **リスク軽減**: 問題が発生してもロールバックが容易
-4. **進捗の可視化**: 各フェーズの完了を明確に示せる
+```
+test(<scope>): <subject>
 
-### 代替アプローチ: 単一PR
+<body>
+```
 
-全フェーズを1つのPRにまとめることも可能ですが、以下の点に注意：
+**例**:
 
-- **レビュー負荷**: 大量の変更を一度にレビュー
-- **マージまでの時間**: レビューとフィードバックに時間がかかる
-- **コンフリクトリスク**: 長期間のブランチは main との差分が大きくなる
+```
+test(hooks): add tests for useAIPlayer (0% → 90%+)
 
----
+- Add Worker mock setup in jest.setup.ts
+- Test Worker initialization and cleanup
+- Test calculateMove with various scenarios
+- Test error handling and fallbacks
 
-## トラッキング
-
-### GitHub Issue の作成
-
-各フェーズの進捗を追跡するため、GitHub Issue を作成することを推奨：
-
-**Issue タイトル**: `Test Coverage Improvement to 90%+`
-
-**Issue 内容**:
-
-```markdown
-## 目標
-
-全てのカバレッジ指標を90%以上にする
-
-## 現在の状況
-
-- Statements: 82.74% → 目標 90%+
-- Branches: 75.86% → 目標 90%+
-- Functions: 77.86% → 目標 90%+
-- Lines: 82.6% → 目標 90%+
-
-## 実装計画
-
-詳細は [docs/test-coverage/](./docs/test-coverage/) を参照
-
-### フェーズ1: 高優先度
-
-- [ ] #XX useAIPlayer.ts のテスト追加
-- [ ] #XX WASMErrorHandler.tsx のテスト追加
-- [ ] #XX wasm-loader.ts のテスト追加
-
-### フェーズ2: 中優先度
-
-- [ ] #XX ErrorBoundary.tsx のテスト追加
-- [ ] #XX GameBoard.tsx のテスト追加
-
-### フェーズ3: 低優先度
-
-- [ ] #XX move-history.ts のテスト追加
-- [ ] #XX index.ts のテスト追加
-
-## 関連PR
-
-- [ ] Phase 1: #XX
-- [ ] Phase 2: #XX
-- [ ] Phase 3: #XX
+Coverage improved:
+- Statements: 82.74% → 90.14% (+7.4%)
+- Functions: 77.86% → 84.86% (+7.0%)
 ```
 
 ---
@@ -279,52 +257,6 @@ pnpm test:coverage --verbose
 # 特定ファイルのカバレッジを表示
 pnpm test:coverage --collectCoverageFrom='src/hooks/useAIPlayer.ts'
 ```
-
----
-
-## CI/CD での自動チェック
-
-### GitHub Actions での設定例
-
-`.github/workflows/test.yml` にカバレッジチェックを追加：
-
-```yaml
-name: Test
-
-on:
-  pull_request:
-  push:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: pnpm install
-      - run: pnpm test:coverage
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/lcov.info
-```
-
-### カバレッジレポートのコメント
-
-PRに自動でカバレッジレポートをコメントする設定（オプション）：
-
-```yaml
-- name: Coverage comment
-  uses: romeovs/lcov-reporter-action@v0.3.1
-  with:
-    lcov-file: ./coverage/lcov.info
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-```
-
----
 
 ## 進捗の記録
 

@@ -49,52 +49,162 @@ if (isTestEnvironment && !useRealWorker) {
 
 #### 2. カスタムWorkerモックの作成
 
-Jestを使用したWorkerモックの実装例：
+**参考**: [Jest Manual Mocks](https://github.com/jestjs/jest/blob/main/docs/ManualMocks.md)
+
+Jestの公式ドキュメントに基づくWorkerモックの実装方法：
+
+##### 方法1: Jest Setup ファイルでグローバルWorkerをモック（推奨）
 
 ```typescript
-// __mocks__/worker.ts
-export class Worker {
-  private onmessage: ((event: MessageEvent) => void) | null = null;
-  private onerror: ((event: ErrorEvent) => void) | null = null;
+// jest.setup.ts (または既存のsetupファイル)
 
-  constructor(scriptURL: string | URL, options?: WorkerOptions) {
+class MockWorker {
+  private listeners: Map<string, Set<EventListener>> = new Map();
+  public onmessage: ((event: MessageEvent) => void) | null = null;
+  public onerror: ((event: ErrorEvent) => void) | null = null;
+
+  constructor(
+    public scriptURL: string | URL,
+    public options?: WorkerOptions
+  ) {
     // Worker初期化のシミュレーション
   }
 
   postMessage(data: any): void {
     // 非同期でWorkerレスポンスをシミュレート
     setTimeout(() => {
+      const mockResponse = { type: 'move', move: { row: 0, col: 0 } };
+      const event = new MessageEvent('message', { data: mockResponse });
+
       if (this.onmessage) {
-        // モックレスポンスを返す
-        const mockResponse = { type: 'move', move: { row: 0, col: 0 } };
-        this.onmessage(new MessageEvent('message', { data: mockResponse }));
+        this.onmessage(event);
       }
+
+      this.listeners.get('message')?.forEach((listener) => {
+        (listener as (event: MessageEvent) => void)(event);
+      });
     }, 0);
   }
 
   terminate(): void {
-    // クリーンアップ処理
+    this.listeners.clear();
+    this.onmessage = null;
+    this.onerror = null;
   }
 
   addEventListener(type: string, listener: EventListener): void {
-    if (type === 'message') {
-      this.onmessage = listener as (event: MessageEvent) => void;
-    } else if (type === 'error') {
-      this.onerror = listener as (event: ErrorEvent) => void;
+    if (!this.listeners.has(type)) {
+      this.listeners.set(type, new Set());
     }
+    this.listeners.get(type)!.add(listener);
   }
 
   removeEventListener(type: string, listener: EventListener): void {
-    if (type === 'message') {
-      this.onmessage = null;
-    } else if (type === 'error') {
-      this.onerror = null;
-    }
+    this.listeners.get(type)?.delete(listener);
+  }
+
+  dispatchEvent(event: Event): boolean {
+    const type = event.type;
+    this.listeners.get(type)?.forEach((listener) => {
+      listener(event);
+    });
+    return true;
   }
 }
 
-// Jest設定でWorkerをモック
-global.Worker = Worker as any;
+// Object.definePropertyを使用してグローバルWorkerをモック
+Object.defineProperty(global, 'Worker', {
+  writable: true,
+  value: MockWorker,
+});
+```
+
+この方法の利点：
+
+- すべてのテストで自動的にWorkerがモック化される
+- `jest.mock()`の明示的な呼び出しが不要
+- テストファイルがシンプルになる
+
+##### 方法2: テストファイルごとにモックをカスタマイズ
+
+特定のテストで異なる振る舞いが必要な場合：
+
+```typescript
+// src/hooks/__tests__/useAIPlayer.test.ts
+
+describe('useAIPlayer - custom Worker behavior', () => {
+  let OriginalWorker: typeof Worker;
+
+  beforeAll(() => {
+    // 元のWorkerを保存
+    OriginalWorker = global.Worker;
+  });
+
+  beforeEach(() => {
+    // カスタムWorkerモックを設定
+    const CustomMockWorker = class extends OriginalWorker {
+      postMessage(data: any): void {
+        // このテスト専用の振る舞い
+        setTimeout(() => {
+          if (this.onmessage) {
+            this.onmessage(
+              new MessageEvent('message', {
+                data: { type: 'error', error: 'AI calculation failed' },
+              })
+            );
+          }
+        }, 0);
+      }
+    };
+
+    Object.defineProperty(global, 'Worker', {
+      writable: true,
+      value: CustomMockWorker,
+    });
+  });
+
+  afterAll(() => {
+    // 元のWorkerを復元
+    Object.defineProperty(global, 'Worker', {
+      writable: true,
+      value: OriginalWorker,
+    });
+  });
+
+  it('should handle Worker errors', async () => {
+    // テスト実装
+  });
+});
+```
+
+##### モックの振る舞いをテストごとに制御
+
+```typescript
+// より柔軟なモック設定
+const createMockWorker = (behavior: 'success' | 'error' | 'timeout') => {
+  return class extends MockWorker {
+    postMessage(data: any): void {
+      if (behavior === 'success') {
+        setTimeout(() => {
+          this.onmessage?.(
+            new MessageEvent('message', {
+              data: { type: 'move', move: { row: 2, col: 3 } },
+            })
+          );
+        }, 10);
+      } else if (behavior === 'error') {
+        setTimeout(() => {
+          this.onerror?.(
+            new ErrorEvent('error', {
+              message: 'Worker error',
+            })
+          );
+        }, 10);
+      }
+      // timeout の場合は何も返さない
+    }
+  };
+};
 ```
 
 #### 3. テストケース

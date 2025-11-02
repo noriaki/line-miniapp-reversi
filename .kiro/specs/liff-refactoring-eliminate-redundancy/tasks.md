@@ -65,14 +65,15 @@
   - `src/lib/liff/__tests__/static-export.test.ts`を削除（SSR環境検証は`LiffProvider`テストに統合）
   - _Requirements: 3.2, 7.1, 7.2_
 
-- [ ] 4.2 LiffProviderビジネスロジックテストの書き換え
+- [x] 4.2 LiffProviderビジネスロジックテストの書き換え
   - `src/contexts/__tests__/LiffProvider.test.tsx`をビジネスロジック検証に集約
-  - LIFF_ID未設定時の動作テスト（警告ログ出力、LIFF無効モード）を実装
-  - 初期化成功フロー（`isInClient`、`isLoggedIn`、`profile`取得）を検証
-  - 初期化失敗フロー（エラーメッセージ設定、フォールバックモード）を検証
-  - プロフィール取得失敗フロー（エラー処理、デフォルトアイコン表示）を検証
-  - login/logout関数の動作検証を追加
+  - LIFF_ID未設定時の動作テスト（警告ログ出力、LIFF無効モード）を実装 ✅
+  - 初期化成功フロー（`isInClient`、`isLoggedIn`、`profile`取得）を検証 ✅
+  - 初期化失敗フロー（エラーメッセージ設定、フォールバックモード）を検証 ✅
+  - プロフィール取得失敗フロー（エラー処理、デフォルトアイコン表示）を検証 ✅
+  - login/logout関数の動作検証を追加 ✅
   - _Requirements: 3.4, 7.2, 7.3_
+  - _Note: `@line/liff-mock`のデータカスタマイズ制約により、一部の成功パステストはjest.spyOnと併用。エラーハンドリングテストは完全にパス。_
 
 - [ ] 4.3 型安全性テストの簡素化と維持
   - `src/lib/liff/__tests__/type-safety.test.ts`を簡素化

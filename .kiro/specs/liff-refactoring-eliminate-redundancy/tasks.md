@@ -27,7 +27,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
 - [ ] 2. LIFFクライアントラッパーの削除と直接呼び出しへの変更
-- [ ] 2.1 LiffClientクラスの削除と公式API直接呼び出しへの置き換え
+- [x] 2.1 LiffClientクラスの削除と公式API直接呼び出しへの置き換え
   - `src/lib/liff/liff-client.ts`ファイルを削除
   - `LiffProvider.tsx`から`LiffClient`のインスタンス化・import・useRefを削除
   - `liff.init()`、`liff.getProfile()`、`liff.isInClient()`、`liff.isLoggedIn()`を直接呼び出すように変更
@@ -35,7 +35,7 @@
   - エラーハンドリング・フォールバック機能を維持
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-- [ ] 2.2 ログイン・ログアウト機能の直接実装
+- [x] 2.2 ログイン・ログアウト機能の直接実装
   - `LiffProvider`の`login`関数を`liff.login()`直接呼び出しに変更
   - `logout`関数を`liff.logout()`直接呼び出しに変更
   - 外部ブラウザでのログインフローを維持（`withLoginOnExternalBrowser`オプション）

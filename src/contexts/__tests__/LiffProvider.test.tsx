@@ -6,6 +6,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { LiffProvider } from '../LiffProvider';
 import { useLiff } from '@/hooks/useLiff';
+import liff from '@line/liff';
 
 // Mock @line/liff SDK (default export)
 jest.mock('@line/liff', () => ({
@@ -42,12 +43,6 @@ function TestComponent() {
 }
 
 describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
-  let mockLiff: {
-    init: jest.Mock;
-    isInClient: jest.Mock;
-    isLoggedIn: jest.Mock;
-    getProfile: jest.Mock;
-  };
   let consoleErrorSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
 
@@ -56,9 +51,6 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Note: Don't call jest.resetModules() as it clears the mock setup
-
-    // Get mocked liff (default export)
-    mockLiff = jest.requireMock('@line/liff').default;
 
     // Spy on console methods
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
@@ -79,7 +71,7 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
       // Setup
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
       const initError = new Error('Network error');
-      mockLiff.init.mockRejectedValue(initError);
+      (liff.init as jest.Mock).mockRejectedValue(initError);
 
       // Render
       render(
@@ -101,7 +93,7 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
       // Setup
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
       const initError = new Error('LIFF SDK initialization error');
-      mockLiff.init.mockRejectedValue(initError);
+      (liff.init as jest.Mock).mockRejectedValue(initError);
 
       // Render
       render(
@@ -122,7 +114,7 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
     it('should allow game to work normally without LIFF features when initialization fails', async () => {
       // Setup
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockRejectedValue(new Error('Init failed'));
+      (liff.init as jest.Mock).mockRejectedValue(new Error('Init failed'));
 
       // Render
       render(
@@ -143,7 +135,7 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
     it('should set error state and reflect it in UI when initialization fails', async () => {
       // Setup
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockRejectedValue(new Error('Test error'));
+      (liff.init as jest.Mock).mockRejectedValue(new Error('Test error'));
 
       // Render
       render(
@@ -166,7 +158,7 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
 
       // Setup
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockRejectedValue(new Error('LIFF error'));
+      (liff.init as jest.Mock).mockRejectedValue(new Error('LIFF error'));
 
       // Render - should not throw error or trigger ErrorBoundary
       const { container } = render(
@@ -189,10 +181,12 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
     it('should record error state when profile retrieval fails', async () => {
       // Setup
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(true);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockRejectedValue(new Error('Profile API error'));
+      (liff.init as jest.Mock).mockResolvedValue(undefined);
+      (liff.isInClient as jest.Mock).mockReturnValue(true);
+      (liff.isLoggedIn as jest.Mock).mockReturnValue(true);
+      (liff.getProfile as jest.Mock).mockRejectedValue(
+        new Error('Profile API error')
+      );
 
       // Render
       render(
@@ -215,10 +209,12 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
     it('should display default icon when profile retrieval fails', async () => {
       // Setup
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(true);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockRejectedValue(new Error('Profile error'));
+      (liff.init as jest.Mock).mockResolvedValue(undefined);
+      (liff.isInClient as jest.Mock).mockReturnValue(true);
+      (liff.isLoggedIn as jest.Mock).mockReturnValue(true);
+      (liff.getProfile as jest.Mock).mockRejectedValue(
+        new Error('Profile error')
+      );
 
       // Render
       render(
@@ -240,10 +236,10 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
       // Setup
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
       const profileError = new Error('Profile retrieval failed');
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(true);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockRejectedValue(profileError);
+      (liff.init as jest.Mock).mockResolvedValue(undefined);
+      (liff.isInClient as jest.Mock).mockReturnValue(true);
+      (liff.isLoggedIn as jest.Mock).mockReturnValue(true);
+      (liff.getProfile as jest.Mock).mockRejectedValue(profileError);
 
       // Render
       render(
@@ -264,10 +260,12 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
     it('should allow game to continue when profile retrieval fails', async () => {
       // Setup
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(true);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockRejectedValue(new Error('Profile error'));
+      (liff.init as jest.Mock).mockResolvedValue(undefined);
+      (liff.isInClient as jest.Mock).mockReturnValue(true);
+      (liff.isLoggedIn as jest.Mock).mockReturnValue(true);
+      (liff.getProfile as jest.Mock).mockRejectedValue(
+        new Error('Profile error')
+      );
 
       // Render
       render(
@@ -287,10 +285,12 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
     it('should keep LIFF features enabled when only profile fails', async () => {
       // Setup
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(false);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockRejectedValue(new Error('Network timeout'));
+      (liff.init as jest.Mock).mockResolvedValue(undefined);
+      (liff.isInClient as jest.Mock).mockReturnValue(false);
+      (liff.isLoggedIn as jest.Mock).mockReturnValue(true);
+      (liff.getProfile as jest.Mock).mockRejectedValue(
+        new Error('Network timeout')
+      );
 
       // Render
       render(
@@ -389,7 +389,7 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
       });
 
       // Verify liff.init was never called
-      expect(mockLiff.init).not.toHaveBeenCalled();
+      expect(liff.init as jest.Mock).not.toHaveBeenCalled();
     });
   });
 
@@ -397,10 +397,10 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
     it('should handle complete initialization flow with successful profile retrieval', async () => {
       // Setup - success case
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(true);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockResolvedValue({
+      (liff.init as jest.Mock).mockResolvedValue(undefined);
+      (liff.isInClient as jest.Mock).mockReturnValue(true);
+      (liff.isLoggedIn as jest.Mock).mockReturnValue(true);
+      (liff.getProfile as jest.Mock).mockResolvedValue({
         userId: 'U123',
         displayName: 'Test User',
         pictureUrl: 'https://example.com/pic.jpg',
@@ -424,7 +424,7 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
     it('should gracefully degrade from init error to fallback mode', async () => {
       // Setup - init fails
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockRejectedValue(new Error('Init failed'));
+      (liff.init as jest.Mock).mockRejectedValue(new Error('Init failed'));
 
       // Render
       render(
@@ -441,7 +441,7 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
       });
 
       // Verify profile was never attempted
-      expect(mockLiff.getProfile).not.toHaveBeenCalled();
+      expect(liff.getProfile as jest.Mock).not.toHaveBeenCalled();
     });
   });
 });

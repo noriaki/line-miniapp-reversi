@@ -34,53 +34,8 @@ export interface LiffContextType {
   profile: Profile | null;
 
   /** Execute login (for external browser) */
-  login: () => Promise<void>;
+  login: () => void;
 
   /** Execute logout */
-  logout: () => Promise<void>;
-}
-
-/**
- * LIFF Client Interface
- * Type-safe wrapper for LIFF SDK API operations
- */
-export interface LiffClientInterface {
-  /**
-   * Initialize LIFF SDK
-   * @param liffId - LIFF ID from environment variables
-   * @returns Promise that resolves on success, rejects on failure
-   * @throws Error if LIFF ID is not set or initialization fails
-   */
-  initialize(liffId: string): Promise<void>;
-
-  /**
-   * Check if running inside LINE app
-   * @returns true if inside LINE app, false if external browser
-   */
-  isInClient(): boolean;
-
-  /**
-   * Check login state
-   * @returns true if logged in, false if not logged in
-   */
-  isLoggedIn(): boolean;
-
-  /**
-   * Execute login (for external browser)
-   * @returns Promise that starts login flow
-   */
-  login(): Promise<void>;
-
-  /**
-   * Execute logout
-   * @returns Promise that completes logout
-   */
-  logout(): Promise<void>;
-
-  /**
-   * Get profile information - Returns official Profile type from @line/liff
-   * @returns Promise with profile information
-   * @throws Error if not logged in or API call fails
-   */
-  getProfile(): Promise<Profile>;
+  logout: () => void;
 }

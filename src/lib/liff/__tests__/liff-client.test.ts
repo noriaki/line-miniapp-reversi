@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import type { LiffClientInterface, LiffProfile } from '../types';
+import type { LiffClientInterface, Profile } from '../types';
 
 // Mock @line/liff SDK
 jest.mock('@line/liff', () => ({
@@ -123,7 +123,7 @@ describe('LiffClient', () => {
 
   describe('getProfile', () => {
     it('should return profile information when successful', async () => {
-      const mockProfile: LiffProfile = {
+      const mockProfile: Profile = {
         userId: 'U1234567890',
         displayName: 'Test User',
         pictureUrl: 'https://example.com/pic.jpg',
@@ -138,7 +138,7 @@ describe('LiffClient', () => {
     });
 
     it('should return profile without optional fields', async () => {
-      const mockProfile: LiffProfile = {
+      const mockProfile: Profile = {
         userId: 'U1234567890',
         displayName: 'Test User',
       };

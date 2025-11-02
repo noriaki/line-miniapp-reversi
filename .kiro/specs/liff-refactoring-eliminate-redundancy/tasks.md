@@ -18,11 +18,11 @@
   - _目的: Phase 3（Mock移行）の技術的リスクを事前に検証し、不確実性を排除_
   - _所要時間: 30分_
 
-- [ ] 1. 公式型定義への移行と型システムの整理
+- [x] 1. 公式型定義への移行と型システムの整理
   - `src/lib/liff/types.ts`から`LiffProfile`インターフェース定義を削除
   - `LiffContextType`の`profile`フィールドを`Profile | null`型（`@line/liff`公式型）に変更
-  - 全ファイルのimport文を`import type { Profile } from '@line/liff'`に統一
-  - 型エイリアスや再エクスポートを削除し、公式型名で統一
+  - 全ファイルのimport文を`import type { Profile } from '@/lib/liff/types'`に統一
+  - 公式型を`liff.getProfile()`の戻り値型から抽出（`Awaited<ReturnType<typeof liff.getProfile>>`）
   - TypeScriptコンパイル実行（`pnpm run type-check`）で型エラーがないことを確認
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 

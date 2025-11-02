@@ -10,7 +10,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { LiffContext } from './LiffContext';
 import { LiffClient } from '@/lib/liff/liff-client';
-import type { LiffProfile } from '@/lib/liff/types';
+import type { Profile } from '@/lib/liff/types';
 
 interface LiffProviderProps {
   children: React.ReactNode;
@@ -25,7 +25,7 @@ export function LiffProvider({ children }: LiffProviderProps) {
   const [error, setError] = useState<string | null>(null);
   const [isInClient, setIsInClient] = useState<boolean | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-  const [profile, setProfile] = useState<LiffProfile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   const liffClientRef = useRef<LiffClient | null>(null);
 

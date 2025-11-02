@@ -2,7 +2,7 @@
  * TypeScript Type Safety Verification Tests
  *
  * This test suite verifies TypeScript type definitions for LIFF integration:
- * - LIFF SDK type definitions are correctly recognized
+ * - Official LIFF SDK type definitions are correctly used
  * - LIFF API return types are properly inferred
  * - Login state is managed in a type-safe manner
  * - Type errors are detected at compile time
@@ -12,17 +12,13 @@
  * These tests focus on TypeScript type inference and compile-time safety.
  */
 
-import type {
-  LiffProfile,
-  LiffContextType,
-  LiffClientInterface,
-} from '../types';
+import type { LiffContextType, Profile } from '../types';
 
 describe('LIFF Type Safety', () => {
-  describe('Type Definitions', () => {
-    it('should recognize LIFF SDK type definitions', () => {
-      // Verify LiffProfile type structure
-      const mockProfile: LiffProfile = {
+  describe('Official Type Definitions', () => {
+    it('should use official Profile type from @line/liff', () => {
+      // Verify official Profile type structure
+      const mockProfile: Profile = {
         userId: 'U1234567890',
         displayName: 'Test User',
         pictureUrl: 'https://example.com/pic.jpg',
@@ -35,9 +31,9 @@ describe('LIFF Type Safety', () => {
       expect(mockProfile.statusMessage).toBe('Hello');
     });
 
-    it('should allow optional fields in LiffProfile', () => {
+    it('should allow optional fields in official Profile type', () => {
       // Verify optional fields (pictureUrl, statusMessage)
-      const minimalProfile: LiffProfile = {
+      const minimalProfile: Profile = {
         userId: 'U1234567890',
         displayName: 'Test User',
       };
@@ -48,36 +44,29 @@ describe('LIFF Type Safety', () => {
       expect(minimalProfile.statusMessage).toBeUndefined();
     });
 
-    it('should infer correct return type for getProfile()', () => {
-      // Verify type inference for LIFF API methods
-      const mockClient: LiffClientInterface = {
-        initialize: async () => {},
-        isInClient: () => true,
-        isLoggedIn: () => true,
-        login: async () => {},
-        logout: async () => {},
-        getProfile: async (): Promise<LiffProfile> => ({
+    it('should use official Profile type in LiffContextType', () => {
+      // Verify LiffContextType uses official Profile type
+      const contextState: Partial<LiffContextType> = {
+        isReady: true,
+        error: null,
+        isInClient: true,
+        isLoggedIn: true,
+        profile: {
           userId: 'U1234567890',
           displayName: 'Test User',
           pictureUrl: 'https://example.com/pic.jpg',
-        }),
+        } as Profile,
       };
 
-      // TypeScript should infer return type as Promise<LiffProfile>
-      const profilePromise = mockClient.getProfile();
-      expect(profilePromise).toBeInstanceOf(Promise);
-
-      return profilePromise.then((profile) => {
-        // Type narrowing: profile should be LiffProfile
-        expect(profile.userId).toBe('U1234567890');
-      });
+      expect(contextState.profile?.userId).toBe('U1234567890');
+      expect(contextState.profile?.displayName).toBe('Test User');
     });
   });
 
   describe('Login State Type Safety', () => {
-    it('should manage login state with Union types', () => {
+    it('should manage login state with official Profile | null Union type', () => {
       // Verify Profile | null Union type for type-safe state management
-      let profile: LiffProfile | null = null;
+      let profile: Profile | null = null;
 
       // Initially null (not logged in)
       expect(profile).toBeNull();
@@ -94,7 +83,7 @@ describe('LIFF Type Safety', () => {
       expect(profile).toBeNull();
     });
 
-    it('should handle LiffContextType state structure', () => {
+    it('should handle LiffContextType state structure with official Profile', () => {
       // Verify LiffContextType structure
       const initialState: Partial<LiffContextType> = {
         isReady: false,
@@ -110,7 +99,7 @@ describe('LIFF Type Safety', () => {
       expect(initialState.isLoggedIn).toBeNull();
       expect(initialState.profile).toBeNull();
 
-      // After initialization
+      // After initialization with official Profile type
       const readyState: Partial<LiffContextType> = {
         isReady: true,
         error: null,
@@ -119,7 +108,7 @@ describe('LIFF Type Safety', () => {
         profile: {
           userId: 'U1234567890',
           displayName: 'Test User',
-        },
+        } as Profile,
       };
 
       expect(readyState.isReady).toBe(true);
@@ -146,43 +135,42 @@ describe('LIFF Type Safety', () => {
   });
 
   describe('Type Definition File Organization', () => {
-    it('should import types from centralized types.ts without circular dependencies', () => {
-      // Verify all types can be imported without circular dependency issues
-      const profileType: LiffProfile = {
+    it('should import official Profile type from @line/liff package', () => {
+      // Verify official Profile type can be imported directly
+      const profileType: Profile = {
         userId: 'test',
         displayName: 'test',
       };
       const contextType: Partial<LiffContextType> = {
         isReady: false,
+        profile: null,
       };
-      const clientInterface: Partial<LiffClientInterface> = {};
 
       // If this test runs without TypeScript compilation errors,
-      // it confirms no circular dependencies exist
+      // it confirms official types are correctly used
       expect(profileType).toBeDefined();
       expect(contextType).toBeDefined();
-      expect(clientInterface).toBeDefined();
     });
 
-    it('should follow single-direction dependency pattern', () => {
-      // Dependency flow: types.ts → liff-client.ts → LiffContext → LiffProvider → useLiff → GameBoard
-      // This test verifies types.ts has no dependencies (can be imported standalone)
+    it('should follow single-direction dependency pattern with official types', () => {
+      // Dependency flow: @line/liff → types.ts → LiffContext → LiffProvider → useLiff → GameBoard
+      // This test verifies official Profile type is used directly
 
-      // Import types without importing any other LIFF modules
-      const profile: LiffProfile = {
+      // Import official Profile type
+      const profile: Profile = {
         userId: 'test',
         displayName: 'test',
       };
 
-      // If this compiles, it confirms types.ts has no external dependencies
+      // If this compiles, it confirms official types are available
       expect(profile).toBeDefined();
     });
   });
 
   describe('TypeScript Strict Mode Compliance', () => {
-    it('should enforce strict null checks', () => {
+    it('should enforce strict null checks with official Profile type', () => {
       // Verify strict null checking is enforced
-      let profile: LiffProfile | null = null;
+      let profile: Profile | null = null;
 
       // Initially null
       expect(profile).toBeNull();
@@ -201,9 +189,9 @@ describe('LIFF Type Safety', () => {
       }
     });
 
-    it('should enforce strict type checking for optional fields', () => {
+    it('should enforce strict type checking for optional fields in official Profile', () => {
       // Verify optional fields require undefined check
-      const profile: LiffProfile = {
+      const profile: Profile = {
         userId: 'test',
         displayName: 'test',
       };

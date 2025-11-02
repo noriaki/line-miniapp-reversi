@@ -7,7 +7,7 @@
  */
 
 import liff from '@line/liff';
-import type { LiffClientInterface, LiffProfile } from './types';
+import type { LiffClientInterface, Profile } from './types';
 
 /**
  * LiffClient class implementing type-safe LIFF SDK wrapper
@@ -56,11 +56,11 @@ export class LiffClient implements LiffClientInterface {
   }
 
   /**
-   * Get profile information
+   * Get profile information - Returns official Profile type from @line/liff
    * @returns Promise with profile information
    * @throws Error if not logged in or API call fails
    */
-  async getProfile(): Promise<LiffProfile> {
+  async getProfile(): Promise<Profile> {
     return await liff.getProfile();
   }
 }

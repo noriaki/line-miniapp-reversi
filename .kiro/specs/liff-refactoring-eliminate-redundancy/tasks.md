@@ -6,7 +6,7 @@
 
 ---
 
-- [ ] 0. 事前検証 - 公式Mockライブラリの動作確認 (デザインレビュー対応)
+- [x] 0. 事前検証 - 公式Mockライブラリの動作確認 (デザインレビュー対応)
   - `@line/liff-mock` v1.0.3をdevDependenciesに追加（`pnpm add -D @line/liff-mock`）
   - `jest.setup.js`に公式Mockセットアップを追加:
     - `import { LiffMockPlugin } from '@line/liff-mock'`を追加

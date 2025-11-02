@@ -21,6 +21,9 @@ importers:
         specifier: ^18.3.0
         version: 18.3.1(react@18.3.1)
     devDependencies:
+      '@line/liff-mock':
+        specifier: 1.0.3
+        version: 1.0.3(@line/liff@2.27.2)
       '@playwright/test':
         specifier: ^1.56.1
         version: 1.56.1
@@ -815,6 +818,11 @@ packages:
   '@line/bot-sdk@10.4.0':
     resolution: {integrity: sha512-deUato9NM0o30cxtREuRGdKEdr7cXytK9glntr7FcYYkVm7nTTTnN/UOO4NoGJp6B3bXDQF5+RcGliBSFuBywA==}
     engines: {node: '>=20'}
+
+  '@line/liff-mock@1.0.3':
+    resolution: {integrity: sha512-9js4YXheVV4rTXvvLIMVSqC6ikmD7mRrpbFqFZBemqCmSu3YSfljQs1fzKVy9LVUCREmsESLwWqa57jS3LY45g==}
+    peerDependencies:
+      '@line/liff': '>= 2.19.0'
 
   '@line/liff@2.27.2':
     resolution: {integrity: sha512-l03EMOa2Xahct1voTbik4zTp5yOcYivb5p4MQWwnRIYsoRcnwFHEhT7KwvX/JdtmZbL3wLfBENGtm0BAtA1t9w==}
@@ -4491,6 +4499,10 @@ snapshots:
       axios: 1.12.2
     transitivePeerDependencies:
       - debug
+
+  '@line/liff-mock@1.0.3(@line/liff@2.27.2)':
+    dependencies:
+      '@line/liff': 2.27.2
 
   '@line/liff@2.27.2':
     dependencies:

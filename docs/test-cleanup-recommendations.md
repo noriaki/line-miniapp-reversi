@@ -6,8 +6,8 @@
 
 - **総テストファイル数**: 42ファイル（test-utils.ts除く41ファイル）
 - **推定総テストケース数**: 約400-500テスト
-- **削除推奨テスト数**: **52テスト**
-- **削除推奨割合**: 約10-13%
+- **削除推奨テスト数**: **58テスト**
+- **削除推奨割合**: 約12-15%
 
 ### 削除判定の基準
 
@@ -277,7 +277,7 @@ _（注: move-history.test.tsには同様の範囲外テストがさらに複数
 
 ---
 
-### 4. 重複テスト（14件）
+### 4. 重複テスト（18件）
 
 #### 4.1 `src/lib/game/__tests__/cell-id.test.ts`
 
@@ -374,6 +374,63 @@ _（注: move-history.test.tsには同様の範囲外テストがさらに複数
     expect(reloadButton).toBeInTheDocument();
     ```
 
+#### 4.5 `src/lib/ai/__tests__/wasm-bridge.test.ts`
+
+- ☑ **Test 13: should return error when called with negative WASM module pointer**
+  - **ファイル**: `src/lib/ai/__tests__/wasm-bridge.test.ts`
+  - **テスト内容**: 負のWASMモジュールポインタで呼び出された場合のエラー処理を確認
+  - **削除理由**: Test 11 "should return error when called with zero WASM module pointer"と実質的に重複。どちらも無効なポインタ値のテストであり、負の値を個別にテストする必要性はない。
+  - **テストコード**:
+    ```typescript
+    const result = await callAIFunction(-1 as unknown as number, board, 3);
+    expect(result.success).toBe(false);
+    expect(result.error?.reason).toBe('invalid_wasm_module');
+    ```
+
+- ☑ **Test 19: should throw error if depth parameter is not provided**
+  - **ファイル**: `src/lib/ai/__tests__/wasm-bridge.test.ts`
+  - **テスト内容**: depthパラメータが提供されない場合のエラーを確認
+  - **削除理由**: Test 16 "should return error when called with invalid depth (zero)"と重複。パラメータ検証は既に十分テストされており、undefinedを個別にテストする必要性は低い。
+  - **テストコード**:
+    ```typescript
+    const result = await callAIFunction(
+      mockModule,
+      board,
+      undefined as unknown as number
+    );
+    expect(result.success).toBe(false);
+    ```
+
+#### 4.6 `src/lib/ai/__tests__/ai-engine.integration.test.ts`
+
+- ☑ **Test 3: should handle WASM initialization failure**
+  - **ファイル**: `src/lib/ai/__tests__/ai-engine.integration.test.ts`
+  - **テスト内容**: WASM初期化失敗の処理を確認（ただし実際の実装はモジュールロード成功のみを検証）
+  - **削除理由**: テスト名と実装が一致していない。実際にはTest 1 "should load WASM module successfully"と同じことをテストしている。また、wasm-loader-emscripten.test.tsで既に詳細にテスト済み。
+  - **テストコード**:
+    ```typescript
+    const module = await loadWASM();
+    expect(module).toBeDefined();
+    ```
+
+#### 4.7 `app/__tests__/layout.test.tsx`
+
+- ☑ **Test 6: ErrorBoundaryとLiffProviderの正しい順序を保つこと**
+  - **ファイル**: `app/__tests__/layout.test.tsx`
+  - **テスト内容**: プロバイダチェーンの正しい順序を確認（実際にはTest 5と同じ内容）
+  - **削除理由**: Test 5 "LiffProviderでラップされていること"と完全に重複。テストタイトルは「ErrorBoundaryとLiffProviderの順序」だが、実際にはErrorBoundaryの存在や順序を全くテストしておらず、単にLiffProviderと子要素の存在を確認しているだけ。
+  - **テストコード**:
+
+    ```typescript
+    const liffProvider = container.querySelector(
+      '[data-testid="liff-provider"]'
+    );
+    expect(liffProvider).toBeInTheDocument();
+
+    const child = container.querySelector('[data-testid="child"]');
+    expect(child).toBeInTheDocument();
+    ```
+
 ---
 
 ### 5. テスト網羅性のためだけのテスト（6件）
@@ -382,31 +439,68 @@ _（上記のモジュールエクスポート確認テストと重複するた�
 
 ---
 
+### 6. スキップされたテスト（2件）
+
+#### 6.1 `src/lib/ai/__tests__/wasm-loader-emscripten.test.ts`
+
+- ☑ **Test 6: should timeout if WASM loading takes too long (>5s) [SKIPPED]**
+  - **ファイル**: `src/lib/ai/__tests__/wasm-loader-emscripten.test.ts`
+  - **テスト内容**: WASMロードのタイムアウト（5秒超過）をテスト（ただし`it.skip`でスキップされている）
+  - **削除理由**: `it.skip`で永続的にスキップされており、実行されないテスト。コメントに「Jest fake timersとEmscripten WASMロードの相性問題により一時的にスキップ」とあるが、スキップされたままのテストはメンテナンスコストのみが発生する。修正の見込みがないなら削除すべき。
+  - **テストコード**:
+    ```typescript
+    it.skip('should timeout if WASM loading takes too long (>5s)', async () => {
+      jest.useFakeTimers();
+      // ... timeout test logic
+    });
+    ```
+
+#### 6.2 `e2e/__tests__/pass-feature.spec.ts`
+
+- ☑ **Test 11: 連続パスでゲームが終了すること [SKIPPED]**
+  - **ファイル**: `e2e/__tests__/pass-feature.spec.ts`
+  - **テスト内容**: 連続パス機能のE2Eテスト（ただし`test.skip`でスキップされている）
+  - **削除理由**: `test.skip`で永続的にスキップされており、実行されないE2Eテスト。連続パス機能は既に`src/lib/game/__tests__/game-end-conditions.test.ts`の統合テストで十分にカバーされている（Test 1, 2, 3）。E2Eテストが動作しないならば削除し、統合テストに任せるべき。
+  - **テストコード**:
+    ```typescript
+    test.skip('連続パスでゲームが終了すること', async ({ page }) => {
+      // ... E2E test logic
+    });
+    ```
+
+---
+
 ## 削除推奨テストの統計
 
 ### ファイル別集計
 
-| ファイル                                             | 削除推奨テスト数 | ファイル内の削除割合 |
-| ---------------------------------------------------- | ---------------- | -------------------- |
-| `src/lib/game/__tests__/move-history.test.ts`        | 20+              | 約70%                |
-| `src/lib/game/__tests__/cell-id.test.ts`             | 4                | 約50%                |
-| `src/lib/ai/__tests__/ai-fallback.test.ts`           | 1                | 約20%                |
-| `src/lib/ai/__tests__/index.test.ts`                 | 1                | 100%                 |
-| `src/lib/game/__tests__/index.test.ts`               | 1                | 100%                 |
-| `src/workers/__tests__/ai-worker.test.ts`            | 2                | 100%                 |
-| `src/components/__tests__/ErrorBoundary.test.tsx`    | 2                | 約25%                |
-| `src/components/__tests__/WASMErrorHandler.test.tsx` | 1                | 約10%                |
+| ファイル                                              | 削除推奨テスト数 | ファイル内の削除割合 |
+| ----------------------------------------------------- | ---------------- | -------------------- |
+| `src/lib/game/__tests__/move-history.test.ts`         | 20+              | 約70%                |
+| `src/lib/game/__tests__/cell-id.test.ts`              | 4                | 約50%                |
+| `src/lib/ai/__tests__/wasm-bridge.test.ts`            | 2                | 約10%                |
+| `src/lib/ai/__tests__/wasm-loader-emscripten.test.ts` | 1                | 約17%                |
+| `src/lib/ai/__tests__/ai-engine.integration.test.ts`  | 1                | 約33%                |
+| `src/lib/ai/__tests__/ai-fallback.test.ts`            | 1                | 約20%                |
+| `src/lib/ai/__tests__/index.test.ts`                  | 1                | 100%                 |
+| `src/lib/game/__tests__/index.test.ts`                | 1                | 100%                 |
+| `src/workers/__tests__/ai-worker.test.ts`             | 2                | 100%                 |
+| `src/components/__tests__/ErrorBoundary.test.tsx`     | 2                | 約25%                |
+| `src/components/__tests__/WASMErrorHandler.test.tsx`  | 1                | 約10%                |
+| `app/__tests__/layout.test.tsx`                       | 1                | 約17%                |
+| `e2e/__tests__/pass-feature.spec.ts`                  | 1                | 約9%                 |
 
 ### 削除理由別集計
 
 | 削除理由                     | テスト数 | 割合     |
 | ---------------------------- | -------- | -------- |
-| 起こり得ないエッジケース     | 14+      | 27%      |
-| 標準ライブラリへの過剰な疑い | 15       | 29%      |
-| 重複テスト                   | 14       | 27%      |
-| モジュールエクスポート確認   | 3        | 6%       |
-| テスト網羅性のため           | 6        | 11%      |
-| **合計**                     | **52**   | **100%** |
+| 起こり得ないエッジケース     | 14+      | 24%      |
+| 標準ライブラリへの過剰な疑い | 15       | 26%      |
+| 重複テスト                   | 18       | 31%      |
+| モジュールエクスポート確認   | 3        | 5%       |
+| テスト網羅性のため           | 6        | 10%      |
+| スキップされたテスト         | 2        | 4%       |
+| **合計**                     | **58**   | **100%** |
 
 ---
 
@@ -492,7 +586,8 @@ _（上記のモジュールエクスポート確認テストと重複するた�
    - Remove tests that doubt standard library behavior
    - Remove impossible edge case tests (out-of-bounds coordinates)
    - Remove duplicate tests across files
-   - Total: 52 tests removed (~10-13% of total tests)
+   - Remove skipped tests (it.skip/test.skip)
+   - Total: 58 tests removed (~12-15% of total tests)
 
    Rationale: These tests provide no real value and only increase
    maintenance burden. Core business logic and integration tests
@@ -551,7 +646,7 @@ it('should integrate WASM loader and bridge successfully', async () => {
 
 ## まとめ
 
-このドキュメントで特定された **52の削除推奨テスト** を削除することで：
+このドキュメントで特定された **58の削除推奨テスト** を削除することで：
 
 - ✅ テストの実行時間が短縮される
 - ✅ テストの保守コストが削減される

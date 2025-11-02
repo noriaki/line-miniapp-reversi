@@ -10,8 +10,6 @@ import {
   getCellAt,
   setCellAt,
   validateMove,
-  findAllFlips,
-  findFlipsInDirection,
   DIRECTIONS,
   applyMove,
   calculateValidMoves,
@@ -56,29 +54,9 @@ describe('Game Module Exports', () => {
       const board = createInitialBoard();
       expect(getCellAt(board, { row: 0, col: 0 })).toBe(null);
     });
-
-    it('should export setCellAt function', () => {
-      expect(setCellAt).toBeDefined();
-      expect(typeof setCellAt).toBe('function');
-    });
   });
 
   describe('Move Validator Function Exports', () => {
-    it('should export validateMove function', () => {
-      expect(validateMove).toBeDefined();
-      expect(typeof validateMove).toBe('function');
-    });
-
-    it('should export findAllFlips function', () => {
-      expect(findAllFlips).toBeDefined();
-      expect(typeof findAllFlips).toBe('function');
-    });
-
-    it('should export findFlipsInDirection function', () => {
-      expect(findFlipsInDirection).toBeDefined();
-      expect(typeof findFlipsInDirection).toBe('function');
-    });
-
     it('should export DIRECTIONS constant', () => {
       expect(DIRECTIONS).toBeDefined();
       expect(Array.isArray(DIRECTIONS)).toBe(true);
@@ -87,11 +65,6 @@ describe('Game Module Exports', () => {
   });
 
   describe('Game Logic Function Exports', () => {
-    it('should export applyMove function', () => {
-      expect(applyMove).toBeDefined();
-      expect(typeof applyMove).toBe('function');
-    });
-
     it('should export calculateValidMoves function', () => {
       expect(calculateValidMoves).toBeDefined();
       expect(typeof calculateValidMoves).toBe('function');

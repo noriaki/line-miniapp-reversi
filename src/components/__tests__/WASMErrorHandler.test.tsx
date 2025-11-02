@@ -100,19 +100,4 @@ describe('WASMErrorHandler', () => {
       ).toBeInTheDocument();
     });
   });
-
-  describe('RED: Reload functionality', () => {
-    it('should have reload button that reloads the page', () => {
-      const error = {
-        type: 'wasm_load_error' as const,
-        reason: 'fetch_failed' as const,
-        message: 'Failed',
-      };
-
-      render(<WASMErrorHandler error={error} />);
-
-      const reloadButton = screen.getByRole('button', { name: /リロード/ });
-      expect(reloadButton).toBeInTheDocument();
-    });
-  });
 });

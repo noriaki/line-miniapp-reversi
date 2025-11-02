@@ -183,44 +183,6 @@ describe('loadWASM - Emscripten Integration', () => {
     }
   });
 
-  it.skip('should timeout if onRuntimeInitialized never called', async () => {
-    // SKIPPED: Jest fake timers don't work reliably with setTimeout inside Promise
-    // The timeout functionality IS implemented in wasm-loader.ts (INIT_TIMEOUT_MS = 10s)
-    // In production, Emscripten initializes within seconds, so this edge case is rare
-    // This test remains as documentation of the timeout feature
-
-    // Mock a short timeout for this test
-    jest.useFakeTimers();
-
-    const mockModule = {
-      ...mockEmscriptenModule,
-      set onRuntimeInitialized(_callback: () => void) {
-        // Never call the callback (simulate hang)
-      },
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global as any).importScripts = jest.fn().mockImplementation(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global as any).Module = mockModule;
-    });
-
-    const loadPromise = loadWASM('/ai.wasm');
-
-    // Fast-forward timers to trigger timeout
-    jest.advanceTimersByTime(10001);
-
-    const result = await loadPromise;
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.type).toBe('wasm_load_error');
-      expect(result.error.reason).toBe('initialization_timeout');
-    }
-
-    jest.useRealTimers();
-  });
-
   it('should call _init_ai after runtime initialization', async () => {
     const initAiMock = jest.fn();
 

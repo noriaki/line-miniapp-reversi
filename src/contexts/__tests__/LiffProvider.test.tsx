@@ -4,25 +4,23 @@
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { LiffProvider } from '../LiffProvider';
 import { useLiff } from '@/hooks/useLiff';
+import liff from '@line/liff';
 
-// Mock @line/liff SDK (default export)
-jest.mock('@line/liff', () => ({
-  __esModule: true,
-  default: {
-    init: jest.fn(),
-    isInClient: jest.fn(),
-    isLoggedIn: jest.fn(),
-    login: jest.fn(),
-    logout: jest.fn(),
-    getProfile: jest.fn(),
-  },
-}));
+// Type assertion for liff.$mock API (available when @line/liff-mock is installed)
+type LiffWithMock = typeof liff & {
+  $mock: {
+    set: (data: Record<string, unknown>) => void;
+    clear: () => void;
+  };
+};
 
 // Test component that uses useLiff hook
 function TestComponent() {
-  const { isReady, error, isInClient, isLoggedIn, profile } = useLiff();
+  const { isReady, error, isInClient, isLoggedIn, profile, login, logout } =
+    useLiff();
 
   return (
     <div>
@@ -37,28 +35,25 @@ function TestComponent() {
       <div data-testid="profile">
         {profile ? profile.displayName : 'no-profile'}
       </div>
+      <button data-testid="login-btn" onClick={login}>
+        Login
+      </button>
+      <button data-testid="logout-btn" onClick={logout}>
+        Logout
+      </button>
     </div>
   );
 }
 
-describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
-  let mockLiff: {
-    init: jest.Mock;
-    isInClient: jest.Mock;
-    isLoggedIn: jest.Mock;
-    getProfile: jest.Mock;
-  };
+describe('LiffProvider - Business Logic Tests', () => {
   let consoleErrorSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
 
   const ORIGINAL_ENV = process.env;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    // Note: Don't call jest.resetModules() as it clears the mock setup
-
-    // Get mocked liff (default export)
-    mockLiff = jest.requireMock('@line/liff').default;
+    // Clear mock data before each test using official @line/liff-mock API
+    (liff as LiffWithMock).$mock.clear();
 
     // Spy on console methods
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
@@ -69,259 +64,23 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
   });
 
   afterEach(() => {
+    // Clean up mocks using official Mock API
+    (liff as LiffWithMock).$mock.clear();
     consoleErrorSpy.mockRestore();
     consoleWarnSpy.mockRestore();
     process.env = ORIGINAL_ENV;
   });
 
-  describe('Task 6.1: LIFF初期化エラーの処理実装', () => {
-    it('should display user-friendly error message when LIFF initialization fails', async () => {
-      // Setup
-      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      const initError = new Error('Network error');
-      mockLiff.init.mockRejectedValue(initError);
-
-      // Render
-      render(
-        <LiffProvider>
-          <TestComponent />
-        </LiffProvider>
-      );
-
-      // Wait for initialization attempt and error to be set
-      await waitFor(() => {
-        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
-        expect(screen.getByTestId('error')).toHaveTextContent(
-          'LINE integration is unavailable. You can continue playing in normal mode.'
-        );
-      });
-    });
-
-    it('should log error details to developer console when initialization fails', async () => {
-      // Setup
-      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      const initError = new Error('LIFF SDK initialization error');
-      mockLiff.init.mockRejectedValue(initError);
-
-      // Render
-      render(
-        <LiffProvider>
-          <TestComponent />
-        </LiffProvider>
-      );
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          'LIFF initialization failed:',
-          initError
-        );
-      });
-    });
-
-    it('should allow game to work normally without LIFF features when initialization fails', async () => {
-      // Setup
-      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockRejectedValue(new Error('Init failed'));
-
-      // Render
-      render(
-        <LiffProvider>
-          <TestComponent />
-        </LiffProvider>
-      );
-
-      // Wait for initialization and verify state
-      await waitFor(() => {
-        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
-        expect(screen.getByTestId('error')).not.toHaveTextContent('no-error');
-        expect(screen.getByTestId('in-client')).toHaveTextContent('null');
-        expect(screen.getByTestId('logged-in')).toHaveTextContent('null');
-      });
-    });
-
-    it('should set error state and reflect it in UI when initialization fails', async () => {
-      // Setup
-      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockRejectedValue(new Error('Test error'));
-
-      // Render
-      render(
-        <LiffProvider>
-          <TestComponent />
-        </LiffProvider>
-      );
-
-      // Wait and verify
-      await waitFor(() => {
-        const errorElement = screen.getByTestId('error');
-        expect(errorElement).not.toHaveTextContent('no-error');
-        expect(errorElement.textContent).toBeTruthy();
-      });
-    });
-
-    it('should separate LIFF error handling from game error handler', async () => {
-      // This test verifies that LIFF errors are handled internally
-      // and don't propagate to game error handlers
-
-      // Setup
-      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockRejectedValue(new Error('LIFF error'));
-
-      // Render - should not throw error or trigger ErrorBoundary
-      const { container } = render(
-        <LiffProvider>
-          <TestComponent />
-        </LiffProvider>
-      );
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
-      });
-
-      // Component should render successfully even with LIFF error
-      expect(container.querySelector('[data-testid="ready"]')).toBeTruthy();
-    });
-  });
-
-  describe('Task 6.2: プロフィール取得エラーの処理実装', () => {
-    it('should record error state when profile retrieval fails', async () => {
-      // Setup
-      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(true);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockRejectedValue(new Error('Profile API error'));
-
-      // Render
-      render(
-        <LiffProvider>
-          <TestComponent />
-        </LiffProvider>
-      );
-
-      // Wait for profile attempt
-      await waitFor(() => {
-        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
-      });
-
-      // Verify error is recorded
-      expect(screen.getByTestId('error')).toHaveTextContent(
-        'Failed to retrieve profile information'
-      );
-    });
-
-    it('should display default icon when profile retrieval fails', async () => {
-      // Setup
-      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(true);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockRejectedValue(new Error('Profile error'));
-
-      // Render
-      render(
-        <LiffProvider>
-          <TestComponent />
-        </LiffProvider>
-      );
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
-      });
-
-      // Verify profile is null (triggers default icon in UI)
-      expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
-    });
-
-    it('should log profile error to developer console', async () => {
-      // Setup
-      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      const profileError = new Error('Profile retrieval failed');
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(true);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockRejectedValue(profileError);
-
-      // Render
-      render(
-        <LiffProvider>
-          <TestComponent />
-        </LiffProvider>
-      );
-
-      // Wait for profile attempt
-      await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          'Profile retrieval failed:',
-          profileError
-        );
-      });
-    });
-
-    it('should allow game to continue when profile retrieval fails', async () => {
-      // Setup
-      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(true);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockRejectedValue(new Error('Profile error'));
-
-      // Render
-      render(
-        <LiffProvider>
-          <TestComponent />
-        </LiffProvider>
-      );
-
-      // Wait for initialization and verify LIFF is still enabled
-      await waitFor(() => {
-        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
-        expect(screen.getByTestId('in-client')).toHaveTextContent('true');
-        expect(screen.getByTestId('logged-in')).toHaveTextContent('true');
-      });
-    });
-
-    it('should keep LIFF features enabled when only profile fails', async () => {
-      // Setup
-      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(false);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockRejectedValue(new Error('Network timeout'));
-
-      // Render
-      render(
-        <LiffProvider>
-          <TestComponent />
-        </LiffProvider>
-      );
-
-      // Wait and verify LIFF state is correct except for profile
-      await waitFor(() => {
-        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
-        expect(screen.getByTestId('in-client')).toHaveTextContent('false');
-        expect(screen.getByTestId('logged-in')).toHaveTextContent('true');
-        expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
-      });
-    });
-  });
-
-  describe('Task 6.3: 環境変数未設定時のフォールバック処理', () => {
-    it('should display warning to console when LIFF_ID is not set', async () => {
-      // Setup - no LIFF_ID
+  describe('LIFF_ID未設定時の動作テスト', () => {
+    it('should output warning log when LIFF_ID is not set', async () => {
       delete process.env.NEXT_PUBLIC_LIFF_ID;
 
-      // Render
       render(
         <LiffProvider>
           <TestComponent />
         </LiffProvider>
       );
 
-      // Wait and verify warning
       await waitFor(() => {
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           'LIFF_ID not set: LIFF features are disabled'
@@ -329,119 +88,553 @@ describe('LiffProvider - Error Handling and Fallback (Task 6)', () => {
       });
     });
 
-    it('should disable LIFF features when LIFF_ID is not set', async () => {
-      // Setup
+    it('should enter LIFF disabled mode when LIFF_ID is not set', async () => {
       delete process.env.NEXT_PUBLIC_LIFF_ID;
 
-      // Render
       render(
         <LiffProvider>
           <TestComponent />
         </LiffProvider>
       );
 
-      // Wait
       await waitFor(() => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
-      // Verify LIFF features are disabled
+      // LIFF disabled mode: all LIFF features are null
+      expect(screen.getByTestId('error')).toHaveTextContent('no-error');
       expect(screen.getByTestId('in-client')).toHaveTextContent('null');
       expect(screen.getByTestId('logged-in')).toHaveTextContent('null');
       expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
     });
+  });
 
-    it('should allow normal gameplay when LIFF_ID is not set', async () => {
-      // Setup
-      delete process.env.NEXT_PUBLIC_LIFF_ID;
+  describe('初期化成功フロー', () => {
+    it('should successfully initialize and retrieve isInClient status', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
 
-      // Render
+      // Mock liff.init to resolve successfully
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      // Use jest.spyOn for success path (liff.$mock.set doesn't work for isInClient/isLoggedIn)
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(true);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(false);
+
       render(
         <LiffProvider>
           <TestComponent />
         </LiffProvider>
       );
 
-      // Wait
       await waitFor(() => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
-      // Verify app is ready for gameplay
-      expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       expect(screen.getByTestId('error')).toHaveTextContent('no-error');
+      expect(screen.getByTestId('in-client')).toHaveTextContent('true');
+      expect(screen.getByTestId('logged-in')).toHaveTextContent('false');
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
     });
 
-    it('should not attempt LIFF initialization when LIFF_ID is missing', async () => {
-      // Setup
-      delete process.env.NEXT_PUBLIC_LIFF_ID;
+    it('should successfully retrieve isLoggedIn status', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
 
-      // Render
+      // Mock liff.init to resolve successfully
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      // Use jest.spyOn for success path
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(false);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(true);
+
       render(
         <LiffProvider>
           <TestComponent />
         </LiffProvider>
       );
 
-      // Wait
       await waitFor(() => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
-      // Verify liff.init was never called
-      expect(mockLiff.init).not.toHaveBeenCalled();
+      expect(screen.getByTestId('in-client')).toHaveTextContent('false');
+      expect(screen.getByTestId('logged-in')).toHaveTextContent('true');
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
+    });
+
+    it('should retrieve profile when logged in', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+
+      // Mock liff.init to resolve successfully
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      // Use jest.spyOn for success path (liff.$mock.set doesn't work for getProfile)
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(true);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(true);
+      const getProfileSpy = jest.spyOn(liff, 'getProfile').mockResolvedValue({
+        userId: 'U123456',
+        displayName: 'Test User',
+        pictureUrl: 'https://example.com/pic.jpg',
+        statusMessage: 'Hello!',
+      });
+
+      render(
+        <LiffProvider>
+          <TestComponent />
+        </LiffProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
+      });
+
+      expect(screen.getByTestId('profile')).toHaveTextContent('Test User');
+      expect(screen.getByTestId('error')).toHaveTextContent('no-error');
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
+      getProfileSpy.mockRestore();
+    });
+
+    it('should not retrieve profile when not logged in', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+
+      // Mock liff.init to resolve successfully
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      // Use jest.spyOn for success path
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(true);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(false);
+
+      render(
+        <LiffProvider>
+          <TestComponent />
+        </LiffProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
+      });
+
+      expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
+      expect(screen.getByTestId('logged-in')).toHaveTextContent('false');
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
     });
   });
 
-  describe('Integration: Error Recovery Flow', () => {
-    it('should handle complete initialization flow with successful profile retrieval', async () => {
-      // Setup - success case
+  describe('初期化失敗フロー', () => {
+    it('should set error message when initialization fails', async () => {
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockResolvedValue(undefined);
-      mockLiff.isInClient.mockReturnValue(true);
-      mockLiff.isLoggedIn.mockReturnValue(true);
-      mockLiff.getProfile.mockResolvedValue({
-        userId: 'U123',
-        displayName: 'Test User',
-        pictureUrl: 'https://example.com/pic.jpg',
-      });
+      const initSpy = jest
+        .spyOn(liff, 'init')
+        .mockRejectedValue(new Error('Network error'));
 
-      // Render
       render(
         <LiffProvider>
           <TestComponent />
         </LiffProvider>
       );
 
-      // Wait and verify success
       await waitFor(() => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
-        expect(screen.getByTestId('error')).toHaveTextContent('no-error');
-        expect(screen.getByTestId('profile')).toHaveTextContent('Test User');
       });
+
+      expect(screen.getByTestId('error')).toHaveTextContent(
+        'LINE integration is unavailable. You can continue playing in normal mode.'
+      );
+
+      initSpy.mockRestore();
     });
 
-    it('should gracefully degrade from init error to fallback mode', async () => {
-      // Setup - init fails
+    it('should enter fallback mode when initialization fails', async () => {
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
-      mockLiff.init.mockRejectedValue(new Error('Init failed'));
+      const initSpy = jest
+        .spyOn(liff, 'init')
+        .mockRejectedValue(new Error('Init failed'));
 
-      // Render
       render(
         <LiffProvider>
           <TestComponent />
         </LiffProvider>
       );
 
-      // Wait and verify fallback mode
       await waitFor(() => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
-        expect(screen.getByTestId('error')).not.toHaveTextContent('no-error');
-        expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
       });
 
-      // Verify profile was never attempted
-      expect(mockLiff.getProfile).not.toHaveBeenCalled();
+      // Fallback mode: ready=true, error is set, LIFF features are null
+      expect(screen.getByTestId('error')).not.toHaveTextContent('no-error');
+      expect(screen.getByTestId('in-client')).toHaveTextContent('null');
+      expect(screen.getByTestId('logged-in')).toHaveTextContent('null');
+      expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
+
+      initSpy.mockRestore();
+    });
+
+    it('should log initialization error to console', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+      const initError = new Error('LIFF SDK initialization error');
+      const initSpy = jest.spyOn(liff, 'init').mockRejectedValue(initError);
+
+      render(
+        <LiffProvider>
+          <TestComponent />
+        </LiffProvider>
+      );
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'LIFF initialization failed:',
+          initError
+        );
+      });
+
+      initSpy.mockRestore();
+    });
+  });
+
+  describe('プロフィール取得失敗フロー', () => {
+    it('should set error message when profile retrieval fails', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+
+      // Mock all LIFF methods to ensure init succeeds and avoid network errors
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(true);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(true);
+      const profileSpy = jest
+        .spyOn(liff, 'getProfile')
+        .mockRejectedValue(new Error('Profile API error'));
+
+      render(
+        <LiffProvider>
+          <TestComponent />
+        </LiffProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
+      });
+
+      expect(screen.getByTestId('error')).toHaveTextContent(
+        'Failed to retrieve profile information'
+      );
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
+      profileSpy.mockRestore();
+    });
+
+    it('should display default icon when profile retrieval fails', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+
+      // Mock all LIFF methods to ensure init succeeds
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(true);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(true);
+      const profileSpy = jest
+        .spyOn(liff, 'getProfile')
+        .mockRejectedValue(new Error('Profile error'));
+
+      render(
+        <LiffProvider>
+          <TestComponent />
+        </LiffProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
+      });
+
+      // Profile is null, which triggers default icon display in UI
+      expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
+      profileSpy.mockRestore();
+    });
+
+    it('should log profile error to console', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+      const profileError = new Error('Profile retrieval failed');
+
+      // Mock all LIFF methods to ensure init succeeds
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(true);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(true);
+      const profileSpy = jest
+        .spyOn(liff, 'getProfile')
+        .mockRejectedValue(profileError);
+
+      render(
+        <LiffProvider>
+          <TestComponent />
+        </LiffProvider>
+      );
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Profile retrieval failed:',
+          profileError
+        );
+      });
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
+      profileSpy.mockRestore();
+    });
+
+    it('should keep LIFF features enabled when only profile fails', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+
+      // Mock all LIFF methods to ensure init succeeds
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(false);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(true);
+      const profileSpy = jest
+        .spyOn(liff, 'getProfile')
+        .mockRejectedValue(new Error('Network timeout'));
+
+      render(
+        <LiffProvider>
+          <TestComponent />
+        </LiffProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
+      });
+
+      // LIFF state is correct except for profile
+      expect(screen.getByTestId('in-client')).toHaveTextContent('false');
+      expect(screen.getByTestId('logged-in')).toHaveTextContent('true');
+      expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
+      profileSpy.mockRestore();
+    });
+  });
+
+  describe('login/logout関数の動作検証', () => {
+    it('should call liff.login() when login function is invoked', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+
+      // Mock all LIFF methods to ensure init succeeds
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(false);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(false);
+      const loginSpy = jest.spyOn(liff, 'login').mockImplementation();
+
+      render(
+        <LiffProvider>
+          <TestComponent />
+        </LiffProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
+      });
+
+      const user = userEvent.setup();
+      await user.click(screen.getByTestId('login-btn'));
+
+      expect(loginSpy).toHaveBeenCalled();
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
+      loginSpy.mockRestore();
+    });
+
+    it('should throw error when login is called before initialization', () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+
+      // Delay initialization to keep isReady=false
+      const initSpy = jest.spyOn(liff, 'init').mockImplementation(
+        () => new Promise(() => {}) // Never resolves
+      );
+      const loginSpy = jest.spyOn(liff, 'login').mockImplementation();
+
+      const TestComponentWithError = () => {
+        const { login, isReady } = useLiff();
+
+        if (!isReady) {
+          // Try to login before ready
+          expect(() => login()).toThrow('LIFF not initialized');
+        }
+
+        return <div data-testid="test">Test</div>;
+      };
+
+      render(
+        <LiffProvider>
+          <TestComponentWithError />
+        </LiffProvider>
+      );
+
+      initSpy.mockRestore();
+      loginSpy.mockRestore();
+    });
+
+    it('should call liff.logout() when logout function is invoked', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+
+      // Mock all LIFF methods to ensure init succeeds
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(true);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(true);
+      const getProfileSpy = jest.spyOn(liff, 'getProfile').mockResolvedValue({
+        userId: 'U123456',
+        displayName: 'Test User',
+      });
+      const logoutSpy = jest.spyOn(liff, 'logout').mockImplementation();
+
+      render(
+        <LiffProvider>
+          <TestComponent />
+        </LiffProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
+      });
+
+      const user = userEvent.setup();
+      await user.click(screen.getByTestId('logout-btn'));
+
+      expect(logoutSpy).toHaveBeenCalled();
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
+      getProfileSpy.mockRestore();
+      logoutSpy.mockRestore();
+    });
+
+    it('should clear profile and update login status after logout', async () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+
+      // Mock all LIFF methods to ensure init succeeds
+      const initSpy = jest.spyOn(liff, 'init').mockResolvedValue();
+      const isInClientSpy = jest
+        .spyOn(liff, 'isInClient')
+        .mockReturnValue(true);
+      const isLoggedInSpy = jest
+        .spyOn(liff, 'isLoggedIn')
+        .mockReturnValue(true);
+      const getProfileSpy = jest.spyOn(liff, 'getProfile').mockResolvedValue({
+        userId: 'U123456',
+        displayName: 'Test User',
+      });
+      const logoutSpy = jest.spyOn(liff, 'logout').mockImplementation();
+
+      render(
+        <LiffProvider>
+          <TestComponent />
+        </LiffProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('ready')).toHaveTextContent('ready');
+      });
+
+      // Verify logged in with profile
+      expect(screen.getByTestId('profile')).toHaveTextContent('Test User');
+      expect(screen.getByTestId('logged-in')).toHaveTextContent('true');
+
+      const user = userEvent.setup();
+      await user.click(screen.getByTestId('logout-btn'));
+
+      // Verify logout clears profile and updates status
+      await waitFor(() => {
+        expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
+        expect(screen.getByTestId('logged-in')).toHaveTextContent('false');
+      });
+
+      initSpy.mockRestore();
+      isInClientSpy.mockRestore();
+      isLoggedInSpy.mockRestore();
+      getProfileSpy.mockRestore();
+      logoutSpy.mockRestore();
+    });
+
+    it('should throw error when logout is called before initialization', () => {
+      process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
+
+      // Delay initialization to keep isReady=false
+      const initSpy = jest.spyOn(liff, 'init').mockImplementation(
+        () => new Promise(() => {}) // Never resolves
+      );
+      const logoutSpy = jest.spyOn(liff, 'logout').mockImplementation();
+
+      const TestComponentWithError = () => {
+        const { logout, isReady } = useLiff();
+
+        if (!isReady) {
+          // Try to logout before ready
+          expect(() => logout()).toThrow('LIFF not initialized');
+        }
+
+        return <div data-testid="test">Test</div>;
+      };
+
+      render(
+        <LiffProvider>
+          <TestComponentWithError />
+        </LiffProvider>
+      );
+
+      initSpy.mockRestore();
+      logoutSpy.mockRestore();
     });
   });
 });

@@ -3,14 +3,17 @@
  *
  * Client Component that initializes LIFF SDK and provides LIFF state
  * to the application through React Context.
+ *
+ * This component directly uses @line/liff SDK APIs without wrapper classes.
+ * Following official LIFF SDK patterns for Next.js integration.
  */
 
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import liff from '@line/liff';
 import { LiffContext } from './LiffContext';
-import { LiffClient } from '@/lib/liff/liff-client';
-import type { LiffProfile } from '@/lib/liff/types';
+import type { Profile } from '@/lib/liff/types';
 
 interface LiffProviderProps {
   children: React.ReactNode;
@@ -19,15 +22,15 @@ interface LiffProviderProps {
 /**
  * LiffProvider Component
  * Initializes LIFF SDK on mount and provides LIFF state to children
+ *
+ * Uses official @line/liff SDK APIs directly without abstraction layers.
  */
 export function LiffProvider({ children }: LiffProviderProps) {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isInClient, setIsInClient] = useState<boolean | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-  const [profile, setProfile] = useState<LiffProfile | null>(null);
-
-  const liffClientRef = useRef<LiffClient | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
     let isMounted = true; // Track if component is still mounted
@@ -50,21 +53,17 @@ export function LiffProvider({ children }: LiffProviderProps) {
         return;
       }
 
-      // Create LiffClient instance
-      const client = new LiffClient();
-      liffClientRef.current = client;
-
       try {
-        // Initialize LIFF SDK
-        await client.initialize(liffId);
+        // Initialize LIFF SDK directly
+        await liff.init({ liffId });
 
         if (!isMounted) {
           return; // Don't update state if unmounted
         }
 
-        // Check environment and login status
-        const inClient = client.isInClient();
-        const loggedIn = client.isLoggedIn();
+        // Check environment and login status using liff API directly
+        const inClient = liff.isInClient();
+        const loggedIn = liff.isLoggedIn();
 
         setIsInClient(inClient);
         setIsLoggedIn(loggedIn);
@@ -72,7 +71,7 @@ export function LiffProvider({ children }: LiffProviderProps) {
         // Try to get profile if logged in
         if (loggedIn) {
           try {
-            const userProfile = await client.getProfile();
+            const userProfile = await liff.getProfile();
             if (isMounted) {
               setProfile(userProfile);
             }
@@ -106,24 +105,23 @@ export function LiffProvider({ children }: LiffProviderProps) {
     // Cleanup function to prevent state updates after unmount
     return () => {
       isMounted = false;
-      // Note: Don't reset initializingRef.current here to prevent double initialization
     };
   }, []);
 
-  // Login function for external browser
-  const login = async () => {
-    if (!liffClientRef.current) {
+  // Login function for external browser - uses liff.login() directly
+  const login = () => {
+    if (!isReady) {
       throw new Error('LIFF not initialized');
     }
-    await liffClientRef.current.login();
+    liff.login();
   };
 
-  // Logout function
-  const logout = async () => {
-    if (!liffClientRef.current) {
+  // Logout function - uses liff.logout() directly
+  const logout = () => {
+    if (!isReady) {
       throw new Error('LIFF not initialized');
     }
-    await liffClientRef.current.logout();
+    liff.logout();
     setProfile(null);
     setIsLoggedIn(false);
   };

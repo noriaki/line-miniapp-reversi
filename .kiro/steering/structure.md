@@ -107,12 +107,14 @@
 ### LINE Integration (`/src/lib/liff/`)
 
 **Location**: `/src/lib/liff/`
-**Purpose**: LIFF SDK統合、型定義、クライアント操作
+**Purpose**: LIFF SDK統合、型定義
+
 **Example**:
 
-- `types.ts`: LIFF型定義(LiffProfile, LiffContextType)
-- `liff-client.ts`: LIFF SDK操作ラッパー(初期化、プロフィール取得)
-- `__tests__/`: LIFF統合テスト
+- `types.ts`: LIFF型定義（公式Profile型の再エクスポート、LiffContextType）
+- `__tests__/`: LIFF統合テスト（型安全性検証）
+
+**Note**: LIFF SDK操作は公式APIを直接呼び出すため、ラッパークラスは不要（詳細は`.kiro/steering/line-liff.md`参照）
 
 ### E2E Tests (`/e2e/`)
 

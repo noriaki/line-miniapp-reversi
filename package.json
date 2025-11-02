@@ -29,6 +29,7 @@
     "react-dom": "^18.3.0"
   },
   "devDependencies": {
+    "@line/liff-mock": "1.0.3",
     "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",

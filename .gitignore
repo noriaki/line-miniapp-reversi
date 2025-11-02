@@ -147,3 +147,6 @@ vite.config.ts.timestamp-*
 # Playwright
 playwright-report/
 test-results/
+
+# pnpm
+.pnpm-store/

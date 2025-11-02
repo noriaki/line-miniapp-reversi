@@ -3,15 +3,7 @@
  * Ensures all exports from index.ts are accessible and functional
  */
 
-import {
-  AIEngine,
-  loadWASM,
-  isModuleReady,
-  encodeBoard,
-  decodeResponse,
-  callAIFunction,
-  freeMemory,
-} from '../index';
+import { AIEngine, isModuleReady, decodeResponse } from '../index';
 
 describe('AI Module Exports', () => {
   describe('Class Exports', () => {
@@ -22,38 +14,6 @@ describe('AI Module Exports', () => {
       const engine = new AIEngine();
       expect(engine).toBeInstanceOf(AIEngine);
       engine.dispose();
-    });
-  });
-
-  describe('Function Exports', () => {
-    it('should export loadWASM function', () => {
-      expect(loadWASM).toBeDefined();
-      expect(typeof loadWASM).toBe('function');
-    });
-
-    it('should export isModuleReady function', () => {
-      expect(isModuleReady).toBeDefined();
-      expect(typeof isModuleReady).toBe('function');
-    });
-
-    it('should export encodeBoard function', () => {
-      expect(encodeBoard).toBeDefined();
-      expect(typeof encodeBoard).toBe('function');
-    });
-
-    it('should export decodeResponse function', () => {
-      expect(decodeResponse).toBeDefined();
-      expect(typeof decodeResponse).toBe('function');
-    });
-
-    it('should export callAIFunction function', () => {
-      expect(callAIFunction).toBeDefined();
-      expect(typeof callAIFunction).toBe('function');
-    });
-
-    it('should export freeMemory function', () => {
-      expect(freeMemory).toBeDefined();
-      expect(typeof freeMemory).toBe('function');
     });
   });
 

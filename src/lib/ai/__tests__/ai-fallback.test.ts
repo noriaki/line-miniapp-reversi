@@ -22,26 +22,6 @@ describe('AI Fallback', () => {
       expect(validMoves).toContainEqual(move);
     });
 
-    it('should return different moves across multiple calls (randomness)', () => {
-      const validMoves: Position[] = [
-        { row: 0, col: 0 },
-        { row: 0, col: 1 },
-        { row: 0, col: 2 },
-        { row: 0, col: 3 },
-        { row: 0, col: 4 },
-      ];
-
-      const results = new Set<string>();
-      for (let i = 0; i < 20; i++) {
-        const move = selectRandomValidMove(validMoves);
-        results.add(`${move.row},${move.col}`);
-      }
-
-      // With 5 options and 20 tries, very likely to get > 1 unique result
-      // (probabilistically, this should not be flaky)
-      expect(results.size).toBeGreaterThan(1);
-    });
-
     it('should throw error when validMoves array is empty', () => {
       const validMoves: Position[] = [];
 

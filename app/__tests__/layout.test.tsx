@@ -70,22 +70,4 @@ describe('RootLayout (Server Component)', () => {
     const child = container.querySelector('[data-testid="child"]');
     expect(liffProvider).toContainElement(child as HTMLElement);
   });
-
-  it('ErrorBoundaryとLiffProviderの正しい順序を保つこと', () => {
-    const { container } = render(
-      <RootLayout>
-        <div data-testid="child">Test Content</div>
-      </RootLayout>
-    );
-
-    // LiffProvider should exist (mocked)
-    const liffProvider = container.querySelector(
-      '[data-testid="liff-provider"]'
-    );
-    expect(liffProvider).toBeInTheDocument();
-
-    // Child should be rendered inside the provider chain
-    const child = container.querySelector('[data-testid="child"]');
-    expect(child).toBeInTheDocument();
-  });
 });

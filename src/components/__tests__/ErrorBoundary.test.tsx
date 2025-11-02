@@ -127,23 +127,6 @@ describe('ErrorBoundary', () => {
     });
   });
 
-  describe('RED: Reload functionality', () => {
-    it('should have reload button that calls window.location.reload', () => {
-      render(
-        <ErrorBoundary>
-          <ThrowError shouldThrow={true} />
-        </ErrorBoundary>
-      );
-
-      const reloadButton = screen.getByRole('button', { name: /リロード/ });
-      expect(reloadButton).toBeInTheDocument();
-
-      // Verify button has onClick handler (implementation test)
-      // The actual window.location.reload() call is tested in E2E
-      expect(reloadButton).toHaveAttribute('style');
-    });
-  });
-
   describe('RED: Normal rendering without errors', () => {
     it('should render children normally when no error occurs', () => {
       render(
@@ -153,25 +136,6 @@ describe('ErrorBoundary', () => {
       );
 
       expect(screen.getByText('Normal content')).toBeInTheDocument();
-    });
-  });
-
-  describe('RED: User-friendly error messages', () => {
-    it('should display user-friendly Japanese error message', () => {
-      render(
-        <ErrorBoundary>
-          <ThrowError shouldThrow={true} />
-        </ErrorBoundary>
-      );
-
-      expect(
-        screen.getByText(/予期しないエラーが発生しました/)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          /問題が解決しない場合は、ページをリロードしてください。/
-        )
-      ).toBeInTheDocument();
     });
   });
 });

@@ -160,20 +160,6 @@ describe('Integration Test: AIEngine + WASMBridge', () => {
     expect(typeof result).toBe('number');
   });
 
-  it('should handle WASM initialization failure (simulated via invalid module)', async () => {
-    // このテストは失敗シナリオのシミュレーション
-    // 実際のWASMは既にロード済みなので、エラーハンドリングロジックの確認のみ
-
-    // WASMが正常にロードされていることを確認
-    expect(Module).toBeDefined();
-    expect(Module._ai_js).toBeDefined();
-
-    // エラーハンドリングのロジックが存在することを確認
-    // (実際のエラーは発生させない)
-    expect(typeof Module._malloc).toBe('function');
-    expect(typeof Module._free).toBe('function');
-  });
-
   it('should maintain WASM module state across multiple AI calculations', () => {
     const board: number[][] = Array(8)
       .fill(null)

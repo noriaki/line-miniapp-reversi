@@ -185,19 +185,6 @@ test.describe('Pass Feature E2E Tests', () => {
       }
     });
   });
-
-  test.describe('Task 8.2: Consecutive Pass Game End (Commented - Complex Setup)', () => {
-    // Note: Testing consecutive pass scenario in E2E requires setting up
-    // a specific board state where both players have no valid moves.
-    // This is difficult to achieve through UI interactions alone.
-    // Integration tests (Task 7) cover this functionality more effectively.
-
-    test.skip('should end game when both players pass consecutively', async () => {
-      // This test requires custom board state setup which is not available in E2E
-      // The functionality is thoroughly tested in integration tests
-      // Keeping this as a placeholder for future enhancement if board state injection is added
-    });
-  });
 });
 
 test.describe('Pass Feature - Integration Scenarios', () => {

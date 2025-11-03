@@ -17,7 +17,12 @@ export function createAIWorker(): Worker | null {
     const workerURL = new URL('../workers/ai-worker', import.meta.url);
     return new Worker(workerURL, { type: 'module' });
   } catch (error) {
-    console.error('Failed to create AI worker:', error);
+    // Enhanced error logging for better debugging
+    console.error('Failed to create AI worker:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      errorType: error instanceof Error ? error.constructor.name : typeof error,
+    });
     return null;
   }
 }

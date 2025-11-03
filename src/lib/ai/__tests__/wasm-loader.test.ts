@@ -42,6 +42,13 @@ describe('wasm-loader', () => {
     afterEach(() => {
       // Cleanup global state
       cleanupWorkerEnvironment();
+
+      // Additional HEAP view cleanup (PR#30 review requirement)
+      delete (global as any).HEAP8;
+      delete (global as any).HEAPU8;
+      delete (global as any).HEAP32;
+      delete (global as any).HEAPU32;
+      delete (global as any).wasmMemory;
     });
 
     // Task 4.1: WASM正常ロードのテスト

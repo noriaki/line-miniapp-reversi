@@ -92,7 +92,9 @@
 - `useAIPlayer.ts`: AI計算実行・Worker通信
 - `useGameErrorHandler.ts`: エラー状態・メッセージ管理
 - `useLiff.ts`: LIFF Context消費・状態アクセス
+- `worker-factory.ts`: Worker生成分離(テスト容易性向上)
 - `__tests__/`: フックテスト
+- `__mocks__/`: モックインフラ(worker-factory.ts等)
 
 ### React Contexts (`/src/contexts/`)
 
@@ -190,6 +192,7 @@ import { validateMove } from './move-validator';
 - `__tests__/`ディレクトリを実装と同階層に配置
 - ユニット/統合テスト: `<module>.test.ts`形式
 - E2Eテスト: `/e2e/<feature>.spec.ts`形式(Playwright)
+- `__mocks__/`ディレクトリでモックインフラを管理(worker-factory.ts等)
 
 ### Error Recovery Pattern
 
@@ -201,9 +204,15 @@ import { validateMove } from './move-validator';
 ---
 
 _created_at: 2025-10-21_
-_updated_at: 2025-11-02_
+_updated_at: 2025-11-03_
 
-**Recent Updates (2025-11-02)**:
+**Recent Updates (2025-11-03)**:
+
+- Added `worker-factory.ts` pattern for testable Worker instantiation
+- Documented `__mocks__/` directory for test infrastructure
+- Updated Test Co-location section with mock directory pattern
+
+**Previous Updates (2025-11-02)**:
 
 - Added LINE Integration Layer documentation (`/src/lib/liff/`)
 - Added React Contexts pattern (`/src/contexts/`)

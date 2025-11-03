@@ -2,23 +2,22 @@ import { useEffect, useRef, useCallback } from 'react';
 import type { Board, Player, Position } from '@/lib/game/types';
 import { selectRandomValidMove } from '@/lib/ai/ai-fallback';
 import { calculateValidMoves } from '@/lib/game/game-logic';
+import { createAIWorker } from './worker-factory';
 
 export function useAIPlayer() {
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
+    // Check if running in test environment
+    if (process.env.NODE_ENV === 'test') {
+      // Skip worker initialization in tests
+      return;
+    }
+
     // Initialize worker on mount
     if (typeof window !== 'undefined' && typeof Worker !== 'undefined') {
       try {
-        // Check if running in test environment
-        if (process.env.NODE_ENV === 'test') {
-          // Mock worker in tests
-          return;
-        }
-        workerRef.current = new Worker(
-          new URL('../workers/ai-worker.ts', import.meta.url),
-          { type: 'module' }
-        );
+        workerRef.current = createAIWorker();
       } catch (error) {
         console.error('Failed to initialize AI worker:', error);
       }

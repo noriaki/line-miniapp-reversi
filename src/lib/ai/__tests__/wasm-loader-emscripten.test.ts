@@ -27,10 +27,8 @@ describe('loadWASM - Emscripten Integration', () => {
     // Create mock Emscripten Module
     mockModule = createEmscriptenModule();
 
-    // Setup Web Worker environment with localhost origin (different from wasm-loader.test.ts)
-    setupWorkerEnvironment(mockModule, {
-      origin: 'http://localhost',
-    });
+    // Setup Web Worker environment with default origin (same as wasm-loader.test.ts)
+    setupWorkerEnvironment(mockModule);
   });
 
   afterEach(() => {
@@ -42,7 +40,9 @@ describe('loadWASM - Emscripten Integration', () => {
     const result = await loadWASM('/ai.wasm');
 
     // Should call importScripts with absolute ai.js URL
-    expect(global.importScripts).toHaveBeenCalledWith('http://localhost/ai.js');
+    expect(global.importScripts).toHaveBeenCalledWith(
+      'http://localhost:3000/ai.js'
+    );
 
     // Should successfully return Module
     expect(result.success).toBe(true);
@@ -59,6 +59,7 @@ describe('loadWASM - Emscripten Integration', () => {
 
     // Override importScripts for this specific test to track callback setter
     (global.importScripts as jest.Mock).mockImplementation(() => {
+      const globalScope = global as typeof global & { self?: any };
       const emscriptenModule = createEmscriptenModule();
 
       // Custom setter to track when callback is set and use process.nextTick
@@ -74,6 +75,9 @@ describe('loadWASM - Emscripten Integration', () => {
       });
 
       global.Module = emscriptenModule;
+      if (globalScope.self) {
+        globalScope.self.Module = emscriptenModule;
+      }
     });
 
     const result = await loadWASM('/ai.wasm');
@@ -121,6 +125,11 @@ describe('loadWASM - Emscripten Integration', () => {
       // Simulate scenario where Emscripten glue code fails to set up Module
       // Delete the pre-configured Module object to simulate initialization failure
       delete global.Module;
+      // Also delete from global.self if it exists
+      const globalScope = global as typeof global & { self?: any };
+      if (globalScope.self) {
+        delete globalScope.self.Module;
+      }
     });
 
     const result = await loadWASM('/ai.wasm');
@@ -143,19 +152,19 @@ describe('loadWASM - Emscripten Integration', () => {
     await loadWASM('/ai.wasm');
     expect(global.importScripts).toHaveBeenNthCalledWith(
       1,
-      'http://localhost/ai.js'
+      'http://localhost:3000/ai.js'
     );
 
     await loadWASM('/path/to/ai.wasm');
     expect(global.importScripts).toHaveBeenNthCalledWith(
       2,
-      'http://localhost/path/to/ai.js'
+      'http://localhost:3000/path/to/ai.js'
     );
 
     await loadWASM('ai.wasm');
     expect(global.importScripts).toHaveBeenNthCalledWith(
       3,
-      'http://localhostai.js'
+      'http://localhost:3000ai.js'
     );
   });
 });

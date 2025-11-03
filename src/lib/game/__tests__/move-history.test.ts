@@ -48,6 +48,68 @@ describe('Move History', () => {
         });
       });
     });
+
+    describe('invalid position tests', () => {
+      it('should return "??" for negative row', () => {
+        const consoleErrorSpy = jest
+          .spyOn(console, 'error')
+          .mockImplementation();
+        const position: Position = { row: -1, col: 0 };
+        expect(positionToNotation(position)).toBe('??');
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Invalid position: row=-1, col=0'
+        );
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should return "??" for row > 7', () => {
+        const consoleErrorSpy = jest
+          .spyOn(console, 'error')
+          .mockImplementation();
+        const position: Position = { row: 8, col: 0 };
+        expect(positionToNotation(position)).toBe('??');
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Invalid position: row=8, col=0'
+        );
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should return "??" for negative col', () => {
+        const consoleErrorSpy = jest
+          .spyOn(console, 'error')
+          .mockImplementation();
+        const position: Position = { row: 0, col: -1 };
+        expect(positionToNotation(position)).toBe('??');
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Invalid position: row=0, col=-1'
+        );
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should return "??" for col > 7', () => {
+        const consoleErrorSpy = jest
+          .spyOn(console, 'error')
+          .mockImplementation();
+        const position: Position = { row: 0, col: 8 };
+        expect(positionToNotation(position)).toBe('??');
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Invalid position: row=0, col=8'
+        );
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should return "??" for both row and col out of bounds', () => {
+        const consoleErrorSpy = jest
+          .spyOn(console, 'error')
+          .mockImplementation();
+        const position: Position = { row: -1, col: 10 };
+        expect(positionToNotation(position)).toBe('??');
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Invalid position: row=-1, col=10'
+        );
+        consoleErrorSpy.mockRestore();
+      });
+    });
   });
 
   describe('generateNotationString', () => {

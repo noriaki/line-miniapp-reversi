@@ -21,9 +21,7 @@ export function positionToNotation(position: Position): string {
 
   // Validate position is within board boundaries (0-7)
   if (row < 0 || row > 7 || col < 0 || col > 7) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(`Invalid position: row=${row}, col=${col}`);
-    }
+    console.error(`Invalid position: row=${row}, col=${col}`);
     return '??';
   }
 

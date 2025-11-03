@@ -15,6 +15,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import type { EgaroucidWASMModule } from '../types';
+import type { EmscriptenModule } from './__types__/worker-global';
 
 describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
   const RESOURCES_DIR = path.join(
@@ -41,16 +42,25 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
     // Create global context for Emscripten with Node.js environment
     const modulePromise = new Promise<EgaroucidWASMModule>(
       (resolve, reject) => {
+        const globalObj = global as typeof global & {
+          process?: NodeJS.Process;
+          require?: NodeRequire;
+          Module?: unknown;
+        };
+
         // Provide Node.js global objects that Emscripten expects
-        if (typeof (global as any).process === 'undefined') {
-          (global as any).process = process;
+        if (typeof globalObj.process === 'undefined') {
+          globalObj.process = process;
         }
-        if (typeof (global as any).require === 'undefined') {
-          (global as any).require = require;
+        if (typeof globalObj.require === 'undefined') {
+          globalObj.require = require;
         }
 
-        const moduleConfig = {
-          wasmBinary: wasmBinary,
+        const moduleConfig: Partial<EmscriptenModule> = {
+          wasmBinary: wasmBinary.buffer.slice(
+            wasmBinary.byteOffset,
+            wasmBinary.byteOffset + wasmBinary.byteLength
+          ),
           // Emscripten uses scriptDirectory, let's make sure it's set correctly
           // by defining thisProgram to be in the resources directory
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
@@ -62,7 +72,7 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
             // 'this' is the fully initialized Module object from Emscripten
             resolve(this);
           },
-          onAbort: (reason: any) => {
+          onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
           },
           print: (text: string) => {
@@ -83,7 +93,7 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
           noExitRuntime: true,
         };
 
-        (global as any).Module = moduleConfig;
+        globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
           // Execute Emscripten glue code in a context where __dirname is defined
@@ -209,21 +219,30 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
 
     const modulePromise = new Promise<EgaroucidWASMModule>(
       (resolve, reject) => {
-        if (typeof (global as any).process === 'undefined') {
-          (global as any).process = process;
+        const globalObj = global as typeof global & {
+          process?: NodeJS.Process;
+          require?: NodeRequire;
+          Module?: unknown;
+        };
+
+        if (typeof globalObj.process === 'undefined') {
+          globalObj.process = process;
         }
-        if (typeof (global as any).require === 'undefined') {
-          (global as any).require = require;
+        if (typeof globalObj.require === 'undefined') {
+          globalObj.require = require;
         }
 
-        const moduleConfig = {
-          wasmBinary: wasmBinary,
+        const moduleConfig: Partial<EmscriptenModule> = {
+          wasmBinary: wasmBinary.buffer.slice(
+            wasmBinary.byteOffset,
+            wasmBinary.byteOffset + wasmBinary.byteLength
+          ),
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
             resolve(this);
           },
-          onAbort: (reason: any) => {
+          onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
           },
           print: (text: string) => {
@@ -247,7 +266,7 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
           noExitRuntime: true,
         };
 
-        (global as any).Module = moduleConfig;
+        globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
           const executeGlue = new Function(
@@ -999,21 +1018,30 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
 
     const modulePromise = new Promise<EgaroucidWASMModule>(
       (resolve, reject) => {
-        if (typeof (global as any).process === 'undefined') {
-          (global as any).process = process;
+        const globalObj = global as typeof global & {
+          process?: NodeJS.Process;
+          require?: NodeRequire;
+          Module?: unknown;
+        };
+
+        if (typeof globalObj.process === 'undefined') {
+          globalObj.process = process;
         }
-        if (typeof (global as any).require === 'undefined') {
-          (global as any).require = require;
+        if (typeof globalObj.require === 'undefined') {
+          globalObj.require = require;
         }
 
-        const moduleConfig = {
-          wasmBinary: wasmBinary,
+        const moduleConfig: Partial<EmscriptenModule> = {
+          wasmBinary: wasmBinary.buffer.slice(
+            wasmBinary.byteOffset,
+            wasmBinary.byteOffset + wasmBinary.byteLength
+          ),
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
             resolve(this);
           },
-          onAbort: (reason: any) => {
+          onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
           },
           print: (text: string) => {
@@ -1032,7 +1060,7 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
           noExitRuntime: true,
         };
 
-        (global as any).Module = moduleConfig;
+        globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
           const executeGlue = new Function(
@@ -1322,21 +1350,30 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
 
     const modulePromise = new Promise<EgaroucidWASMModule>(
       (resolve, reject) => {
-        if (typeof (global as any).process === 'undefined') {
-          (global as any).process = process;
+        const globalObj = global as typeof global & {
+          process?: NodeJS.Process;
+          require?: NodeRequire;
+          Module?: unknown;
+        };
+
+        if (typeof globalObj.process === 'undefined') {
+          globalObj.process = process;
         }
-        if (typeof (global as any).require === 'undefined') {
-          (global as any).require = require;
+        if (typeof globalObj.require === 'undefined') {
+          globalObj.require = require;
         }
 
-        const moduleConfig = {
-          wasmBinary: wasmBinary,
+        const moduleConfig: Partial<EmscriptenModule> = {
+          wasmBinary: wasmBinary.buffer.slice(
+            wasmBinary.byteOffset,
+            wasmBinary.byteOffset + wasmBinary.byteLength
+          ),
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
             resolve(this);
           },
-          onAbort: (reason: any) => {
+          onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
           },
           print: (text: string) => {
@@ -1355,7 +1392,7 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
           noExitRuntime: true,
         };
 
-        (global as any).Module = moduleConfig;
+        globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
           const executeGlue = new Function(
@@ -1519,21 +1556,30 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
 
     const modulePromise = new Promise<EgaroucidWASMModule>(
       (resolve, reject) => {
-        if (typeof (global as any).process === 'undefined') {
-          (global as any).process = process;
+        const globalObj = global as typeof global & {
+          process?: NodeJS.Process;
+          require?: NodeRequire;
+          Module?: unknown;
+        };
+
+        if (typeof globalObj.process === 'undefined') {
+          globalObj.process = process;
         }
-        if (typeof (global as any).require === 'undefined') {
-          (global as any).require = require;
+        if (typeof globalObj.require === 'undefined') {
+          globalObj.require = require;
         }
 
-        const moduleConfig = {
-          wasmBinary: wasmBinary,
+        const moduleConfig: Partial<EmscriptenModule> = {
+          wasmBinary: wasmBinary.buffer.slice(
+            wasmBinary.byteOffset,
+            wasmBinary.byteOffset + wasmBinary.byteLength
+          ),
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
             resolve(this);
           },
-          onAbort: (reason: any) => {
+          onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
           },
           print: (text: string) => {
@@ -1552,7 +1598,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
           noExitRuntime: true,
         };
 
-        (global as any).Module = moduleConfig;
+        globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
           const executeGlue = new Function(
@@ -1829,21 +1875,30 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
 
     const modulePromise = new Promise<EgaroucidWASMModule>(
       (resolve, reject) => {
-        if (typeof (global as any).process === 'undefined') {
-          (global as any).process = process;
+        const globalObj = global as typeof global & {
+          process?: NodeJS.Process;
+          require?: NodeRequire;
+          Module?: unknown;
+        };
+
+        if (typeof globalObj.process === 'undefined') {
+          globalObj.process = process;
         }
-        if (typeof (global as any).require === 'undefined') {
-          (global as any).require = require;
+        if (typeof globalObj.require === 'undefined') {
+          globalObj.require = require;
         }
 
-        const moduleConfig = {
-          wasmBinary: wasmBinary,
+        const moduleConfig: Partial<EmscriptenModule> = {
+          wasmBinary: wasmBinary.buffer.slice(
+            wasmBinary.byteOffset,
+            wasmBinary.byteOffset + wasmBinary.byteLength
+          ),
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
             resolve(this);
           },
-          onAbort: (reason: any) => {
+          onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
           },
           print: (text: string) => {
@@ -1862,7 +1917,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
           noExitRuntime: true,
         };
 
-        (global as any).Module = moduleConfig;
+        globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
           const executeGlue = new Function(

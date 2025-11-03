@@ -51,9 +51,13 @@ class MockWorker {
   }
 }
 
+// Type-safe global object
+const globalObj = global as typeof global & {
+  Worker?: typeof Worker;
+};
+
 // Mock Worker constructor
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(global as any).Worker = MockWorker;
+globalObj.Worker = MockWorker as unknown as typeof Worker;
 
 describe('AIEngine', () => {
   let aiEngine: AIEngine;

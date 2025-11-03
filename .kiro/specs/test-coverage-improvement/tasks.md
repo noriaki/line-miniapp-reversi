@@ -89,14 +89,14 @@
   - メモリリーク防止(イベントリスナークリーンアップ)を確認
   - _Requirements: 1.6, 7.2, 7.3, 7.4_
 
-- [ ] 3. WASMErrorHandler.tsxのテスト実装
+- [x] 3. WASMErrorHandler.tsxのテスト実装
   - 全エラー種別に対する適切なメッセージ表示を検証
   - UI要素の存在確認とユーザー操作のハンドリングを確認
   - アクセシビリティ属性とレスポンシブデザインの適用を検証
   - エラー詳細情報の正確な表示を確認
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8_
 
-- [ ] 3.1 エラーメッセージ表示のテスト
+- [x] 3.1 エラーメッセージ表示のテスト
   - `fetch_failed`エラーで"インターネット接続を確認"メッセージ表示を検証
   - `instantiation_failed`エラーで"ブラウザがWebAssemblyに対応していない"メッセージを確認
   - `initialization_timeout`エラーで"読み込みに時間がかかっています"メッセージを検証
@@ -105,21 +105,21 @@
   - デフォルトメッセージ(エラー情報未提供時)の表示を確認
   - _Requirements: 2.1, 2.3, 2.4_
 
-- [ ] 3.2 UI要素とユーザー操作のテスト
+- [x] 3.2 UI要素とユーザー操作のテスト
   - リロードボタンの存在確認(`screen.getByRole('button', {name: 'リロード'})`)
   - リロードボタンクリック時の`window.location.reload()`呼び出しを検証
   - 技術詳細セクション(`<details>`要素)の存在とJSON表示を確認
   - 技術詳細の展開・折りたたみ動作を検証
   - _Requirements: 2.2, 2.5_
 
-- [ ] 3.3 エラータイプ別ハンドリングのテスト
+- [x] 3.3 エラータイプ別ハンドリングのテスト
   - `WASMLoadError`型の各種エラー(`fetch_failed`, `instantiation_failed`, `initialization_timeout`)を検証
   - `InitializationError`型の各種エラー(`wasm_load_failed`, `wasm_instantiation_failed`, `test_call_failed`)を確認
   - 複数エラー連続発生時の最新エラー優先表示を検証
   - エラータイプに応じた適切なメッセージマッピングを確認
   - _Requirements: 2.3, 2.6_
 
-- [ ] 3.4 アクセシビリティとレスポンシブのテスト
+- [x] 3.4 アクセシビリティとレスポンシブのテスト
   - ARIA属性(`role`, `aria-label`)の適切な設定を検証
   - キーボードナビゲーション対応を確認
   - レスポンシブデザインの適用(Tailwind CSSクラス)を検証

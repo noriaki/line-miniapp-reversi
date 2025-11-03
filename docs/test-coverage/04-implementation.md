@@ -35,10 +35,10 @@ module.exports = {
   - [x] 全テストケースの実装 (16テストケース)
   - [x] カバレッジ確認: 100% Statements, 86.36% Branches, 100% Functions, 100% Lines
 
-- [ ] WASMErrorHandler.tsx のテスト追加
-  - [ ] エラータイプの網羅
-  - [ ] インタラクションテストの追加
-  - [ ] カバレッジ確認
+- [x] WASMErrorHandler.tsx のテスト追加
+  - [x] エラータイプの網羅 (全6種類のエラーメッセージ表示テスト)
+  - [x] インタラクションテストの追加 (リロードボタン、技術詳細展開/折りたたみ)
+  - [x] カバレッジ確認: 82.35% Statements, 100% Branches, 40% Functions, 82.35% Lines (23テストケース)
 
 - [ ] wasm-loader.ts のテスト追加
   - [ ] エッジケースの追加

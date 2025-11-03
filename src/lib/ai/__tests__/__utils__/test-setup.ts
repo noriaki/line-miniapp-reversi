@@ -9,6 +9,9 @@ const globalObj = global as typeof global & {
   self?: unknown;
 };
 
+// Shared location mock object - updated for each test via setupWorkerEnvironment
+let locationMock: { origin: string; href: string } | null = null;
+
 export interface WorkerEnvironmentOptions {
   origin?: string;
   initDelay?: number;
@@ -50,15 +53,28 @@ export function setupWorkerEnvironment(
 
   // Mock importScripts behavior
   (global.importScripts as jest.Mock).mockImplementation(() => {
-    const existingModule = global.Module || {};
-    global.Module = {
+    const globalScope = global as typeof global & { self?: any };
+
+    // Get existing module from self.Module (if exists) or global.Module
+    const existingModule = globalScope.self?.Module || global.Module || {};
+
+    // Create new module object merging existing configuration with mock
+    const moduleObj = {
       ...existingModule,
       ...mockModule,
     };
 
+    // Set both global.Module and globalScope.self.Module to the same object
+    // This ensures wasm-loader.ts (which uses self.Module) and tests (which use global.Module) see the same object
+    global.Module = moduleObj;
+    if (globalScope.self) {
+      globalScope.self.Module = moduleObj;
+    }
+
     if (autoTriggerInit) {
       const trigger = () => {
-        const wasmModule = global.Module;
+        // Get module from self.Module (if exists) or global.Module
+        const wasmModule = globalScope.self?.Module || global.Module;
         if (wasmModule?.onRuntimeInitialized) {
           // Copy HEAP views to global scope (Emscripten behavior in Web Worker)
           global.HEAP8 = mockModule.HEAP8;
@@ -82,9 +98,40 @@ export function setupWorkerEnvironment(
   });
 
   // Mock self.location
-  globalObj.self = {
-    location: { origin, href: `${origin}/` },
-  } as typeof globalObj.self;
+  // In Web Worker, self.location is a WorkerLocation object with origin and href
+  // Always ensure locationMock exists and has correct values for this test
+  if (!locationMock) {
+    locationMock = {
+      origin,
+      href: `${origin}/`,
+    };
+  } else {
+    // Update existing locationMock object for this test
+    locationMock.origin = origin;
+    locationMock.href = `${origin}/`;
+  }
+
+  // Mock self: In Web Worker, self === global (globalThis)
+  // In jsdom testEnvironment, global.location is not configurable and has origin: 'http://localhost'
+  // We cannot delete or redefine it, so we use a Proxy to intercept location access
+  // This way, wasm-loader.ts (which accesses self.location.origin) gets our mock
+  if (!globalObj.self || (globalObj.self as any).__isProxy !== true) {
+    (globalObj as any).self = new Proxy(globalObj, {
+      get(target: any, prop: string | symbol) {
+        if (prop === 'location') {
+          return locationMock;
+        }
+        if (prop === '__isProxy') {
+          return true;
+        }
+        return target[prop];
+      },
+      set(target: any, prop: string | symbol, value: any) {
+        target[prop] = value;
+        return true;
+      },
+    });
+  }
 }
 
 /**
@@ -109,9 +156,13 @@ export function cleanupWorkerEnvironment(): void {
   delete global.HEAP32;
   delete global.HEAPU32;
   delete global.wasmMemory;
-  if (globalObj.self !== undefined) {
-    delete (globalObj as { self?: unknown }).self;
-  }
+
+  // Note: We keep locationMock object alive and just update its values in each test
+  // This avoids "Cannot redefine property" errors when running multiple tests
+  // The location property with getter is defined once and reused across all tests
+
+  // Note: We don't delete global.self because it's set to global itself
+  // Deleting it would break the reference
 
   // Clear mock call history but preserve the mock function itself
   // importScripts is set globally in jest.setup.js and should not be removed

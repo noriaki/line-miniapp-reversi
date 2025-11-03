@@ -126,14 +126,14 @@
   - スクリーンリーダー対応要素の存在を確認
   - _Requirements: 2.7, 2.8_
 
-- [ ] 4. wasm-loader.tsのテスト実装
+- [x] 4. wasm-loader.tsのテスト実装
   - WASM正常ロードからランタイム初期化までの完全なフローを検証
   - 各種エラーシナリオに対する適切なエラーハンドリングを確認
   - Result型パターンによる成功・失敗の返却を検証
   - パス解決ロジックの正確性を確認
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9_
 
-- [ ] 4.1 WASM正常ロードのテスト
+- [x] 4.1 WASM正常ロードのテスト
   - `importScripts`呼び出しの実行を検証
   - `global.Module`オブジェクトの設定を確認
   - `onRuntimeInitialized`コールバック待機と実行を検証
@@ -141,21 +141,21 @@
   - `Result.success(Module)`の返却を検証
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 4.2 エラーハンドリングのテスト
+- [x] 4.2 エラーハンドリングのテスト
   - `importScripts`未定義時(`typeof importScripts === 'undefined'`)の`WASMLoadError`返却を検証
   - `importScripts`例外スロー時のcatchブロックと`fetch_failed`エラーを確認
   - `global.Module`未定義時の`instantiation_failed`エラーを検証
   - ランタイム初期化失敗時のエラーハンドリングを確認
   - _Requirements: 3.4, 3.5, 3.6_
 
-- [ ] 4.3 非同期処理とタイミング制御のテスト
-  - `process.nextTick()`による`onRuntimeInitialized`コールバックタイミングの制御を検証
+- [x] 4.3 非同期処理とタイミング制御のテスト
+  - `setTimeout()`による`onRuntimeInitialized`コールバックタイミングの制御を検証
   - 非同期初期化完了待機のPromise解決を確認
   - タイムアウト処理の実行を検証
   - プログレス状態管理のロジックを確認
   - _Requirements: 3.8, 3.9, 7.1_
 
-- [ ] 4.4 パス解決とResult型のテスト
+- [x] 4.4 パス解決とResult型のテスト
   - `.wasm`を`.js`に置換するパス変換ロジックを検証
   - 絶対パスと相対パスの適切な処理を確認
   - `Result.success`構造(`{success: true, value: Module}`)を検証

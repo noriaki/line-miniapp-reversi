@@ -28,3 +28,7 @@ if (typeof window !== 'undefined') {
     value: MockWorker,
   });
 }
+
+// Mock Web Worker importScripts for WASM loader tests
+// This is a global function available in Web Worker context
+//global.importScripts = jest.fn();

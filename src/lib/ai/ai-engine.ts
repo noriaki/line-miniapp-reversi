@@ -84,21 +84,12 @@ export class AIEngine {
     }
 
     return new Promise((resolve) => {
-      if (!this.worker) {
-        resolve({
-          success: false,
-          error: {
-            type: 'ai_calculation_error',
-            reason: 'not_initialized',
-            message: 'Worker not available',
-          },
-        });
-        return;
-      }
+      // this.workerの存在が保証されている (Line 75でチェック済み)
+      const worker = this.worker!;
 
       // Set up timeout
       const timeout = setTimeout(() => {
-        this.worker?.removeEventListener('message', handleMessage);
+        worker.removeEventListener('message', handleMessage);
         resolve({
           success: false,
           error: {
@@ -112,7 +103,7 @@ export class AIEngine {
       // Set up message listener
       const handleMessage = (event: MessageEvent<AIWorkerResponse>) => {
         clearTimeout(timeout);
-        this.worker?.removeEventListener('message', handleMessage);
+        worker.removeEventListener('message', handleMessage);
 
         if (event.data.type === 'success') {
           resolve({
@@ -131,7 +122,7 @@ export class AIEngine {
         }
       };
 
-      this.worker.addEventListener('message', handleMessage);
+      worker.addEventListener('message', handleMessage);
 
       // Send calculation request to worker
       const request: AIWorkerRequest = {
@@ -143,7 +134,7 @@ export class AIEngine {
         },
       };
 
-      this.worker.postMessage(request);
+      worker.postMessage(request);
     });
   }
 

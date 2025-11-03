@@ -33,7 +33,7 @@ module.exports = {
     '!app/**/__tests__/**',
     '!src/**/__mocks__/**', // Exclude mock files (test infrastructure)
     '!app/**/__mocks__/**', // Exclude mock files (test infrastructure)
-    '!src/hooks/worker-factory.ts', // Exclude worker factory (import.meta.url not testable in Jest)
+    '!src/hooks/worker-factory.ts', // Exclude: import.meta.url not testable in Jest Node environment
     '!src/workers/**', // Exclude Web Workers (difficult to test in Node.js)
     '!src/lib/liff/**', // Exclude LIFF integration (Requirement 9.4)
     '!src/contexts/Liff*.tsx', // Exclude LIFF Context/Provider (Requirement 9.4)

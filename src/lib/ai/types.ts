@@ -134,6 +134,7 @@ export interface AICalculationError {
  */
 export interface AIWorkerRequest {
   type: 'calculate';
+  requestId?: string;
   payload: {
     board: Board;
     currentPlayer: Player;
@@ -146,6 +147,7 @@ export interface AIWorkerRequest {
  */
 export interface AIWorkerResponse {
   type: 'success' | 'error';
+  requestId?: string;
   payload: {
     move?: Position;
     error?: string;

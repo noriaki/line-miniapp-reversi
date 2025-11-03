@@ -9,12 +9,13 @@ jest.mock('@/lib/game/game-logic');
 jest.mock('../worker-factory'); // Mock worker factory to avoid import.meta issues
 
 import { renderHook, act } from '@testing-library/react';
-import { useAIPlayer } from '../useAIPlayer';
+import { useAIPlayer, AI_CALCULATION_TIMEOUT_MS } from '../useAIPlayer';
 import { selectRandomValidMove } from '@/lib/ai/ai-fallback';
 import { calculateValidMoves } from '@/lib/game/game-logic';
 import { createAIWorker } from '../worker-factory';
 import { MockWorker } from '../__mocks__/worker-factory';
 import type { Board, Position } from '@/lib/game/types';
+import type { AIWorkerRequest } from '@/lib/ai/types';
 
 // Test fixtures
 const validBoard: Board = [
@@ -39,14 +40,10 @@ const mockFallbackMove: Position = { row: 2, col: 3 };
 
 describe('useAIPlayer', () => {
   let mockWorkerInstance: MockWorker;
-  const originalNodeEnv = process.env.NODE_ENV;
   const originalWorker = (global as typeof globalThis & { Worker?: unknown })
     .Worker;
 
   beforeEach(() => {
-    // Set default to development mode (tests can override)
-    (process.env as { NODE_ENV?: string }).NODE_ENV = 'development';
-
     // Mock global Worker constructor to enable Worker check in implementation
     (global as typeof globalThis & { Worker: unknown }).Worker = MockWorker;
 
@@ -71,7 +68,6 @@ describe('useAIPlayer', () => {
   afterEach(() => {
     jest.runOnlyPendingTimers();
     jest.useRealTimers();
-    (process.env as { NODE_ENV?: string }).NODE_ENV = originalNodeEnv;
 
     // Restore original Worker
     if (originalWorker === undefined) {
@@ -86,25 +82,14 @@ describe('useAIPlayer', () => {
   // Task 2.1: Worker initialization and cleanup tests
 
   describe('Worker initialization and cleanup', () => {
-    it('should initialize Worker on mount in non-test environment', () => {
-      // Given: non-test environment (already set in beforeEach)
+    it('should initialize Worker on mount', () => {
+      // Given: environment with Worker support
       // When: hook is mounted
       const { result } = renderHook(() => useAIPlayer());
 
       // Then: createAIWorker should be called
       expect(createAIWorker).toHaveBeenCalled();
       expect(result.current.calculateMove).toBeDefined();
-    });
-
-    it('should skip Worker initialization in test environment', () => {
-      // Given: test environment
-      (process.env as { NODE_ENV?: string }).NODE_ENV = 'test';
-
-      // When: hook is mounted
-      renderHook(() => useAIPlayer());
-
-      // Then: createAIWorker should not be called
-      expect(createAIWorker).not.toHaveBeenCalled();
     });
 
     it('should terminate Worker on unmount', () => {
@@ -139,9 +124,7 @@ describe('useAIPlayer', () => {
     });
 
     it('should handle Worker undefined environment gracefully', () => {
-      // Given: Worker is not supported in environment (development mode)
-      // Note: Must be in development mode to reach Worker check (not test mode)
-      (process.env as { NODE_ENV?: string }).NODE_ENV = 'development';
+      // Given: Worker is not supported in environment
       const originalWorker = (
         global as typeof globalThis & { Worker?: unknown }
       ).Worker;
@@ -183,10 +166,11 @@ describe('useAIPlayer', () => {
       });
 
       // Override postMessage to simulate immediate success response
-      mockWorkerInstance.postMessage = jest.fn(() => {
+      mockWorkerInstance.postMessage = jest.fn((message: AIWorkerRequest) => {
         setTimeout(() => {
           mockWorkerInstance.simulateMessage({
             type: 'success',
+            requestId: message.requestId,
             payload: { move: expectedMove, calculationTimeMs: 500 },
           });
         }, 100);
@@ -203,14 +187,17 @@ describe('useAIPlayer', () => {
       // Then: should resolve with AI move
       const move = await movePromise;
       expect(move).toEqual(expectedMove);
-      expect(mockWorkerInstance.postMessage).toHaveBeenCalledWith({
-        type: 'calculate',
-        payload: {
-          board: validBoard,
-          currentPlayer: 'black',
-          timeoutMs: 3000,
-        },
-      });
+      expect(mockWorkerInstance.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'calculate',
+          requestId: expect.any(String),
+          payload: {
+            board: validBoard,
+            currentPlayer: 'black',
+            timeoutMs: AI_CALCULATION_TIMEOUT_MS,
+          },
+        })
+      );
     });
 
     it('should handle multiple concurrent calculations independently', async () => {
@@ -224,12 +211,16 @@ describe('useAIPlayer', () => {
         await Promise.resolve();
       });
 
+      const requestIds: string[] = [];
       let callCount = 0;
-      mockWorkerInstance.postMessage = jest.fn(() => {
+      mockWorkerInstance.postMessage = jest.fn((message: AIWorkerRequest) => {
         const currentCall = callCount++;
+        requestIds.push(message.requestId!);
+
         setTimeout(() => {
           mockWorkerInstance.simulateMessage({
             type: 'success',
+            requestId: message.requestId,
             payload: {
               move: currentCall === 0 ? move1 : move2,
               calculationTimeMs: 300,
@@ -246,16 +237,13 @@ describe('useAIPlayer', () => {
         jest.advanceTimersByTime(50);
       });
 
-      // Then: both should resolve (may receive same or different moves due to shared listener)
-      // The important part is that both promises resolve and worker is called twice
+      // Then: both should resolve with their respective moves
       const [result1, result2] = await Promise.all([promise1, promise2]);
-      expect(result1).toBeDefined();
-      expect(result2).toBeDefined();
-      expect(result1.row).toBeGreaterThanOrEqual(0);
-      expect(result1.col).toBeGreaterThanOrEqual(0);
-      expect(result2.row).toBeGreaterThanOrEqual(0);
-      expect(result2.col).toBeGreaterThanOrEqual(0);
+      expect(result1).toEqual(move1);
+      expect(result2).toEqual(move2);
       expect(mockWorkerInstance.postMessage).toHaveBeenCalledTimes(2);
+      expect(requestIds).toHaveLength(2);
+      expect(requestIds[0]).not.toBe(requestIds[1]); // Ensure unique request IDs
     });
   });
 
@@ -278,49 +266,18 @@ describe('useAIPlayer', () => {
       const movePromise = result.current.calculateMove(validBoard, 'black');
 
       act(() => {
-        jest.advanceTimersByTime(3000); // Trigger timeout
+        jest.advanceTimersByTime(AI_CALCULATION_TIMEOUT_MS); // Trigger timeout
       });
 
       // Then: should resolve with fallback move
       const move = await movePromise;
       expect(move).toEqual(mockFallbackMove);
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'AI calculation timeout (>3s), using random fallback'
+        `AI calculation timeout (>${AI_CALCULATION_TIMEOUT_MS}ms), using random fallback`
       );
       expect(selectRandomValidMove).toHaveBeenCalledWith(mockValidMoves);
 
       consoleWarnSpy.mockRestore();
-    });
-
-    it('should clear event listener on timeout', async () => {
-      // Given: hook is initialized
-      const { result } = renderHook(() => useAIPlayer());
-
-      // Wait for hook to mount and initialize worker
-      await act(async () => {
-        await Promise.resolve();
-      });
-
-      mockWorkerInstance.postMessage = jest.fn();
-      const removeEventListenerSpy = jest.spyOn(
-        mockWorkerInstance,
-        'removeEventListener'
-      );
-
-      // When: timeout occurs
-      const movePromise = result.current.calculateMove(validBoard, 'black');
-
-      act(() => {
-        jest.advanceTimersByTime(3000);
-      });
-
-      await movePromise;
-
-      // Then: listener should be removed
-      expect(removeEventListenerSpy).toHaveBeenCalledWith(
-        'message',
-        expect.any(Function)
-      );
     });
   });
 
@@ -337,10 +294,11 @@ describe('useAIPlayer', () => {
         await Promise.resolve(); // Allow useEffect to run
       });
 
-      mockWorkerInstance.postMessage = jest.fn(() => {
+      mockWorkerInstance.postMessage = jest.fn((message: AIWorkerRequest) => {
         setTimeout(() => {
           mockWorkerInstance.simulateMessage({
             type: 'error',
+            requestId: message.requestId,
             payload: { error: 'WASM calculation failed' },
           });
         }, 100);
@@ -365,8 +323,8 @@ describe('useAIPlayer', () => {
     });
 
     it('should use fallback immediately when Worker is not initialized', async () => {
-      // Given: test environment (Worker not initialized)
-      (process.env as { NODE_ENV?: string }).NODE_ENV = 'test';
+      // Given: createAIWorker returns null (Worker not initialized)
+      (createAIWorker as jest.Mock).mockReturnValue(null);
       const { result } = renderHook(() => useAIPlayer());
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
@@ -384,7 +342,7 @@ describe('useAIPlayer', () => {
 
     it('should reject when fallback also fails', async () => {
       // Given: Worker not initialized and fallback throws error
-      (process.env as { NODE_ENV?: string }).NODE_ENV = 'test';
+      (createAIWorker as jest.Mock).mockReturnValue(null);
       const { result } = renderHook(() => useAIPlayer());
       (selectRandomValidMove as jest.Mock).mockImplementation(() => {
         throw new Error('No valid moves available');
@@ -415,7 +373,7 @@ describe('useAIPlayer', () => {
       const movePromise = result.current.calculateMove(validBoard, 'black');
 
       act(() => {
-        jest.advanceTimersByTime(3000);
+        jest.advanceTimersByTime(AI_CALCULATION_TIMEOUT_MS);
       });
 
       // Then: should reject with generic timeout error
@@ -437,10 +395,11 @@ describe('useAIPlayer', () => {
         throw new Error('Fallback failed');
       });
 
-      mockWorkerInstance.postMessage = jest.fn(() => {
+      mockWorkerInstance.postMessage = jest.fn((message: AIWorkerRequest) => {
         setTimeout(() => {
           mockWorkerInstance.simulateMessage({
             type: 'error',
+            requestId: message.requestId,
             payload: { error: 'WASM error' },
           });
         }, 100);
@@ -474,7 +433,8 @@ describe('useAIPlayer', () => {
 
       mockWorkerInstance.postMessage = jest.fn(); // Never responds
 
-      const movePromise = result.current.calculateMove(validBoard, 'black');
+      // Start calculation (promise will remain pending)
+      result.current.calculateMove(validBoard, 'black');
 
       // When: component unmounts before calculation completes
       unmount();
@@ -482,13 +442,8 @@ describe('useAIPlayer', () => {
       // Then: Worker should be terminated
       expect(mockWorkerInstance.isWorkerTerminated()).toBe(true);
 
-      // Fast-forward and verify no memory leaks (promise doesn't throw)
-      act(() => {
-        jest.advanceTimersByTime(3000);
-      });
-
-      // Promise should still resolve with fallback since timeout fires
-      await expect(movePromise).resolves.toEqual(mockFallbackMove);
+      // Note: The promise will remain pending as cleanup clears pending requests
+      // This is expected behavior to prevent state updates after unmount
     });
 
     it('should clear timeout when calculation completes successfully', async () => {
@@ -502,10 +457,11 @@ describe('useAIPlayer', () => {
 
       const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-      mockWorkerInstance.postMessage = jest.fn(() => {
+      mockWorkerInstance.postMessage = jest.fn((message: AIWorkerRequest) => {
         setTimeout(() => {
           mockWorkerInstance.simulateMessage({
             type: 'success',
+            requestId: message.requestId,
             payload: { move: { row: 2, col: 3 }, calculationTimeMs: 100 },
           });
         }, 500);
@@ -524,45 +480,6 @@ describe('useAIPlayer', () => {
       expect(clearTimeoutSpy).toHaveBeenCalled();
 
       clearTimeoutSpy.mockRestore();
-    });
-
-    it('should remove event listener when calculation completes', async () => {
-      // Given: hook initialized
-      const { result } = renderHook(() => useAIPlayer());
-
-      // Wait for hook to mount and initialize worker
-      await act(async () => {
-        await Promise.resolve();
-      });
-
-      const removeEventListenerSpy = jest.spyOn(
-        mockWorkerInstance,
-        'removeEventListener'
-      );
-
-      mockWorkerInstance.postMessage = jest.fn(() => {
-        setTimeout(() => {
-          mockWorkerInstance.simulateMessage({
-            type: 'success',
-            payload: { move: { row: 3, col: 4 }, calculationTimeMs: 200 },
-          });
-        }, 200);
-      });
-
-      // When: calculation completes
-      const movePromise = result.current.calculateMove(validBoard, 'black');
-
-      act(() => {
-        jest.advanceTimersByTime(200);
-      });
-
-      await movePromise;
-
-      // Then: listener should be removed
-      expect(removeEventListenerSpy).toHaveBeenCalledWith(
-        'message',
-        expect.any(Function)
-      );
     });
   });
 });

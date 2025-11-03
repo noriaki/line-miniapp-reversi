@@ -92,6 +92,7 @@ async function calculateMove(
 
       return {
         type: 'success',
+        requestId: request.requestId,
         payload: {
           move,
           calculationTimeMs,
@@ -104,6 +105,7 @@ async function calculateMove(
   } catch (error) {
     return {
       type: 'error',
+      requestId: request.requestId,
       payload: {
         error: error instanceof Error ? error.message : 'Unknown error',
       },

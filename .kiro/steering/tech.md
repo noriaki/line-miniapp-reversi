@@ -44,14 +44,18 @@ type Result<T, E> = { success: true; value: T } | { success: false; error: E };
 - ESLint: Next.js推奨設定(`eslint-config-next`)
 - Prettier: コードフォーマット自動化
 - Type Check: `tsc --noEmit`でビルド前検証
+- Anti-patterns: NODE_ENV分岐の回避(本番コードでは環境依存ロジックを排除)
 
 ### Testing
 
-- **Jest**: ユニット・統合テスト、GameLogicレイヤー90%以上カバレッジ目標
+- **Jest**: ユニット・統合テスト、全指標90%以上カバレッジ達成(Branches 92.51%)
+- **Coverage Enforcement**: jest.config.jsで90%閾値強制(Statements, Branches, Functions, Lines)
 - **Playwright**: E2E テスト(game-flow, AI対戦, responsive, WASM error)
 - **Multi-device Testing**: Desktop Chrome, Mobile Chrome, Mobile Safari
 - **Test Modes**: UI mode、headed mode、プロジェクト別実行(chromium/mobile特化)
 - **Pure Functions重視**: テスタビリティ向上
+- **Worker Factory Pattern**: Web Workerのテスト分離(`worker-factory.ts` + `__mocks__/`)
+- **Mock Infrastructure**: Worker通信シミュレーション、非同期制御、タイムアウトテスト
 
 ## Development Environment
 
@@ -136,9 +140,17 @@ pnpm format
 ---
 
 _created_at: 2025-10-21_
-_updated_at: 2025-11-02_
+_updated_at: 2025-11-03_
 
-**Recent Updates (2025-11-02)**:
+**Recent Updates (2025-11-03)**:
+
+- Test coverage achievement: Branches 92.51% (all metrics 90%+)
+- Added Worker Factory pattern for testable Web Worker integration
+- Coverage threshold enforcement in jest.config.js (90% required)
+- NODE_ENV anti-pattern removal from production code
+- Enhanced error handling integration tests
+
+**Previous Updates (2025-11-02)**:
 
 - LIFF SDK integration completed (implemented 2025-10-26)
 - Added LIFF integration section with graceful degradation pattern

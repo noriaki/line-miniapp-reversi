@@ -8,6 +8,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import type { EgaroucidWASMModule } from '../types';
+import type { EmscriptenModule } from './__types__/worker-global';
 
 describe('Integration Test: AIEngine + WASMBridge', () => {
   const RESOURCES_DIR = path.join(
@@ -39,8 +40,11 @@ describe('Integration Test: AIEngine + WASMBridge', () => {
           globalObj.require = require;
         }
 
-        const moduleConfig = {
-          wasmBinary: wasmBinary,
+        const moduleConfig: Partial<EmscriptenModule> = {
+          wasmBinary: wasmBinary.buffer.slice(
+            wasmBinary.byteOffset,
+            wasmBinary.byteOffset + wasmBinary.byteLength
+          ),
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
@@ -61,7 +65,7 @@ describe('Integration Test: AIEngine + WASMBridge', () => {
           noExitRuntime: true,
         };
 
-        globalObj.Module = moduleConfig;
+        globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
           const executeGlue = new Function(

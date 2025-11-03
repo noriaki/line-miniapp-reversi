@@ -38,6 +38,27 @@ const createMockModule = (): EgaroucidWASMModule => {
   };
 };
 
+// Mock WASM module without memory buffer access
+const createMockModuleWithoutBuffer = (): EgaroucidWASMModule => {
+  const nextPointer = 256; // Start at 256 to avoid null pointer (0)
+
+  return {
+    _init_ai: jest.fn(),
+    _calc_value: jest.fn(),
+    _ai_js: jest.fn(),
+    _resume: jest.fn(),
+    _stop: jest.fn(),
+    _malloc: jest.fn(() => nextPointer),
+    _free: jest.fn(),
+    // All memory buffer properties are undefined
+    memory: undefined,
+    HEAP8: undefined,
+    HEAPU8: undefined,
+    HEAP32: undefined,
+    HEAPU32: undefined,
+  } as unknown as EgaroucidWASMModule;
+};
+
 describe('encodeBoard', () => {
   it('should encode empty board correctly', () => {
     const wasmModule = createMockModule();
@@ -207,6 +228,43 @@ describe('encodeBoard', () => {
       expect(heap[2]).toBe(-1); // Row 0, Col 2: null = -1
       expect(heap[63]).toBe(0); // Row 7, Col 7: black = 0
     }
+  });
+
+  describe('memory buffer access failure', () => {
+    it('should return error when all memory buffer properties are undefined', () => {
+      const wasmModule = createMockModuleWithoutBuffer();
+      const board: Board = Array(8)
+        .fill(null)
+        .map(() => Array(8).fill(null));
+
+      const result = encodeBoard(wasmModule, board);
+
+      // Verify error is returned
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.type).toBe('encode_error');
+        expect(result.error.reason).toBe('memory_allocation_failed');
+        expect(result.error.message).toBe('WASM memory buffer not accessible');
+      }
+
+      // Verify _free was called to prevent memory leak
+      expect(wasmModule._free).toHaveBeenCalledWith(256);
+    });
+
+    it('should call _free with correct pointer when buffer access fails', () => {
+      const wasmModule = createMockModuleWithoutBuffer();
+      const board: Board = Array(8)
+        .fill(null)
+        .map(() => Array(8).fill(null));
+
+      // Mock _malloc to return a specific pointer
+      (wasmModule._malloc as jest.Mock).mockReturnValue(512);
+
+      encodeBoard(wasmModule, board);
+
+      // Verify _free was called with the same pointer returned by _malloc
+      expect(wasmModule._free).toHaveBeenCalledWith(512);
+    });
   });
 });
 

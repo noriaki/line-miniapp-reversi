@@ -1,3 +1,5 @@
+/// <reference lib="webworker" />
+
 /**
  * WASM Loader
  * Handles loading and initialization of the Egaroucid WebAssembly module via Emscripten

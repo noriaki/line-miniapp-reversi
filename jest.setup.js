@@ -18,4 +18,17 @@ if (typeof window !== 'undefined') {
     liffId: 'test-liff-id',
     mock: true,
   });
+
+  // Global Worker Mock setup
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { MockWorker } = require('./src/hooks/__mocks__/worker-factory');
+
+  Object.defineProperty(global, 'Worker', {
+    writable: true,
+    value: MockWorker,
+  });
 }
+
+// Mock Web Worker importScripts for WASM loader tests
+// This is a global function available in Web Worker context
+//global.importScripts = jest.fn();

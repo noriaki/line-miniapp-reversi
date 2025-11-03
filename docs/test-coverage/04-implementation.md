@@ -29,11 +29,11 @@ module.exports = {
 
 ### ステップ2: フェーズ1実装（高優先度）
 
-- [ ] useAIPlayer.ts のテスト追加
-  - [ ] Workerモックの作成
-  - [ ] テストファイル作成: `src/hooks/__tests__/useAIPlayer.test.ts`
-  - [ ] 全テストケースの実装
-  - [ ] カバレッジ確認
+- [x] useAIPlayer.ts のテスト追加
+  - [x] Workerモックの作成 (`src/hooks/worker-factory.ts`, `src/hooks/__mocks__/worker-factory.ts`)
+  - [x] テストファイル作成: `src/hooks/__tests__/useAIPlayer.test.ts`
+  - [x] 全テストケースの実装 (16テストケース)
+  - [x] カバレッジ確認: 100% Statements, 86.36% Branches, 100% Functions, 100% Lines
 
 - [ ] WASMErrorHandler.tsx のテスト追加
   - [ ] エラータイプの網羅

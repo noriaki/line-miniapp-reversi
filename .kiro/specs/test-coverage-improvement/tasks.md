@@ -19,71 +19,70 @@
 
 ## 実装タスク
 
-- [ ] 1. テストインフラストラクチャの準備
+- [x] 1. テストインフラストラクチャの準備
   - Mock Workerクラスの実装準備として必要な型定義とユーティリティを設計
   - Jest環境でWeb Worker APIを模倣するための基本構造を構築
   - `postMessage`, `addEventListener`, `removeEventListener`, `terminate`メソッドの実装方針を確立
   - テストヘルパーメソッド(`simulateMessage`, `simulateDelay`, `simulateError`)の設計
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 1.1 Mock Workerクラスの実装
-  - `__mocks__/worker.mock.ts`にMock Workerクラスを作成
+- [x] 1.1 Mock Workerクラスの実装
+  - `__mocks__/worker-factory.ts`にMock Worker作成関数を実装
   - メッセージキューとイベントリスナー管理機能を実装
   - Worker終了状態のトラッキング機能を追加
   - テストシナリオごとにWorker挙動をカスタマイズ可能な構造を構築
   - _Requirements: 4.1, 4.2, 4.3, 4.7_
 
-- [ ] 1.2 Mock Emscripten Module setupの実装
-  - グローバル`Module`オブジェクトのモック生成関数を作成
-  - `_init_ai`, `_malloc`, `_free`, `_calc_value`, `_ai_js`などのWASM関数をjest.fn()でモック化
-  - メモリビュー(HEAP8, HEAPU8, HEAP32)のモック実装
-  - `onRuntimeInitialized`コールバック機構のシミュレーション
-  - `beforeEach`/`afterEach`でのグローバル変数クリーンアップパターンを確立
+- [x] 1.2 Mock Emscripten Module setupの実装
+  - Worker初期化ロジックを`worker-factory.ts`に分離してテスト可能性を確保
+  - `import.meta.url`問題を回避するための設計実装
+  - テスト環境でのモック化可能な構造を確立
+  - `beforeEach`/`afterEach`でのモッククリーンアップパターンを確立
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 1.3 テストユーティリティの準備
+- [x] 1.3 テストユーティリティの準備
   - 共通テストフィクスチャデータの定義(validBoard, emptyBoard, fullBoard)
   - エラーフィクスチャの準備(WASMLoadError, InitializationError各種)
   - Worker メッセージフィクスチャの作成(calculateBlack, calculateWhite, success, error)
   - タイミング制御用のJest fake timers設定パターンの確立
   - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 2. useAIPlayer.tsのテスト実装
+- [x] 2. useAIPlayer.tsのテスト実装
   - フック初期化からクリーンアップまでの全ライフサイクルをテスト
   - Worker通信の正常系・異常系・タイムアウトパスを網羅
   - 非同期処理と状態遷移の正確性を検証
   - 並行操作とメモリリーク防止を確認
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8_
 
-- [ ] 2.1 Worker初期化とクリーンアップのテスト
+- [x] 2.1 Worker初期化とクリーンアップのテスト
   - Worker作成成功時の`workerRef.current`設定を検証
   - テスト環境(`NODE_ENV === 'test'`)での早期リターンを確認
   - Worker作成失敗時のcatchブロックとエラーログを検証
   - アンマウント時の`terminate()`呼び出しを確認
   - _Requirements: 1.1, 1.5_
 
-- [ ] 2.2 AI計算成功パスのテスト
+- [x] 2.2 AI計算成功パスのテスト
   - `calculateMove`呼び出しでWorkerへのメッセージ送信を検証
   - Worker成功レスポンス受信時のPromise解決を確認
   - 正しいAI手(Position)の返却を検証
   - loading状態の適切な管理(true → false遷移)を確認
   - _Requirements: 1.2, 1.3, 1.8_
 
-- [ ] 2.3 タイムアウト処理のテスト
+- [x] 2.3 タイムアウト処理のテスト
   - 3秒タイムアウト時のフォールバック実行を検証
   - `jest.advanceTimersByTime(3000)`でタイマー進行をシミュレート
   - タイムアウト時のイベントリスナークリアを確認
   - フォールバックAIによるランダム手の返却を検証
   - _Requirements: 1.7, 7.1_
 
-- [ ] 2.4 エラーハンドリングのテスト
+- [x] 2.4 エラーハンドリングのテスト
   - Workerエラーレスポンス(`type: 'error'`)受信時のフォールバック実行を検証
   - Worker未初期化(`!workerRef.current`)時の即座フォールバック実行を確認
   - フォールバック失敗時のPromise rejectを検証
   - エラー状態の適切な伝搬とメッセージ設定を確認
   - _Requirements: 1.4, 6.1, 6.5, 7.5_
 
-- [ ] 2.5 並行処理と非同期制御のテスト
+- [x] 2.5 並行処理と非同期制御のテスト
   - 複数の`calculateMove`連続呼び出し時の独立したPromise解決を検証
   - 競合状態(race condition)ハンドリングを確認
   - コンポーネントアンマウント前後の非同期処理完了タイミングを検証

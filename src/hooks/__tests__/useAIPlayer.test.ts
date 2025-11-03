@@ -12,7 +12,8 @@ import { renderHook, act } from '@testing-library/react';
 import { useAIPlayer } from '../useAIPlayer';
 import { selectRandomValidMove } from '@/lib/ai/ai-fallback';
 import { calculateValidMoves } from '@/lib/game/game-logic';
-import { createAIWorker, MockWorker } from '../worker-factory';
+import { createAIWorker } from '../worker-factory';
+import { MockWorker } from '../__mocks__/worker-factory';
 import type { Board, Position } from '@/lib/game/types';
 
 // Test fixtures
@@ -44,7 +45,7 @@ describe('useAIPlayer', () => {
 
   beforeEach(() => {
     // Set default to development mode (tests can override)
-    process.env.NODE_ENV = 'development';
+    (process.env as { NODE_ENV?: string }).NODE_ENV = 'development';
 
     // Mock global Worker constructor to enable Worker check in implementation
     (global as typeof globalThis & { Worker: unknown }).Worker = MockWorker;
@@ -70,11 +71,12 @@ describe('useAIPlayer', () => {
   afterEach(() => {
     jest.runOnlyPendingTimers();
     jest.useRealTimers();
-    process.env.NODE_ENV = originalNodeEnv;
+    (process.env as { NODE_ENV?: string }).NODE_ENV = originalNodeEnv;
 
     // Restore original Worker
     if (originalWorker === undefined) {
-      delete (global as typeof globalThis & { Worker?: unknown }).Worker;
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete (global as Record<string, unknown>).Worker;
     } else {
       (global as typeof globalThis & { Worker: unknown }).Worker =
         originalWorker;
@@ -96,7 +98,7 @@ describe('useAIPlayer', () => {
 
     it('should skip Worker initialization in test environment', () => {
       // Given: test environment
-      process.env.NODE_ENV = 'test';
+      (process.env as { NODE_ENV?: string }).NODE_ENV = 'test';
 
       // When: hook is mounted
       renderHook(() => useAIPlayer());
@@ -139,7 +141,7 @@ describe('useAIPlayer', () => {
     it('should handle Worker undefined environment gracefully', () => {
       // Given: Worker is not supported in environment (development mode)
       // Note: Must be in development mode to reach Worker check (not test mode)
-      process.env.NODE_ENV = 'development';
+      (process.env as { NODE_ENV?: string }).NODE_ENV = 'development';
       const originalWorker = (
         global as typeof globalThis & { Worker?: unknown }
       ).Worker;
@@ -158,7 +160,8 @@ describe('useAIPlayer', () => {
 
       // Cleanup: restore original Worker
       if (originalWorker === undefined) {
-        delete (global as typeof globalThis & { Worker?: unknown }).Worker;
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete (global as Record<string, unknown>).Worker;
       } else {
         (global as typeof globalThis & { Worker: unknown }).Worker =
           originalWorker;
@@ -363,7 +366,7 @@ describe('useAIPlayer', () => {
 
     it('should use fallback immediately when Worker is not initialized', async () => {
       // Given: test environment (Worker not initialized)
-      process.env.NODE_ENV = 'test';
+      (process.env as { NODE_ENV?: string }).NODE_ENV = 'test';
       const { result } = renderHook(() => useAIPlayer());
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
@@ -381,7 +384,7 @@ describe('useAIPlayer', () => {
 
     it('should reject when fallback also fails', async () => {
       // Given: Worker not initialized and fallback throws error
-      process.env.NODE_ENV = 'test';
+      (process.env as { NODE_ENV?: string }).NODE_ENV = 'test';
       const { result } = renderHook(() => useAIPlayer());
       (selectRandomValidMove as jest.Mock).mockImplementation(() => {
         throw new Error('No valid moves available');

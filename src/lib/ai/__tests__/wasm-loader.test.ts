@@ -156,6 +156,11 @@ describe('wasm-loader', () => {
       global.importScripts = jest.fn().mockImplementation(() => {
         // Delete the pre-configured Module to simulate failure
         delete global.Module;
+        // Also delete from global.self if it exists
+        const globalScope = global as typeof global & { self?: any };
+        if (globalScope.self) {
+          delete globalScope.self.Module;
+        }
       });
 
       const result = await loadWASM('/ai.wasm');
@@ -205,9 +210,20 @@ describe('wasm-loader', () => {
     it('should timeout if onRuntimeInitialized is not called within 10 seconds', async () => {
       jest.useFakeTimers();
 
+      // Create a module without _malloc to simulate pre-initialization state
+      const uninitializedModule = {
+        ...mockModule,
+        _malloc: undefined,
+        _free: undefined,
+      } as any;
+
       global.importScripts = jest.fn().mockImplementation(() => {
-        global.Module = mockModule;
-        // Do not call onRuntimeInitialized
+        const globalScope = global as typeof global & { self?: any };
+        global.Module = uninitializedModule;
+        if (globalScope.self) {
+          globalScope.self.Module = uninitializedModule;
+        }
+        // Do not call onRuntimeInitialized to simulate timeout scenario
       });
 
       const resultPromise = loadWASM('/ai.wasm');
@@ -236,11 +252,16 @@ describe('wasm-loader', () => {
       };
 
       global.importScripts = jest.fn().mockImplementation(() => {
-        const existingModule = global.Module || {};
-        global.Module = {
+        const globalScope = global as typeof global & { self?: any };
+        const existingModule = globalScope.self?.Module || global.Module || {};
+        const moduleObj = {
           ...existingModule,
           ...syncModule,
         };
+        global.Module = moduleObj;
+        if (globalScope.self) {
+          globalScope.self.Module = moduleObj;
+        }
         // Do not set onRuntimeInitialized callback - module is ready immediately
       });
 
@@ -254,19 +275,36 @@ describe('wasm-loader', () => {
       let callbackExecuted = false;
 
       global.importScripts = jest.fn().mockImplementation(() => {
-        const existingModule = global.Module || {};
-        global.Module = {
-          ...existingModule,
-          ...mockModule,
-        };
+        const globalScope = global as typeof global & { self?: any };
 
-        setTimeout(() => {
-          const wasmModule = global.Module;
-          if (wasmModule && wasmModule.onRuntimeInitialized) {
-            callbackExecuted = true;
-            wasmModule.onRuntimeInitialized();
+        // Start with uninitialized module (no _malloc yet)
+        const uninitializedModule = {
+          ...mockModule,
+          _malloc: undefined,
+          _free: undefined,
+        } as any;
+
+        global.Module = uninitializedModule;
+        if (globalScope.self) {
+          globalScope.self.Module = uninitializedModule;
+        }
+
+        // Simulate async runtime initialization using process.nextTick
+        // This ensures the callback is called after loadWASM sets onRuntimeInitialized
+        process.nextTick(() => {
+          const wasmModule = globalScope.self?.Module || global.Module;
+
+          if (wasmModule) {
+            // Add _malloc and _free to simulate WASM initialization
+            wasmModule._malloc = mockModule._malloc;
+            wasmModule._free = mockModule._free;
+
+            if (wasmModule.onRuntimeInitialized) {
+              callbackExecuted = true;
+              wasmModule.onRuntimeInitialized();
+            }
           }
-        }, 10);
+        });
       });
 
       const result = await loadWASM('/ai.wasm');
@@ -377,14 +415,19 @@ describe('wasm-loader', () => {
       };
 
       global.importScripts = jest.fn().mockImplementation(() => {
-        const existingModule = global.Module || {};
-        global.Module = {
+        const globalScope = global as typeof global & { self?: any };
+        const existingModule = globalScope.self?.Module || global.Module || {};
+        const moduleObj = {
           ...existingModule,
           ...moduleWithoutInit,
         };
+        global.Module = moduleObj;
+        if (globalScope.self) {
+          globalScope.self.Module = moduleObj;
+        }
 
         setTimeout(() => {
-          const wasmModule = global.Module;
+          const wasmModule = globalScope.self?.Module || global.Module;
           if (wasmModule && wasmModule.onRuntimeInitialized) {
             wasmModule.onRuntimeInitialized();
           }
@@ -402,15 +445,25 @@ describe('wasm-loader', () => {
       const customHeapU8 = new Uint8Array(128);
 
       global.importScripts = jest.fn().mockImplementation(() => {
-        const existingModule = global.Module || {};
-        global.Module = {
-          ...existingModule,
-          ...mockModule,
-        };
+        const globalScope = global as typeof global & { self?: any };
 
-        setTimeout(() => {
-          const wasmModule = global.Module;
-          if (wasmModule && wasmModule.onRuntimeInitialized) {
+        // Start with uninitialized module (no _malloc yet)
+        const uninitializedModule = {
+          ...mockModule,
+          _malloc: undefined,
+          _free: undefined,
+        } as any;
+
+        global.Module = uninitializedModule;
+        if (globalScope.self) {
+          globalScope.self.Module = uninitializedModule;
+        }
+
+        // Use process.nextTick to ensure callback fires after onRuntimeInitialized is set
+        process.nextTick(() => {
+          const wasmModule = globalScope.self?.Module || global.Module;
+          if (wasmModule) {
+            // Set HEAP views on global scope (Emscripten behavior)
             global.HEAP8 = customHeap8;
             global.HEAPU8 = customHeapU8;
             global.HEAP32 = mockModule.HEAP32;
@@ -419,9 +472,15 @@ describe('wasm-loader', () => {
               buffer: customHeap8.buffer,
             } as WebAssembly.Memory;
 
-            wasmModule.onRuntimeInitialized();
+            // Add _malloc and _free to simulate WASM initialization
+            wasmModule._malloc = mockModule._malloc;
+            wasmModule._free = mockModule._free;
+
+            if (wasmModule.onRuntimeInitialized) {
+              wasmModule.onRuntimeInitialized();
+            }
           }
-        }, 10);
+        });
       });
 
       const result = await loadWASM('/ai.wasm');

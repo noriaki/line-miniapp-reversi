@@ -13,9 +13,9 @@ import type { AIWorkerResponse } from '@/lib/ai/types';
 export function createAIWorker(): Worker | null {
   try {
     // Use import.meta.url for worker URL (only works in modern bundlers, not Jest)
-    // Note: Omit file extension - Next.js will resolve it correctly
-    const workerURL = new URL('../workers/ai-worker', import.meta.url);
-    return new Worker(workerURL, { type: 'module' });
+    return new Worker(new URL('../workers/ai-worker', import.meta.url), {
+      type: 'module',
+    });
   } catch (error) {
     // Enhanced error logging for better debugging
     console.error('Failed to create AI worker:', {

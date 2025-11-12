@@ -318,10 +318,14 @@ describe('GameBoard Component', () => {
       mockValidateMove.mockRestore();
     });
 
-    it('notationString不在時はid="history"要素が存在しないこと', () => {
+    it('notationString不在時でもid="history"要素がDOM内に存在すること（Requirement 1: AC 1.1）', () => {
       const { container } = render(<GameBoard />);
       const moveHistory = container.querySelector('#history');
-      expect(moveHistory).not.toBeInTheDocument();
+      // Element should exist in DOM even when notation is empty (for Playwright testing)
+      expect(moveHistory).toBeInTheDocument();
+      // But it should be visually hidden
+      expect(moveHistory).toHaveClass('sr-only');
+      expect(moveHistory).toHaveAttribute('aria-hidden', 'true');
     });
   });
 
@@ -644,17 +648,27 @@ describe('GameBoard Component', () => {
   });
 
   describe('Move History Display (Task 4)', () => {
-    it('初期状態では棋譜表示領域が表示されないこと', () => {
+    it('初期状態でも棋譜表示領域がDOM内に存在すること（Requirement 1: AC 1.1）', () => {
       render(<GameBoard />);
       const moveHistory = screen.queryByTestId('move-history');
-      // Empty notation string should not display
-      expect(moveHistory).not.toBeInTheDocument();
+      // Element should exist in DOM even when empty (for Playwright testing)
+      expect(moveHistory).toBeInTheDocument();
+      // But it should be visually hidden with sr-only class
+      expect(moveHistory).toHaveClass('sr-only');
+      expect(moveHistory).toHaveAttribute('aria-hidden', 'true');
     });
 
-    it('棋譜が空文字列の場合は表示されないこと', () => {
+    it('棋譜が空文字列の場合でもDOM内に存在し視覚的に非表示であること（Requirement 1: AC 1.2, 1.4）', () => {
       render(<GameBoard />);
       const moveHistory = screen.queryByTestId('move-history');
-      expect(moveHistory).not.toBeInTheDocument();
+      // Element exists in DOM
+      expect(moveHistory).toBeInTheDocument();
+      // Visually hidden with sr-only class
+      expect(moveHistory).toHaveClass('sr-only');
+      // Contains non-breaking space to maintain height (textContent sees it as regular space)
+      const textContent = moveHistory?.textContent || '';
+      expect(textContent.trim()).toBe('');
+      expect(textContent.length).toBeGreaterThan(0); // Contains non-breaking space
     });
 
     it('playing状態でnotationStringが存在する場合に表示されること', async () => {

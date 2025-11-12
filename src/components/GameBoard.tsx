@@ -486,7 +486,7 @@ export default function GameBoard(): JSX.Element {
       )}
 
       {/* Move History Display (Task 4) - Visually hidden for users (Task 1) */}
-      {gameStatus.type === 'playing' && notationString && (
+      {gameStatus.type === 'playing' && (
         <div
           id="history"
           data-testid="move-history"
@@ -495,7 +495,7 @@ export default function GameBoard(): JSX.Element {
           className="sr-only"
         >
           <div className="text-sm text-gray-600 whitespace-nowrap">
-            {notationString}
+            {notationString || '\u00A0'}
           </div>
         </div>
       )}

@@ -457,6 +457,137 @@ describe('GameBoard Component', () => {
     });
   });
 
+  describe('UI Usability - Move History Visual Hiding (Task 1)', () => {
+    it('棋譜要素にsr-onlyクラスが適用されていること', async () => {
+      const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
+        success: true,
+        value: [
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, 'black', null, null, null],
+          [null, null, null, 'black', 'black', null, null, null],
+          [null, null, null, 'white', 'black', null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+        ],
+      });
+
+      const mockValidateMove = jest
+        .spyOn(gameLogic, 'validateMove')
+        .mockReturnValue({ success: true, value: true });
+
+      render(<GameBoard />);
+      const cell = screen.getAllByRole('button')[20];
+      await userEvent.click(cell);
+
+      await waitFor(() => {
+        const moveHistory = screen.getByTestId('move-history');
+        expect(moveHistory).toHaveClass('sr-only');
+      });
+
+      mockApplyMove.mockRestore();
+      mockValidateMove.mockRestore();
+    });
+
+    it('棋譜要素にaria-hidden="true"属性が設定されていること', async () => {
+      const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
+        success: true,
+        value: [
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, 'black', null, null, null],
+          [null, null, null, 'black', 'black', null, null, null],
+          [null, null, null, 'white', 'black', null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+        ],
+      });
+
+      const mockValidateMove = jest
+        .spyOn(gameLogic, 'validateMove')
+        .mockReturnValue({ success: true, value: true });
+
+      render(<GameBoard />);
+      const cell = screen.getAllByRole('button')[20];
+      await userEvent.click(cell);
+
+      await waitFor(() => {
+        const moveHistory = screen.getByTestId('move-history');
+        expect(moveHistory).toHaveAttribute('aria-hidden', 'true');
+      });
+
+      mockApplyMove.mockRestore();
+      mockValidateMove.mockRestore();
+    });
+
+    it('棋譜要素がDOM内に保持されていること', async () => {
+      const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
+        success: true,
+        value: [
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, 'black', null, null, null],
+          [null, null, null, 'black', 'black', null, null, null],
+          [null, null, null, 'white', 'black', null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+        ],
+      });
+
+      const mockValidateMove = jest
+        .spyOn(gameLogic, 'validateMove')
+        .mockReturnValue({ success: true, value: true });
+
+      const { container } = render(<GameBoard />);
+      const cell = screen.getAllByRole('button')[20];
+      await userEvent.click(cell);
+
+      await waitFor(() => {
+        const moveHistory = container.querySelector('#history');
+        expect(moveHistory).toBeInTheDocument();
+        expect(moveHistory).toHaveAttribute('data-testid', 'move-history');
+      });
+
+      mockApplyMove.mockRestore();
+      mockValidateMove.mockRestore();
+    });
+
+    it('data-testid="move-history"属性が保持されていること', async () => {
+      const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
+        success: true,
+        value: [
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, 'black', null, null, null],
+          [null, null, null, 'black', 'black', null, null, null],
+          [null, null, null, 'white', 'black', null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+        ],
+      });
+
+      const mockValidateMove = jest
+        .spyOn(gameLogic, 'validateMove')
+        .mockReturnValue({ success: true, value: true });
+
+      render(<GameBoard />);
+      const cell = screen.getAllByRole('button')[20];
+      await userEvent.click(cell);
+
+      await waitFor(() => {
+        const moveHistory = screen.getByTestId('move-history');
+        expect(moveHistory).toBeInTheDocument();
+      });
+
+      mockApplyMove.mockRestore();
+      mockValidateMove.mockRestore();
+    });
+  });
+
   describe('Move History Display (Task 4)', () => {
     it('初期状態では棋譜表示領域が表示されないこと', () => {
       render(<GameBoard />);

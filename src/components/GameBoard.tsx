@@ -480,13 +480,14 @@ export default function GameBoard(): JSX.Element {
         </button>
       )}
 
-      {/* Move History Display (Task 4) */}
+      {/* Move History Display (Task 4) - Visually hidden for users (Task 1) */}
       {gameStatus.type === 'playing' && notationString && (
         <div
           id="history"
           data-testid="move-history"
           aria-label="着手履歴"
-          className="mt-4 px-4 py-2 overflow-x-auto"
+          aria-hidden="true"
+          className="sr-only"
         >
           <div className="text-sm text-gray-600 whitespace-nowrap">
             {notationString}

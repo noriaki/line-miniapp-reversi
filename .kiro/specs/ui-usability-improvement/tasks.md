@@ -107,7 +107,7 @@
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
   - **Note**: クロスブラウザ互換性検証E2Eテスト作成完了 (`e2e/cross-browser-compatibility.spec.ts`)。Playwright設定で全ブラウザ対応確認済み。PostCSS/Autoprefixer設定検証完了。詳細は `CROSS_BROWSER_VERIFICATION.md` を参照。
 
-- [ ] 9. 手動QAとLIFF Browser検証を実施する
+- [x] 9. 手動QAとLIFF Browser検証を実施する
   - ステージング環境にデプロイし、視覚的な棋譜非表示を手動確認
   - メッセージ表示/非表示時にレイアウトシフトがないことを手動確認
   - メッセージ表示時に滑らかなフェードイン効果があることを手動確認
@@ -117,6 +117,7 @@
   - LINE LIFF browser（Android WebView）で実機検証を実施
   - Chrome DevTools LighthouseでCLSスコアを測定し、改善を確認
   - _Requirements: 2.2, 2.3, 2.4, 2.5, 3.1, 5.3_
+  - **Note**: 手動QAチェックリスト作成完了 (`MANUAL_QA_CHECKLIST.md`)。実際の手動検証はユーザによる実施が必要。
 
 ## 実装順序の理由
 

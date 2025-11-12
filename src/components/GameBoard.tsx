@@ -318,11 +318,16 @@ export default function GameBoard(): JSX.Element {
           {getErrorMessage()}
         </div>
       )}
-      {getPassMessage() && (
-        <div className="notification-message bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-          {getPassMessage()}
+      {/* Fixed-height container to prevent layout shift (Task 2, Requirement 2.1) */}
+      <div className="h-16 flex items-center justify-center">
+        <div
+          className={`notification-message bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded transition-opacity duration-200 ${
+            getPassMessage() ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {getPassMessage() || '\u00A0'}
         </div>
-      )}
+      </div>
       {hasInconsistency && (
         <div className="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {getInconsistencyMessage()}

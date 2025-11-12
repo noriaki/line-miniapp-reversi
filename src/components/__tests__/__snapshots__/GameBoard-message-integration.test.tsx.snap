@@ -1,0 +1,25 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Integration Test: GameBoard + useGameErrorHandler - Message Display メッセージ領域が常に固定高さを保持すること (Snapshot Test for Layout Stability): message-container-initial 1`] = `
+<div
+  class="h-16 flex items-center justify-center"
+>
+  <div
+    class="notification-message bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded transition-opacity duration-200 opacity-0"
+  >
+     
+  </div>
+</div>
+`;
+
+exports[`Integration Test: GameBoard + useGameErrorHandler - Message Display メッセージ領域が常に固定高さを保持すること (Snapshot Test for Layout Stability): message-container-visible 1`] = `
+<div
+  class="h-16 flex items-center justify-center"
+>
+  <div
+    class="notification-message bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded transition-opacity duration-200 opacity-100"
+  >
+    有効な手がありません。パスしました。
+  </div>
+</div>
+`;

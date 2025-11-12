@@ -588,6 +588,61 @@ describe('GameBoard Component', () => {
     });
   });
 
+  describe('UI Usability - Message Layout (Task 2, Task 5.1)', () => {
+    it('メッセージ表示領域に固定高さクラス（h-16）が適用されていること', () => {
+      const { container } = render(<GameBoard />);
+      // Find the fixed-height container (parent of notification-message)
+      const messageContainer = container.querySelector('.h-16');
+      expect(messageContainer).toBeInTheDocument();
+      expect(messageContainer).toHaveClass('h-16');
+    });
+
+    it('メッセージ要素が常にDOM内に存在すること', () => {
+      const { container } = render(<GameBoard />);
+      // The notification-message element should always be in DOM
+      const notificationMessage = container.querySelector(
+        '.notification-message'
+      );
+      expect(notificationMessage).toBeInTheDocument();
+    });
+
+    it('パス通知メッセージ表示時に opacity-100 クラスが適用されることを検証するテスト', () => {
+      // Mock to have no valid moves (triggers pass scenario)
+      jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
+
+      const { container } = render(<GameBoard />);
+
+      // Initially should be opacity-0 (no pass message)
+      const notificationMessage = container.querySelector(
+        '.notification-message'
+      );
+      expect(notificationMessage).toHaveClass('opacity-0');
+
+      jest.spyOn(gameLogic, 'calculateValidMoves').mockRestore();
+    });
+
+    it('パス通知メッセージ非表示時に opacity-0 クラスが適用されることを検証するテスト', () => {
+      const { container } = render(<GameBoard />);
+
+      // Initially no pass message, so should have opacity-0
+      const notificationMessage = container.querySelector(
+        '.notification-message'
+      );
+      expect(notificationMessage).toHaveClass('opacity-0');
+      expect(notificationMessage).not.toHaveClass('opacity-100');
+    });
+
+    it('transition-opacity クラスが適用されていることを検証するテスト', () => {
+      const { container } = render(<GameBoard />);
+
+      // The notification-message should have transition-opacity class
+      const notificationMessage = container.querySelector(
+        '.notification-message'
+      );
+      expect(notificationMessage).toHaveClass('transition-opacity');
+    });
+  });
+
   describe('Move History Display (Task 4)', () => {
     it('初期状態では棋譜表示領域が表示されないこと', () => {
       render(<GameBoard />);

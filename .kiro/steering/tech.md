@@ -97,12 +97,25 @@ pnpm format
 - **GameBoard.tsx**: Client Component("use client")、全ゲームロジック
 - 理由: SSG高速化とゲームロジック明確分離のバランス
 
-### WASM Integration
+### WASM Integration & Worker Pattern
 
 - **WASMBridge**: メモリ管理・データ変換・エラーハンドリング隠蔽
 - **AIEngine**: 高レベルAPI(型安全なインタフェース)
 - **Web Worker**: UI非ブロック(0.5-2秒のAI計算)
-- 理由: 型安全性・保守性・UX応答性
+- **Worker Factory**: テスト容易性向上(`worker-factory.ts` + `__mocks__/`)
+- **Webpack 5 静的解析要件**: Worker URL を直接インライン化(変数経由禁止)
+- 理由: 型安全性・保守性・UX応答性・テスタビリティ
+
+```typescript
+// ✅ Correct: Inline Worker URL for webpack 5 static analysis
+new Worker(new URL('../workers/ai-worker', import.meta.url), {
+  type: 'module',
+});
+
+// ❌ Wrong: Variable breaks webpack static analysis
+const workerUrl = new URL('../workers/ai-worker', import.meta.url);
+new Worker(workerUrl, { type: 'module' }); // Causes MIME type errors
+```
 
 ### State Management
 
@@ -140,9 +153,14 @@ pnpm format
 ---
 
 _created_at: 2025-10-21_
-_updated_at: 2025-11-03_
+_updated_at: 2025-11-12_
 
-**Recent Updates (2025-11-03)**:
+**Recent Updates (2025-11-12)**:
+
+- Worker Factory: Fixed webpack 5 static analysis by inlining Worker URL construction
+- Critical pattern: Worker URL must be inline (no variables) for webpack bundling
+
+**Previous Updates (2025-11-03)**:
 
 - Test coverage achievement: Branches 92.51% (all metrics 90%+)
 - Added Worker Factory pattern for testable Web Worker integration
@@ -150,7 +168,7 @@ _updated_at: 2025-11-03_
 - NODE_ENV anti-pattern removal from production code
 - Enhanced error handling integration tests
 
-**Previous Updates (2025-11-02)**:
+**Earlier Updates (2025-11-02)**:
 
 - LIFF SDK integration completed (implemented 2025-10-26)
 - Added LIFF integration section with graceful degradation pattern

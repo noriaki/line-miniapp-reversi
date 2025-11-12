@@ -318,11 +318,16 @@ export default function GameBoard(): JSX.Element {
           {getErrorMessage()}
         </div>
       )}
-      {getPassMessage() && (
-        <div className="notification-message bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-          {getPassMessage()}
+      {/* Fixed-height container to prevent layout shift (Task 2, Requirement 2.1) */}
+      <div className="h-16 flex items-center justify-center">
+        <div
+          className={`notification-message bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded transition-opacity duration-200 ${
+            getPassMessage() ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {getPassMessage() || '\u00A0'}
         </div>
-      )}
+      </div>
       {hasInconsistency && (
         <div className="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {getInconsistencyMessage()}
@@ -480,16 +485,17 @@ export default function GameBoard(): JSX.Element {
         </button>
       )}
 
-      {/* Move History Display (Task 4) */}
-      {gameStatus.type === 'playing' && notationString && (
+      {/* Move History Display (Task 4) - Visually hidden for users (Task 1) */}
+      {gameStatus.type === 'playing' && (
         <div
           id="history"
           data-testid="move-history"
           aria-label="着手履歴"
-          className="mt-4 px-4 py-2 overflow-x-auto"
+          aria-hidden="true"
+          className="sr-only"
         >
           <div className="text-sm text-gray-600 whitespace-nowrap">
-            {notationString}
+            {notationString || '\u00A0'}
           </div>
         </div>
       )}

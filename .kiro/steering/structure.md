@@ -48,6 +48,8 @@
 - `move-validator.ts`: 反転可能石の検索
 - `game-end.ts`: ゲーム終了判定・勝敗判定
 - `board.ts`: ボード初期化・石数カウント
+- `cell-id.ts`: セルID生成(HTMLアクセシビリティ)
+- `move-history.ts`: 手譜記譜法(座標→チェス記法変換)
 - `__tests__/`: ユニットテスト(90%カバレッジ目標)
 
 ### AI Engine (`/src/lib/ai/`)
@@ -204,15 +206,21 @@ import { validateMove } from './move-validator';
 ---
 
 _created_at: 2025-10-21_
-_updated_at: 2025-11-03_
+_updated_at: 2025-11-12_
 
-**Recent Updates (2025-11-03)**:
+**Recent Updates (2025-11-12)**:
+
+- Added move-history utilities to Game Logic layer (chess notation conversion)
+- Added cell-id utilities for HTML accessibility (unique cell identifiers)
+- Worker Factory pattern: inline URL construction requirement for webpack 5
+
+**Previous Updates (2025-11-03)**:
 
 - Added `worker-factory.ts` pattern for testable Worker instantiation
 - Documented `__mocks__/` directory for test infrastructure
 - Updated Test Co-location section with mock directory pattern
 
-**Previous Updates (2025-11-02)**:
+**Earlier Updates (2025-11-02)**:
 
 - Added LINE Integration Layer documentation (`/src/lib/liff/`)
 - Added React Contexts pattern (`/src/contexts/`)

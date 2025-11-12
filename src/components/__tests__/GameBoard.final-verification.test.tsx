@@ -81,19 +81,24 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
       const user = userEvent.setup();
       const { container } = render(<GameBoard />);
 
-      // Initially, history should not exist
+      // Initially, history element should exist in DOM (Requirement 1: AC 1.1)
       let history = container.querySelector('#history');
-      expect(history).not.toBeInTheDocument();
+      expect(history).toBeInTheDocument();
+      // Should be visually hidden
+      expect(history).toHaveClass('sr-only');
 
       // Make a valid move (c4)
       const validCell = container.querySelector('[data-row="3"][data-col="2"]');
       expect(validCell).toBeInTheDocument();
       await user.click(validCell!);
 
-      // Wait for state update
+      // Wait for state update - history should still exist with notation
       await waitFor(() => {
         history = container.querySelector('#history');
         expect(history).toBeInTheDocument();
+        // After move, notation string should be present
+        const notationText = history?.textContent?.trim();
+        expect(notationText).toBeTruthy();
       });
 
       // Verify history has correct ID
@@ -275,18 +280,22 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
       const user = userEvent.setup();
       const { container } = render(<GameBoard />);
 
-      // Initially, no history
+      // Initially, history element should exist (Requirement 1: AC 1.1)
       let history = container.querySelector('#history');
-      expect(history).not.toBeInTheDocument();
+      expect(history).toBeInTheDocument();
+      expect(history).toHaveClass('sr-only');
 
       // Make a move
       const cellC4 = container.querySelector('#c4');
       await user.click(cellC4!);
 
-      // Wait for history to appear
+      // Wait for history notation to be populated
       await waitFor(() => {
         history = container.querySelector('#history');
         expect(history).toBeInTheDocument();
+        // Notation should be populated after move
+        const notationText = history?.textContent?.trim();
+        expect(notationText).toBeTruthy();
         expect(history).toHaveAttribute('id', 'history');
       });
 

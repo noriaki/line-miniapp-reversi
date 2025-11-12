@@ -113,7 +113,7 @@ export function useGameErrorHandler(): UseGameErrorHandlerReturn {
 
   /**
    * Notify pass operation
-   * Sets notification and auto-clears after 3 seconds
+   * Sets notification and auto-clears after 5 seconds
    */
   const notifyPass = useCallback((player: Player) => {
     // Clear existing timer
@@ -124,10 +124,10 @@ export function useGameErrorHandler(): UseGameErrorHandlerReturn {
     // Set notification
     setPassNotification(player);
 
-    // Auto-clear after 3 seconds
+    // Auto-clear after 5 seconds
     passNotificationTimerRef.current = setTimeout(() => {
       setPassNotification(null);
-    }, 3000);
+    }, 5000);
   }, []);
 
   /**

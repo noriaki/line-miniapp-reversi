@@ -35,14 +35,22 @@ LINEミニアプリプラットフォーム上で動作するリバーシ(オセ
   - LINEアプリ内/外の環境自動検出
   - エラーハンドリング・フォールバック機能
   - スタンドアロンWebアプリとしても完全動作
+- **手譜表示**: チェス記譜法形式での対局履歴表示(2025-11-10実装)
+  - リアルタイム手譜更新(a1-h8形式)
+  - 座標マッピング(row/col → chess notation)
 - **Focus**: ゲームロジック、AI統合、レスポンシブUIの完成度優先
 
 ---
 
 _created_at: 2025-10-21_
-_updated_at: 2025-11-02_
+_updated_at: 2025-11-12_
 
-**Recent Updates (2025-11-02)**:
+**Recent Updates (2025-11-12)**:
+
+- Added move history display feature (chess notation format)
+- Coordinates mapping from board positions to standard chess notation
+
+**Previous Updates (2025-11-02)**:
 
 - Updated LIFF SDK integration status - fully implemented as of 2025-10-26
 - LIFF features: profile display, environment detection, error handling

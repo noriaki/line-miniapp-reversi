@@ -65,6 +65,105 @@ describe('useGameErrorHandler', () => {
     });
   });
 
+  describe('RED: Pass notification (Task 3)', () => {
+    it('should set pass notification when notifyPass is called', () => {
+      const { result } = renderHook(() => useGameErrorHandler());
+
+      act(() => {
+        result.current.notifyPass('black');
+      });
+
+      expect(result.current.passNotification).toBe('black');
+      expect(result.current.getPassMessage()).toBe(
+        '有効な手がありません。パスしました。'
+      );
+    });
+
+    it('should clear pass notification after 5 seconds (Requirement 3.1, 3.2)', () => {
+      jest.useFakeTimers();
+      const { result } = renderHook(() => useGameErrorHandler());
+
+      act(() => {
+        result.current.notifyPass('white');
+      });
+
+      expect(result.current.passNotification).toBe('white');
+
+      // Should still be visible after 4 seconds
+      act(() => {
+        jest.advanceTimersByTime(4000);
+      });
+      expect(result.current.passNotification).toBe('white');
+
+      // Should be cleared after 5 seconds
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(result.current.passNotification).toBeNull();
+
+      jest.useRealTimers();
+    });
+
+    it('should cancel previous timer when new notifyPass is called (Requirement 3.3)', () => {
+      jest.useFakeTimers();
+      const { result } = renderHook(() => useGameErrorHandler());
+
+      // First notification
+      act(() => {
+        result.current.notifyPass('black');
+      });
+      expect(result.current.passNotification).toBe('black');
+
+      // Advance time by 3 seconds
+      act(() => {
+        jest.advanceTimersByTime(3000);
+      });
+
+      // Second notification (should cancel first timer)
+      act(() => {
+        result.current.notifyPass('white');
+      });
+      expect(result.current.passNotification).toBe('white');
+
+      // Advance time by 3 more seconds (6 seconds total from first notification)
+      // First timer should have been cancelled, so notification should still be 'white'
+      act(() => {
+        jest.advanceTimersByTime(3000);
+      });
+      expect(result.current.passNotification).toBe('white');
+
+      // Advance remaining 2 seconds to complete 5 seconds from second notification
+      act(() => {
+        jest.advanceTimersByTime(2000);
+      });
+      expect(result.current.passNotification).toBeNull();
+
+      jest.useRealTimers();
+    });
+
+    it('should cleanup timer on unmount (Requirement 3.3)', () => {
+      jest.useFakeTimers();
+      const { result, unmount } = renderHook(() => useGameErrorHandler());
+
+      act(() => {
+        result.current.notifyPass('black');
+      });
+
+      expect(result.current.passNotification).toBe('black');
+
+      // Unmount before timer completes
+      unmount();
+
+      // Advance time - timer should not fire after unmount
+      act(() => {
+        jest.advanceTimersByTime(5000);
+      });
+
+      // No error should occur (timer was cleaned up)
+      jest.useRealTimers();
+    });
+  });
+
   describe('RED: Game state inconsistency detection', () => {
     it('should detect invalid board state', () => {
       const { result } = renderHook(() => useGameErrorHandler());

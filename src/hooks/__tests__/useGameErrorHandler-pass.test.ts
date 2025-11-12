@@ -29,9 +29,9 @@ describe('useGameErrorHandler - Pass Notification (Task 1.2)', () => {
 
       expect(result.current.passNotification).toBe('white');
 
-      // Fast-forward time by 3 seconds
+      // Fast-forward time by 5 seconds (updated from 3 seconds in Task 3)
       act(() => {
-        jest.advanceTimersByTime(3000);
+        jest.advanceTimersByTime(5000);
       });
 
       expect(result.current.passNotification).toBeNull();
@@ -80,9 +80,9 @@ describe('useGameErrorHandler - Pass Notification (Task 1.2)', () => {
 
       expect(result.current.passNotification).toBe('black');
 
-      // Advance time partially
+      // Advance time partially (2.5 seconds)
       act(() => {
-        jest.advanceTimersByTime(1500);
+        jest.advanceTimersByTime(2500);
       });
 
       // Second notification before first timer expires
@@ -92,17 +92,17 @@ describe('useGameErrorHandler - Pass Notification (Task 1.2)', () => {
 
       expect(result.current.passNotification).toBe('white');
 
-      // Advance time by remaining 1.5 seconds (total 3 seconds from first)
+      // Advance time by remaining 2.5 seconds (total 5 seconds from first)
       act(() => {
-        jest.advanceTimersByTime(1500);
+        jest.advanceTimersByTime(2500);
       });
 
       // First timer should have been cleared, second notification still active
       expect(result.current.passNotification).toBe('white');
 
-      // Advance another 1.5 seconds to clear second notification
+      // Advance another 2.5 seconds to clear second notification (5 seconds total from second)
       act(() => {
-        jest.advanceTimersByTime(1500);
+        jest.advanceTimersByTime(2500);
       });
 
       expect(result.current.passNotification).toBeNull();

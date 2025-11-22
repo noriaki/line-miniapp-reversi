@@ -7,9 +7,9 @@
  * This is a BLACK-BOX test suite based on C++ source analysis.
  *
  * Resources:
- * - WASM: .kiro/specs/line-reversi-miniapp/resources/ai.wasm
- * - Glue: .kiro/specs/line-reversi-miniapp/resources/ai.js
- * - Spec: .kiro/specs/line-reversi-miniapp/wasm-source-analysis/interface-spec.md
+ * - WASM: .specify/specs/line-reversi-miniapp/resources/ai.wasm
+ * - Glue: .specify/specs/line-reversi-miniapp/resources/ai.js
+ * - Spec: .specify/specs/line-reversi-miniapp/wasm-source-analysis/interface-spec.md
  */
 
 import * as path from 'path';
@@ -20,7 +20,7 @@ import type { EmscriptenModule } from './__types__/worker-global';
 describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
   const RESOURCES_DIR = path.join(
     __dirname,
-    '../../../../.kiro/specs/line-reversi-miniapp/resources'
+    '../../../../.specify/specs/line-reversi-miniapp/resources'
   );
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
@@ -189,7 +189,7 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
 describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
   const RESOURCES_DIR = path.join(
     __dirname,
-    '../../../../.kiro/specs/line-reversi-miniapp/resources'
+    '../../../../.specify/specs/line-reversi-miniapp/resources'
   );
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
@@ -1005,7 +1005,7 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
 describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification', () => {
   const RESOURCES_DIR = path.join(
     __dirname,
-    '../../../../.kiro/specs/line-reversi-miniapp/resources'
+    '../../../../.specify/specs/line-reversi-miniapp/resources'
   );
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
@@ -1337,7 +1337,7 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
 describe('WASM Integration Tests - Task 5.4: Memory Management Verification', () => {
   const RESOURCES_DIR = path.join(
     __dirname,
-    '../../../../.kiro/specs/line-reversi-miniapp/resources'
+    '../../../../.specify/specs/line-reversi-miniapp/resources'
   );
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
@@ -1543,7 +1543,7 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
 describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verification', () => {
   const RESOURCES_DIR = path.join(
     __dirname,
-    '../../../../.kiro/specs/line-reversi-miniapp/resources'
+    '../../../../.specify/specs/line-reversi-miniapp/resources'
   );
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
@@ -1862,7 +1862,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
 describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verification', () => {
   const RESOURCES_DIR = path.join(
     __dirname,
-    '../../../../.kiro/specs/line-reversi-miniapp/resources'
+    '../../../../.specify/specs/line-reversi-miniapp/resources'
   );
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');

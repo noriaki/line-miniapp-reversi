@@ -13,7 +13,7 @@ import type { EmscriptenModule } from './__types__/worker-global';
 describe('Integration Test: AIEngine + WASMBridge', () => {
   const RESOURCES_DIR = path.join(
     __dirname,
-    '../../../../.kiro/specs/line-reversi-miniapp/resources'
+    '../../../../.specify/specs/line-reversi-miniapp/resources'
   );
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');

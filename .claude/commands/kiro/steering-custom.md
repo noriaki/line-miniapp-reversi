@@ -7,18 +7,18 @@ allowed-tools: Task
 
 ## Interactive Workflow
 
-This command starts an interactive process with the SubAgent:
+This command starts an interactive process with the Subagent:
 
-1. SubAgent asks user for domain/topic
-2. SubAgent checks for available templates
-3. SubAgent analyzes codebase for relevant patterns
-4. SubAgent generates custom steering file
+1. Subagent asks user for domain/topic
+2. Subagent checks for available templates
+3. Subagent analyzes codebase for relevant patterns
+4. Subagent generates custom steering file
 
-## Invoke SubAgent
+## Invoke Subagent
 
 Delegate custom steering creation to steering-custom-agent:
 
-Use the Task tool to invoke the SubAgent with file path patterns:
+Use the Task tool to invoke the Subagent with file path patterns:
 
 ```
 Task(
@@ -28,8 +28,8 @@ Task(
 Interactive Mode: Ask user for domain/topic
 
 File patterns to read:
-- .kiro/settings/templates/steering-custom/*.md
-- .kiro/settings/rules/steering-principles.md
+- .specify/settings/templates/steering-custom/*.md
+- .specify/settings/rules/steering-principles.md
 
 JIT Strategy: Analyze codebase for relevant patterns as needed
 """
@@ -38,7 +38,7 @@ JIT Strategy: Analyze codebase for relevant patterns as needed
 
 ## Display Result
 
-Show SubAgent summary to user:
+Show Subagent summary to user:
 
 - Custom steering file created
 - Template used (if any)
@@ -47,13 +47,16 @@ Show SubAgent summary to user:
 
 ## Available Templates
 
-Available templates in `.kiro/settings/templates/steering-custom/`:
+Available templates in `.specify/settings/templates/steering-custom/`:
 
 - api-standards.md, testing.md, security.md, database.md
 - error-handling.md, authentication.md, deployment.md
 
 ## Notes
 
-- SubAgent will interact with user to understand needs
+- Subagent will interact with user to understand needs
 - Templates are starting points, customized for project
 - All steering files loaded as project memory
+- Avoid documenting agent-specific tooling directories (e.g. `.cursor/`, `.gemini/`, `.claude/`)
+- `.specify/settings/` content should NOT be documented (it's metadata, not project knowledge)
+- Light references to `.specify/specs/` and `.specify/steering/` are acceptable; avoid other `.kiro/` directories

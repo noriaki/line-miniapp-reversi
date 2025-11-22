@@ -14,16 +14,16 @@ argument-hint: <feature-name>
 
 Check that design has been completed:
 
-- Verify `.kiro/specs/$1/` exists
-- Verify `.kiro/specs/$1/design.md` exists
+- Verify `.specify/specs/$1/` exists
+- Verify `.specify/specs/$1/design.md` exists
 
 If validation fails, inform user to complete design phase first.
 
-## Invoke SubAgent
+## Invoke Subagent
 
 Delegate design validation to validate-design-agent:
 
-Use the Task tool to invoke the SubAgent with file path patterns:
+Use the Task tool to invoke the Subagent with file path patterns:
 
 ```
 Task(
@@ -31,21 +31,21 @@ Task(
   description="Interactive design review",
   prompt="""
 Feature: $1
-Spec directory: .kiro/specs/$1/
+Spec directory: .specify/specs/$1/
 
 File patterns to read:
-- .kiro/specs/$1/spec.json
-- .kiro/specs/$1/requirements.md
-- .kiro/specs/$1/design.md
-- .kiro/steering/*.md
-- .kiro/settings/rules/design-review.md
+- .specify/specs/$1/spec.json
+- .specify/specs/$1/requirements.md
+- .specify/specs/$1/design.md
+- .specify/steering/*.md
+- .specify/settings/rules/design-review.md
 """
 )
 ```
 
 ## Display Result
 
-Show SubAgent summary to user, then provide next step guidance:
+Show Subagent summary to user, then provide next step guidance:
 
 ### Next Phase: Task Generation
 

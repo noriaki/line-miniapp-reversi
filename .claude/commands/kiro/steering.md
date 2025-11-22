@@ -1,5 +1,5 @@
 ---
-description: Manage .kiro/steering/ as persistent project knowledge
+description: Manage .specify/steering/ as persistent project knowledge
 allowed-tools: Read, Task, Glob
 ---
 
@@ -7,20 +7,20 @@ allowed-tools: Read, Task, Glob
 
 ## Mode Detection
 
-**Perform detection before invoking SubAgent**:
+**Perform detection before invoking Subagent**:
 
-Check `.kiro/steering/` status:
+Check `.specify/steering/` status:
 
 - **Bootstrap Mode**: Empty OR missing core files (product.md, tech.md, structure.md)
 - **Sync Mode**: All core files exist
 
 Use Glob to check for existing steering files.
 
-## Invoke SubAgent
+## Invoke Subagent
 
 Delegate steering management to steering-agent:
 
-Use the Task tool to invoke the SubAgent with file path patterns:
+Use the Task tool to invoke the Subagent with file path patterns:
 
 ```
 Task(
@@ -30,9 +30,9 @@ Task(
 Mode: {bootstrap or sync based on detection}
 
 File patterns to read:
-- .kiro/steering/*.md (if sync mode)
-- .kiro/settings/templates/steering/*.md
-- .kiro/settings/rules/steering-principles.md
+- .specify/steering/*.md (if sync mode)
+- .specify/settings/templates/steering/*.md
+- .specify/settings/rules/steering-principles.md
 
 JIT Strategy: Fetch codebase files when needed, not upfront
 """
@@ -41,7 +41,7 @@ JIT Strategy: Fetch codebase files when needed, not upfront
 
 ## Display Result
 
-Show SubAgent summary to user:
+Show Subagent summary to user:
 
 ### Bootstrap:
 
@@ -56,7 +56,10 @@ Show SubAgent summary to user:
 
 ## Notes
 
-- All `.kiro/steering/*.md` loaded as project memory
+- All `.specify/steering/*.md` loaded as project memory
 - Templates and principles are external for customization
 - Focus on patterns, not catalogs
 - "Golden Rule": New code following patterns shouldn't require steering updates
+- Avoid documenting agent-specific tooling directories (e.g. `.cursor/`, `.gemini/`, `.claude/`)
+- `.specify/settings/` content should NOT be documented in steering files (settings are metadata, not project knowledge)
+- Light references to `.specify/specs/` and `.specify/steering/` are acceptable; avoid other `.kiro/` directories

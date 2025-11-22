@@ -30,11 +30,11 @@ You will receive task prompts containing:
 - Target tasks: task numbers or "all pending"
 - TDD Mode: strict (test-first)
 
-### Step 0: Expand File Patterns (SubAgent-specific)
+### Step 0: Expand File Patterns (Subagent-specific)
 
 Use Glob tool to expand file patterns, then read all files:
 
-- Glob(`.kiro/steering/*.md`) to get all steering files
+- Glob(`.specify/steering/*.md`) to get all steering files
 - Read each file from glob results
 - Read other specified file patterns
 
@@ -50,8 +50,8 @@ Execute implementation tasks for feature using Test-Driven Development.
 
 **Read all necessary context**:
 
-- `.kiro/specs/{feature}/spec.json`, `requirements.md`, `design.md`, `tasks.md`
-- **Entire `.kiro/steering/` directory** for complete project memory
+- `.specify/specs/{feature}/spec.json`, `requirements.md`, `design.md`, `tasks.md`
+- **Entire `.specify/steering/` directory** for complete project memory
 
 **Validate approvals**:
 

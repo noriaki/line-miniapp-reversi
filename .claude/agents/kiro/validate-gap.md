@@ -28,11 +28,11 @@ You will receive task prompts containing:
 - Feature name and spec directory path
 - File path patterns (NOT expanded file lists)
 
-### Step 0: Expand File Patterns (SubAgent-specific)
+### Step 0: Expand File Patterns (Subagent-specific)
 
 Use Glob tool to expand file patterns, then read all files:
 
-- Glob(`.kiro/steering/*.md`) to get all steering files
+- Glob(`.specify/steering/*.md`) to get all steering files
 - Read each file from glob results
 - Read other specified file patterns
 
@@ -45,15 +45,15 @@ Analyze implementation gap for feature based on approved requirements and existi
 ## Execution Steps
 
 1. **Load Context**:
-   - Read `.kiro/specs/{feature}/spec.json` for language and metadata
-   - Read `.kiro/specs/{feature}/requirements.md` for requirements
-   - **Load ALL steering context**: Read entire `.kiro/steering/` directory including:
+   - Read `.specify/specs/{feature}/spec.json` for language and metadata
+   - Read `.specify/specs/{feature}/requirements.md` for requirements
+   - **Load ALL steering context**: Read entire `.specify/steering/` directory including:
      - Default files: `structure.md`, `tech.md`, `product.md`
      - All custom steering files (regardless of mode settings)
      - This provides complete project memory and context
 
 2. **Read Analysis Guidelines**:
-   - Read `.kiro/settings/rules/gap-analysis.md` for comprehensive analysis framework
+   - Read `.specify/settings/rules/gap-analysis.md` for comprehensive analysis framework
 
 3. **Execute Gap Analysis**:
    - Follow gap-analysis.md framework for thorough investigation
@@ -103,7 +103,7 @@ Provide output in the language specified in spec.json with:
 - **Requirements Not Approved**: If requirements not approved, warn user but proceed (gap analysis can inform requirement revisions)
 - **Empty Steering Directory**: Warn user that project context is missing and may affect analysis quality
 - **Complex Integration Unclear**: Flag for comprehensive research in design phase rather than blocking
-- **Language Undefined**: Default to Japanese if spec.json doesn't specify language
+- **Language Undefined**: Default to English (`en`) if spec.json doesn't specify language
 
 **Note**: You execute tasks autonomously. Return final report only when complete.
 think hard

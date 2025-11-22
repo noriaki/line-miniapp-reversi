@@ -17,23 +17,23 @@ argument-hint: <feature-name> [task-numbers]
 
 Check that tasks have been generated:
 
-- Verify `.kiro/specs/$1/` exists
-- Verify `.kiro/specs/$1/tasks.md` exists
+- Verify `.specify/specs/$1/` exists
+- Verify `.specify/specs/$1/tasks.md` exists
 
 If validation fails, inform user to complete tasks generation first.
 
 ## Task Selection Logic
 
-**Parse task numbers from `$2`** (perform this in Slash Command before invoking SubAgent):
+**Parse task numbers from `$2`** (perform this in Slash Command before invoking Subagent):
 
 - If `$2` provided: Parse task numbers (e.g., "1.1", "1,2,3")
-- Otherwise: Read `.kiro/specs/$1/tasks.md` and find all unchecked tasks (`- [ ]`)
+- Otherwise: Read `.specify/specs/$1/tasks.md` and find all unchecked tasks (`- [ ]`)
 
-## Invoke SubAgent
+## Invoke Subagent
 
 Delegate TDD implementation to spec-tdd-impl-agent:
 
-Use the Task tool to invoke the SubAgent with file path patterns:
+Use the Task tool to invoke the Subagent with file path patterns:
 
 ```
 Task(
@@ -41,12 +41,12 @@ Task(
   description="Execute TDD implementation",
   prompt="""
 Feature: $1
-Spec directory: .kiro/specs/$1/
+Spec directory: .specify/specs/$1/
 Target tasks: {parsed task numbers or "all pending"}
 
 File patterns to read:
-- .kiro/specs/$1/*.{json,md}
-- .kiro/steering/*.md
+- .specify/specs/$1/*.{json,md}
+- .specify/steering/*.md
 
 TDD Mode: strict (test-first)
 """
@@ -55,7 +55,7 @@ TDD Mode: strict (test-first)
 
 ## Display Result
 
-Show SubAgent summary to user, then provide next step guidance:
+Show Subagent summary to user, then provide next step guidance:
 
 ### Task Execution
 

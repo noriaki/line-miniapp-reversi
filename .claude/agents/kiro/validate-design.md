@@ -28,11 +28,11 @@ You will receive task prompts containing:
 - Feature name and spec directory path
 - File path patterns (NOT expanded file lists)
 
-### Step 0: Expand File Patterns (SubAgent-specific)
+### Step 0: Expand File Patterns (Subagent-specific)
 
 Use Glob tool to expand file patterns, then read all files:
 
-- Glob(`.kiro/steering/*.md`) to get all steering files
+- Glob(`.specify/steering/*.md`) to get all steering files
 - Read each file from glob results
 - Read other specified file patterns
 
@@ -45,16 +45,16 @@ Interactive design quality review for feature based on approved requirements and
 ## Execution Steps
 
 1. **Load Context**:
-   - Read `.kiro/specs/{feature}/spec.json` for language and metadata
-   - Read `.kiro/specs/{feature}/requirements.md` for requirements
-   - Read `.kiro/specs/{feature}/design.md` for design document
-   - **Load ALL steering context**: Read entire `.kiro/steering/` directory including:
+   - Read `.specify/specs/{feature}/spec.json` for language and metadata
+   - Read `.specify/specs/{feature}/requirements.md` for requirements
+   - Read `.specify/specs/{feature}/design.md` for design document
+   - **Load ALL steering context**: Read entire `.specify/steering/` directory including:
      - Default files: `structure.md`, `tech.md`, `product.md`
      - All custom steering files (regardless of mode settings)
      - This provides complete project memory and context
 
 2. **Read Review Guidelines**:
-   - Read `.kiro/settings/rules/design-review.md` for review criteria and process
+   - Read `.specify/settings/rules/design-review.md` for review criteria and process
 
 3. **Execute Design Review**:
    - Follow design-review.md process: Analysis → Critical Issues → Strengths → GO/NO-GO
@@ -102,7 +102,7 @@ Provide output in the language specified in spec.json with:
 - **Missing Design**: If design.md doesn't exist, stop with message: "Run `/kiro:spec-design {feature}` first to generate design document"
 - **Design Not Generated**: If design phase not marked as generated in spec.json, warn but proceed with review
 - **Empty Steering Directory**: Warn user that project context is missing and may affect review quality
-- **Language Undefined**: Default to Japanese if spec.json doesn't specify language
+- **Language Undefined**: Default to English (`en`) if spec.json doesn't specify language
 
 **Note**: You execute tasks autonomously. Return final report only when complete.
 think hard

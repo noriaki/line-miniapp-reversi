@@ -105,19 +105,19 @@ Execute these 4 phases in order:
    - Keep name concise (2-4 words ideally)
 
 2. **Check Uniqueness**:
-   - Use Glob to check `.kiro/specs/*/`
+   - Use Glob to check `.specify/specs/*/`
    - If feature name exists, append `-2`, `-3`, etc.
 
 3. **Create Directory**:
-   - Use Bash: `mkdir -p .kiro/specs/{feature-name}`
+   - Use Bash: `mkdir -p .specify/specs/{feature-name}`
 
 4. **Initialize Files from Templates**:
 
    a. Read templates:
 
    ```
-   - .kiro/settings/templates/specs/init.json
-   - .kiro/settings/templates/specs/requirements-init.md
+   - .specify/settings/templates/specs/init.json
+   - .specify/settings/templates/specs/requirements-init.md
    ```
 
    b. Replace placeholders:
@@ -131,15 +131,15 @@ Execute these 4 phases in order:
    c. Write files using Write tool:
 
    ```
-   - .kiro/specs/{feature-name}/spec.json
-   - .kiro/specs/{feature-name}/requirements.md
+   - .specify/specs/{feature-name}/spec.json
+   - .specify/specs/{feature-name}/requirements.md
    ```
 
 5. **Update TodoWrite**: Mark task 1 as `completed`, task 2 as `in_progress`.
 
 6. **Output Progress**:
    ```
-   ✅ Spec initialized at .kiro/specs/{feature-name}/
+   ✅ Spec initialized at .specify/specs/{feature-name}/
    ```
 
 **Automatic Mode**: IMMEDIATELY continue to Phase 2.
@@ -161,7 +161,7 @@ Execute these 4 phases in order:
 /kiro:spec-requirements {feature-name}
 ```
 
-Wait for completion. SubAgent will return with "次のステップ" message.
+Wait for completion. Subagent will return with "次のステップ" message.
 
 **IMPORTANT**: In Automatic Mode, IGNORE the "次のステップ" message. It is for standalone usage.
 
@@ -194,7 +194,7 @@ Wait for completion. SubAgent will return with "次のステップ" message.
 
 Note: `-y` flag auto-approves requirements.
 
-Wait for completion. SubAgent will return with "次のステップ" message.
+Wait for completion. Subagent will return with "次のステップ" message.
 
 **IMPORTANT**: In Automatic Mode, IGNORE the "次のステップ" message.
 
@@ -273,9 +273,9 @@ Output final completion summary (see Output Description section) and exit.
 
 ### Phase 1 Tools
 
-- **Glob**: Check `.kiro/specs/*/` for existing feature names
+- **Glob**: Check `.specify/specs/*/` for existing feature names
 - **Bash**: Create directory with `mkdir -p`, generate timestamp with `date -u`
-- **Read**: Fetch templates from `.kiro/settings/templates/specs/`
+- **Read**: Fetch templates from `.specify/settings/templates/specs/`
 - **Write**: Create `spec.json` and `requirements.md` in spec directory
 
 ### Phase 2-4 Tools
@@ -315,7 +315,7 @@ All phases execute automatically without prompts.
 After each phase, show brief progress:
 
 ```
-✅ Spec initialized at .kiro/specs/{feature}/
+✅ Spec initialized at .specify/specs/{feature}/
 ✅ Requirements generated → Continuing to design...
 ✅ Design generated → Continuing to tasks...
 ```
@@ -328,10 +328,10 @@ Provide output in the language specified in `spec.json`:
 ✅ Quick Spec Generation Complete!
 
 ## Generated Files:
-- .kiro/specs/{feature}/spec.json
-- .kiro/specs/{feature}/requirements.md ({X} requirements)
-- .kiro/specs/{feature}/design.md ({Y} components, {Z} endpoints)
-- .kiro/specs/{feature}/tasks.md ({N} tasks)
+- .specify/specs/{feature}/spec.json
+- .specify/specs/{feature}/requirements.md ({X} requirements)
+- .specify/specs/{feature}/design.md ({Y} components, {Z} endpoints)
+- .specify/specs/{feature}/tasks.md ({N} tasks)
 
 ⚠️ Quick generation skipped:
 - `/kiro:validate-gap` - Gap analysis (integration check)
@@ -369,7 +369,7 @@ For complex features (integrations, security, APIs), use standard workflow:
 
 **Template Missing**:
 
-- Check `.kiro/settings/templates/specs/` exists
+- Check `.specify/settings/templates/specs/` exists
 - Report specific missing file
 - Exit with error
 

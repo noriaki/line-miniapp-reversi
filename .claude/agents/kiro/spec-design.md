@@ -30,11 +30,11 @@ You will receive task prompts containing:
 - Auto-approve flag (true/false)
 - Mode: generate or merge
 
-### Step 0: Expand File Patterns (SubAgent-specific)
+### Step 0: Expand File Patterns (Subagent-specific)
 
 Use Glob tool to expand file patterns, then read all files:
 
-- Glob(`.kiro/steering/*.md`) to get all steering files
+- Glob(`.specify/steering/*.md`) to get all steering files
 - Read each file from glob results
 - Read other specified file patterns
 
@@ -50,10 +50,10 @@ Generate technical design document for feature based on approved requirements.
 
 **Read all necessary context**:
 
-- `.kiro/specs/{feature}/spec.json`, `requirements.md`, `design.md` (if exists)
-- **Entire `.kiro/steering/` directory** for complete project memory
-- `.kiro/settings/templates/specs/design.md` for document structure
-- `.kiro/settings/rules/design-principles.md` for design principles
+- `.specify/specs/{feature}/spec.json`, `requirements.md`, `design.md` (if exists)
+- **Entire `.specify/steering/` directory** for complete project memory
+- `.specify/settings/templates/specs/design.md` for document structure
+- `.specify/settings/rules/design-principles.md` for design principles
 
 **Validate requirements approval**:
 
@@ -73,7 +73,7 @@ Generate technical design document for feature based on approved requirements.
 2. **Execute Appropriate Discovery Process**:
 
    **For Complex/New Features**:
-   - Read and execute `.kiro/settings/rules/design-discovery-full.md`
+   - Read and execute `.specify/settings/rules/design-discovery-full.md`
    - Conduct thorough research using WebSearch/WebFetch:
      - Latest architectural patterns and best practices
      - External dependency verification (APIs, libraries, versions, compatibility)
@@ -81,7 +81,7 @@ Generate technical design document for feature based on approved requirements.
      - Performance benchmarks and security considerations
 
    **For Extensions**:
-   - Read and execute `.kiro/settings/rules/design-discovery-light.md`
+   - Read and execute `.specify/settings/rules/design-discovery-light.md`
    - Focus on integration points, existing patterns, compatibility
    - Use Grep to analyze existing codebase patterns
 
@@ -98,8 +98,8 @@ Generate technical design document for feature based on approved requirements.
 ### Step 3: Generate Design Document
 
 1. **Load Design Template and Rules**:
-   - Read `.kiro/settings/templates/specs/design.md` for structure
-   - Read `.kiro/settings/rules/design-principles.md` for principles
+   - Read `.specify/settings/templates/specs/design.md` for structure
+   - Read `.specify/settings/rules/design-principles.md` for principles
 
 2. **Generate Design Document**:
    - **Follow specs/design.md template structure and generation instructions strictly**
@@ -126,6 +126,7 @@ Generate technical design document for feature based on approved requirements.
 - **Steering Alignment**: Respect existing architecture patterns from steering context
 - **Template Adherence**: Follow specs/design.md template structure and generation instructions strictly
 - **Design Focus**: Architecture and interfaces ONLY, no implementation code
+- **Requirements Traceability IDs**: Use numeric requirement IDs only (e.g. "1.1", "1.2", "3.1", "3.3") exactly as defined in requirements.md. Do not invent new IDs or use alphabetic labels.
 
 ## Tool Guidance
 
@@ -140,14 +141,14 @@ Generate technical design document for feature based on approved requirements.
 
 Provide brief summary in the language specified in spec.json:
 
-1. **Status**: Confirm design document generated at `.kiro/specs/{feature}/design.md`
+1. **Status**: Confirm design document generated at `.specify/specs/{feature}/design.md`
 2. **Discovery Type**: Which discovery process was executed (full/light/minimal)
 3. **Key Findings**: 2-3 critical insights from discovery that shaped the design
 4. **Next Action**: Approval workflow guidance (see Safety & Fallback)
 
 **Format**: Concise Markdown (under 200 words) - this is the command output, NOT the design document itself
 
-**Note**: The actual design document follows `.kiro/settings/templates/specs/design.md` structure.
+**Note**: The actual design document follows `.specify/settings/templates/specs/design.md` structure.
 
 ## Safety & Fallback
 
@@ -162,12 +163,12 @@ Provide brief summary in the language specified in spec.json:
 **Missing Requirements**:
 
 - **Stop Execution**: Requirements document must exist
-- **User Message**: "No requirements.md found at `.kiro/specs/{feature}/requirements.md`"
+- **User Message**: "No requirements.md found at `.specify/specs/{feature}/requirements.md`"
 - **Suggested Action**: "Run `/kiro:spec-requirements {feature}` to generate requirements first"
 
 **Template Missing**:
 
-- **User Message**: "Template file missing at `.kiro/settings/templates/specs/design.md`"
+- **User Message**: "Template file missing at `.specify/settings/templates/specs/design.md`"
 - **Suggested Action**: "Check repository setup or restore template file"
 - **Fallback**: Use inline basic structure with warning
 
@@ -178,8 +179,10 @@ Provide brief summary in the language specified in spec.json:
 
 **Discovery Complexity Unclear**:
 
-- **Default**: Use full discovery process (`.kiro/settings/rules/design-discovery-full.md`)
+- **Default**: Use full discovery process (`.specify/settings/rules/design-discovery-full.md`)
 - **Rationale**: Better to over-research than miss critical context
+- **Invalid Requirement IDs**:
+  - **Stop Execution**: If requirements.md is missing numeric IDs or uses non-numeric headings (for example, "Requirement A"), stop and instruct the user to fix requirements.md before continuing.
 
 **Note**: You execute tasks autonomously. Return final report only when complete.
 think

@@ -31,6 +31,7 @@ Quickly analyze existing system and integration requirements for feature extensi
 - Verify basic usage patterns
 - Check for known compatibility issues
 - Confirm licensing compatibility
+- Record key findings in `research.md` (technology alignment section)
 
 ### 4. Integration Risk Assessment
 
@@ -53,7 +54,7 @@ Switch to full discovery if you find:
 
 ## Output Requirements
 
-- Clear integration approach
+- Clear integration approach (note boundary impacts in `research.md`)
 - List of files/components to modify
 - New dependencies with versions
 - Integration risks and mitigations

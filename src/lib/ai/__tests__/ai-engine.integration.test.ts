@@ -1,5 +1,5 @@
 /**
- * Integration Tests - Task 9.2: AIEngine + WASMBridge Integration
+ * AIEngine + WASMBridge Integration Tests
  *
  * Tests the complete flow from WASM initialization to AI move calculation
  * @jest-environment node

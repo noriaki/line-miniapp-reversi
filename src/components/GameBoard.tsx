@@ -34,6 +34,7 @@ export default function GameBoard(): JSX.Element {
     isAIThinking,
     consecutivePassCount,
     notationString,
+    lastMove,
     updateBoard,
     switchPlayer,
     updateGameStatus,
@@ -441,6 +442,10 @@ export default function GameBoard(): JSX.Element {
           row.map((cell, colIndex) => {
             const position: Position = { row: rowIndex, col: colIndex };
             const isValid = isValidMove(position);
+            const isLastMove =
+              lastMove !== null &&
+              position.row === lastMove.row &&
+              position.col === lastMove.col;
 
             const cellId = generateCellId(rowIndex, colIndex);
 
@@ -458,6 +463,7 @@ export default function GameBoard(): JSX.Element {
                 data-row={rowIndex}
                 data-col={colIndex}
                 data-valid={isValid || undefined}
+                data-last-move={isLastMove || undefined}
               >
                 {cell === 'black' && <div className="stone stone-black" />}
                 {cell === 'white' && <div className="stone stone-white" />}

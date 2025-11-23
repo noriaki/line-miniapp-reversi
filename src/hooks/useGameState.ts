@@ -18,6 +18,7 @@ export interface GameState {
   consecutivePassCount: number;
   moveHistory: readonly string[];
   notationString: string;
+  lastMove: Position | null;
   incrementPassCount: () => void;
   resetPassCount: () => void;
 }
@@ -29,16 +30,18 @@ export function useGameState() {
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [consecutivePassCount, setConsecutivePassCount] = useState(0);
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
+  const [lastMove, setLastMove] = useState<Position | null>(null);
 
   const validMoves = calculateValidMoves(board, currentPlayer);
   const { black: blackCount, white: whiteCount } = countStones(board);
   const notationString = generateNotationString(moveHistory);
 
-  const updateBoard = useCallback((newBoard: Board, lastMove?: Position) => {
+  const updateBoard = useCallback((newBoard: Board, position?: Position) => {
     setBoard(newBoard);
-    if (lastMove) {
-      const notation = positionToNotation(lastMove);
+    if (position) {
+      const notation = positionToNotation(position);
       setMoveHistory((prev) => [...prev, notation]);
+      setLastMove(position);
     }
   }, []);
 
@@ -69,6 +72,7 @@ export function useGameState() {
     setIsAIThinking(false);
     setConsecutivePassCount(0);
     setMoveHistory([]);
+    setLastMove(null);
   }, []);
 
   return {
@@ -82,6 +86,7 @@ export function useGameState() {
     consecutivePassCount,
     moveHistory,
     notationString,
+    lastMove,
     updateBoard,
     switchPlayer,
     updateGameStatus,

@@ -11,10 +11,7 @@ import type { EgaroucidWASMModule } from '../types';
 import type { EmscriptenModule } from './__types__/worker-global';
 
 describe('Integration Test: AIEngine + WASMBridge', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -48,6 +45,19 @@ describe('Integration Test: AIEngine + WASMBridge', () => {
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+            };
+
+            this.HEAP8 = globalObj.HEAP8!;
+            this.HEAPU8 = globalObj.HEAPU8!;
+            this.HEAP32 = globalObj.HEAP32!;
+            this.HEAPU32 = globalObj.HEAPU32!;
+
             resolve(this);
           },
           onAbort: (reason: unknown) => {

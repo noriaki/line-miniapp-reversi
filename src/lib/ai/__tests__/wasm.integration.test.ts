@@ -7,8 +7,8 @@
  * This is a BLACK-BOX test suite based on C++ source analysis.
  *
  * Resources:
- * - WASM: .specify/specs/line-reversi-miniapp/resources/ai.wasm
- * - Glue: .specify/specs/line-reversi-miniapp/resources/ai.js
+ * - WASM: public/ai.wasm
+ * - Glue: public/ai.js
  * - Spec: .specify/specs/line-reversi-miniapp/wasm-source-analysis/interface-spec.md
  */
 
@@ -18,10 +18,7 @@ import type { EgaroucidWASMModule } from '../types';
 import type { EmscriptenModule } from './__types__/worker-global';
 
 describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -69,6 +66,19 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
             return path.join(RESOURCES_DIR, filename);
           },
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+            };
+
+            this.HEAP8 = globalObj.HEAP8!;
+            this.HEAPU8 = globalObj.HEAPU8!;
+            this.HEAP32 = globalObj.HEAP32!;
+            this.HEAPU32 = globalObj.HEAPU32!;
+
             // 'this' is the fully initialized Module object from Emscripten
             resolve(this);
           },
@@ -187,10 +197,7 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
 });
 
 describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -240,6 +247,19 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+            };
+
+            this.HEAP8 = globalObj.HEAP8!;
+            this.HEAPU8 = globalObj.HEAPU8!;
+            this.HEAP32 = globalObj.HEAP32!;
+            this.HEAPU32 = globalObj.HEAPU32!;
+
             resolve(this);
           },
           onAbort: (reason: unknown) => {
@@ -1003,10 +1023,7 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
 });
 
 describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -1039,6 +1056,19 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+            };
+
+            this.HEAP8 = globalObj.HEAP8!;
+            this.HEAPU8 = globalObj.HEAPU8!;
+            this.HEAP32 = globalObj.HEAP32!;
+            this.HEAPU32 = globalObj.HEAPU32!;
+
             resolve(this);
           },
           onAbort: (reason: unknown) => {
@@ -1335,10 +1365,7 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
 });
 
 describe('WASM Integration Tests - Task 5.4: Memory Management Verification', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -1371,6 +1398,19 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+            };
+
+            this.HEAP8 = globalObj.HEAP8!;
+            this.HEAPU8 = globalObj.HEAPU8!;
+            this.HEAP32 = globalObj.HEAP32!;
+            this.HEAPU32 = globalObj.HEAPU32!;
+
             resolve(this);
           },
           onAbort: (reason: unknown) => {
@@ -1541,10 +1581,7 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
 });
 
 describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verification', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -1577,6 +1614,19 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+            };
+
+            this.HEAP8 = globalObj.HEAP8!;
+            this.HEAPU8 = globalObj.HEAPU8!;
+            this.HEAP32 = globalObj.HEAP32!;
+            this.HEAPU32 = globalObj.HEAPU32!;
+
             resolve(this);
           },
           onAbort: (reason: unknown) => {
@@ -1860,10 +1910,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
 });
 
 describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verification', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -1896,6 +1943,19 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+            };
+
+            this.HEAP8 = globalObj.HEAP8!;
+            this.HEAPU8 = globalObj.HEAPU8!;
+            this.HEAP32 = globalObj.HEAP32!;
+            this.HEAPU32 = globalObj.HEAPU32!;
+
             resolve(this);
           },
           onAbort: (reason: unknown) => {

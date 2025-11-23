@@ -54,6 +54,7 @@ export type { Profile } from '@line/liff';
 // useGameState.ts - Game state machine
 // useAIPlayer.ts - AI worker coordination
 // useLiff.ts - LIFF context consumer
+// worker-factory.ts - Worker instantiation abstraction (testable)
 ```
 
 ### UI Components (`/src/components/`)
@@ -126,6 +127,12 @@ import type { Board, Position } from './types';
 - Provider initializes SDK → Context stores state → Hook consumes context → Components use hook
 - No wrapper classes - use `liff.init()`, `liff.getProfile()` directly
 - Official types from `@line/liff` package
+
+**Worker Abstraction Pattern**:
+
+- Worker instantiation isolated in `worker-factory.ts` for testing (uses `import.meta.url`)
+- Mock implementation in `__mocks__/worker-factory.ts` for Jest compatibility
+- Enables unit testing of Worker-dependent hooks without bundler setup
 
 ---
 

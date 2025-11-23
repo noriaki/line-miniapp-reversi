@@ -18,7 +18,7 @@
 
 - **LIFF SDK 2.x**: Official LINE Front-end Framework (direct API usage, no wrapper classes)
 - **Egaroucid WASM**: High-performance Reversi AI engine (loaded via Web Workers)
-- **Tailwind CSS + CSS Modules**: Utility-first styling with component-scoped CSS for complex animations
+- **Tailwind CSS + Plain CSS**: Utility-first styling with component-scoped plain CSS for complex animations (GameBoard.css)
 - **@line/liff-mock**: Official LIFF testing utilities
 
 ## Development Standards

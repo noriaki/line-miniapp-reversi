@@ -143,6 +143,38 @@
 - **Risk 3**: 本番環境とテスト環境の動作差異
   - **Mitigation**: 本番コード（`wasm-loader.ts`）と同じパターンを採用し、整合性を維持。E2Eテストでブラウザ環境での動作も検証
 
+### Decision: ハイブリッド戦略 - 注入glueコード + 3段階フォールバック（実装後の検証結果）
+
+- **Context**: 実装完了後、実際にどの戦略が成功しているかを検証し、実装の妥当性を確認
+- **Implementation Analysis**:
+  - **注入されたglueコード**: 全7箇所のテストセットアップで`updateMemoryViews()`をラップし、HEAPビューを`Module.*`プロパティに公開
+    ```javascript
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+    ```
+  - **onRuntimeInitialized内の戦略**: 3段階フォールバックを実装
+    - 戦略1: グローバルスコープから`HEAP32`をコピー
+    - 戦略2: `wasmMemory.buffer`から新規HEAPビューを作成
+    - 戦略3: `Module.memory.buffer`から新規HEAPビューを作成
+- **Actual Success Pattern**: **Strategy 1 (グローバルスコープ)** が実際に成功
+  1. Emscriptenの`updateMemoryViews()`がHEAP8、HEAP32等をグローバルスコープに作成
+  2. 注入glueコードがこれらをModuleオブジェクトにも割り当て
+  3. `onRuntimeInitialized`内のStrategy 1が`globalObj.HEAP32`を検出してコピー成功
+- **Strategy 2/3の役割**: 防御的プログラミングパターンとしてのフォールバック
+  - 将来的なEmscriptenバージョン変更への対応
+  - 注入glueコードが失敗した場合の代替手段
+  - ビルド設定の違いによる環境差異への対応
+- **Rationale for Keeping All 3 Strategies**:
+  - 仕様で明示的に定義された3段階戦略を維持
+  - 将来的な互換性確保（防御的プログラミング）
+  - コストは最小限（if-else-ifチェーンのみ）
+  - ドキュメント価値：意図した設計を明示
+- **Test Results**: 全565テスト成功、TypeScript strict mode準拠
+- **Follow-up**: テストタイトルをBDDスタイルに統一し、"Task X.Y"参照を削除
+
 ## References
 
 - [HEAP\* not accessible anymore through Module object](https://groups.google.com/g/emscripten-discuss/c/Qlob7yyD94U) — Emscripten 2.0.10以降のHEAP\*アクセス変更に関する議論

@@ -72,15 +72,39 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
               HEAPU8?: Uint8Array;
               HEAP32?: Int32Array;
               HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
             };
 
-            this.HEAP8 = globalObj.HEAP8!;
-            this.HEAPU8 = globalObj.HEAPU8!;
-            this.HEAP32 = globalObj.HEAP32!;
-            this.HEAPU32 = globalObj.HEAPU32!;
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
 
-            // 'this' is the fully initialized Module object from Emscripten
-            resolve(this);
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -107,6 +131,25 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
 
         try {
           // Execute Emscripten glue code in a context where __dirname is defined
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          // In the minified code: function updateMemoryViews(){var b=wasmMemory.buffer;HEAP8=new Int8Array(b);...}
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           // Create a function that provides __dirname and __filename
           const executeGlue = new Function(
             '__dirname',
@@ -114,7 +157,7 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -253,14 +296,39 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
               HEAPU8?: Uint8Array;
               HEAP32?: Int32Array;
               HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
             };
 
-            this.HEAP8 = globalObj.HEAP8!;
-            this.HEAPU8 = globalObj.HEAPU8!;
-            this.HEAP32 = globalObj.HEAP32!;
-            this.HEAPU32 = globalObj.HEAPU32!;
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
 
-            resolve(this);
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -289,13 +357,33 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Execute Emscripten glue code in a context where __dirname is defined
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          // In the minified code: function updateMemoryViews(){var b=wasmMemory.buffer;HEAP8=new Int8Array(b);...}
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -1062,14 +1150,39 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
               HEAPU8?: Uint8Array;
               HEAP32?: Int32Array;
               HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
             };
 
-            this.HEAP8 = globalObj.HEAP8!;
-            this.HEAPU8 = globalObj.HEAPU8!;
-            this.HEAP32 = globalObj.HEAP32!;
-            this.HEAPU32 = globalObj.HEAPU32!;
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
 
-            resolve(this);
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -1093,13 +1206,32 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Execute Emscripten glue code with injected HEAP exposure logic
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -1404,14 +1536,39 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
               HEAPU8?: Uint8Array;
               HEAP32?: Int32Array;
               HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
             };
 
-            this.HEAP8 = globalObj.HEAP8!;
-            this.HEAPU8 = globalObj.HEAPU8!;
-            this.HEAP32 = globalObj.HEAP32!;
-            this.HEAPU32 = globalObj.HEAPU32!;
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
 
-            resolve(this);
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -1435,13 +1592,32 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Execute Emscripten glue code with injected HEAP exposure logic
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -1620,14 +1796,39 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
               HEAPU8?: Uint8Array;
               HEAP32?: Int32Array;
               HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
             };
 
-            this.HEAP8 = globalObj.HEAP8!;
-            this.HEAPU8 = globalObj.HEAPU8!;
-            this.HEAP32 = globalObj.HEAP32!;
-            this.HEAPU32 = globalObj.HEAPU32!;
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
 
-            resolve(this);
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -1651,13 +1852,31 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -1949,14 +2168,39 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
               HEAPU8?: Uint8Array;
               HEAP32?: Int32Array;
               HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
             };
 
-            this.HEAP8 = globalObj.HEAP8!;
-            this.HEAPU8 = globalObj.HEAPU8!;
-            this.HEAP32 = globalObj.HEAP32!;
-            this.HEAPU32 = globalObj.HEAPU32!;
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
 
-            resolve(this);
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -1980,13 +2224,33 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Execute Emscripten glue code in a context where __dirname is defined
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          // In the minified code: function updateMemoryViews(){var b=wasmMemory.buffer;HEAP8=new Int8Array(b);...}
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {

@@ -110,9 +110,9 @@ sequenceDiagram
     useGameState->>useGameState: setLastMove(position)
     useGameState-->>GameBoard: lastMove更新完了
     GameBoard->>CSS: data-last-move属性を適用
-    CSS-->>User: ハイライト表示
+    CSS-->>User: ハイライト即座に表示
 
-    Note over User,CSS: AIターンの場合も同様のフロー
+    Note over User,CSS: AIターンの場合も同様のフロー（アニメーション完了を待たずに即座にハイライト表示）
 
     User->>GameBoard: ゲームリセット (resetGame)
     GameBoard->>useGameState: resetGame()
@@ -125,6 +125,8 @@ sequenceDiagram
 **フローレベルの決定事項**:
 
 - `updateBoard` 呼び出し時に `position` パラメータを使用して `lastMove` を自動的に更新する
+- ハイライトは `updateBoard` が呼ばれた瞬間に即座に表示される（アニメーション完了を待たない）
+- シンプルで直感的なUIを優先し、複雑なアニメーション同期ロジックは実装しない
 - ゲームリセット時、パスオペレーション時、ゲーム終了時の状態遷移ロジックは変更不要（`lastMove` は独立して管理）
 - ハイライトのレンダリングは `data-last-move` 属性の有無でCSSセレクタによって制御
 
@@ -137,7 +139,7 @@ sequenceDiagram
 | 1.3         | 新しい着手時に前回のハイライトを削除             | useGameState, GameBoard | setLastMove(position)        | 最終手ハイライトのライフサイクル |
 | 1.4         | 他のマスと明確に区別できる視覚スタイル           | GameBoard.css           | .board-cell[data-last-move]  | -                                |
 | 2.1         | AIの着手位置をハイライト                         | useGameState, GameBoard | updateBoard(board, position) | 最終手ハイライトのライフサイクル |
-| 2.2         | AIの着手アニメーション後にハイライト表示         | GameBoard               | -                            | -                                |
+| 2.2         | AIの着手時に即座にハイライト表示                 | GameBoard               | -                            | -                                |
 | 2.3         | AI/人間で同じハイライトスタイル                  | GameBoard.css           | .board-cell[data-last-move]  | -                                |
 | 3.1         | ゲーム開始時はハイライト非表示                   | useGameState            | lastMove初期値: null         | -                                |
 | 3.2         | ゲームリセット時にハイライトクリア               | useGameState            | resetGame()                  | 最終手ハイライトのライフサイクル |
@@ -150,7 +152,7 @@ sequenceDiagram
 | 5.3         | 最終手位置をオプショナル値として扱う             | useGameState            | lastMove: Position \| null   | -                                |
 | 5.4         | GameBoardはuseGameStateから最終手位置取得        | GameBoard               | useGameState().lastMove      | -                                |
 | 6.1         | CSSベースのアニメーション実装                    | GameBoard.css           | CSS transitions              | -                                |
-| 6.2         | React.memoまたはメモ化で不要な再レンダリング防止 | GameBoard               | React.memoまたはuseMemo      | -                                |
+| 6.2         | 不要な再レンダリング防止                         | GameBoard               | シンプルな実装を維持         | -                                |
 | 6.3         | フレームレートに影響しないCSSトランジション      | GameBoard.css           | CSS: transition duration     | -                                |
 | 6.4         | 既存のレンダリングロジックとの互換性保持         | GameBoard               | -                            | -                                |
 
@@ -237,7 +239,10 @@ interface GameStateHook {
 
 - **Integration**: 既存の `useGameState` フックに `lastMove` 状態と `setLastMove` 関数を追加する。`updateBoard` 関数の内部で `lastMove` パラメータが存在する場合に `setLastMove` を呼び出すロジックを追加する。
 - **Validation**: `lastMove` の型は `Position | null` として厳密に型付けされ、TypeScriptの型チェックで不正な値の代入を防ぐ。
-- **Risks**: `updateBoard` 関数のシグネチャ変更により、既存の呼び出し箇所で `lastMove` を明示的に渡す必要がある。ただし、オプショナルパラメータとすることで後方互換性を維持する。
+- **updateBoard呼び出し箇所**: 既存のコードベースで `updateBoard` を呼び出している箇所は以下の通り：
+  - `/src/components/GameBoard.tsx:135` - 人間プレーヤーの着手処理（`handleCellClick`）
+  - `/src/components/GameBoard.tsx:256` - AIプレーヤーの着手処理（`useEffect`内の`calculateMove`）
+  - 両方の箇所で `position` パラメータ（着手位置）が既に取得されており、`updateBoard(newBoard, position)` として第2引数に渡すだけで良い
 
 ### UI Layer
 
@@ -272,7 +277,7 @@ interface GameStateHook {
 
 - **Integration**: 既存の `useGameState` 呼び出しに `lastMove` を追加取得する。盤面セルのレンダリング部分で、`position.row === lastMove?.row && position.col === lastMove?.col` の条件を満たす場合に `data-last-move="true"` 属性を追加する。
 - **Validation**: `lastMove` が `null` の場合は属性を追加せず、通常のセルとして描画する。TypeScriptのOptional Chaining (`?.`) により、安全に `lastMove` の値を参照する。
-- **Risks**: セルのレンダリングロジックへの変更により、不要な再レンダリングが発生する可能性がある。`React.memo` または `useMemo` を使用してレンダリングを最適化する必要がある（Requirement 6.2）。
+- **Simplicity**: メモ化による最適化は不要。シンプルな実装を維持し、過度な最適化を避ける。
 
 #### GameBoard.css
 
@@ -452,8 +457,7 @@ interface Position {
 
 - レンダリングパフォーマンス:
   - ハイライト表示/非表示時のフレームレートが60fps以上を維持することを確認（React DevTools Profilerで測定）
-  - 盤面の再レンダリング回数が必要最小限（着手時のみ）であることを確認
-  - `React.memo` または `useMemo` によるメモ化が適切に機能していることを確認
+  - 既存の盤面レンダリングパフォーマンスに悪影響がないことを確認
 
 ## Performance & Scalability
 
@@ -466,7 +470,7 @@ interface Position {
 ### Optimization Techniques
 
 - **CSSベースのアニメーション**: `transition` プロパティを使用し、ブラウザのハードウェアアクセラレーションを活用
-- **React.memo**: GameBoardコンポーネントまたはセルレンダリング部分にメモ化を適用し、`lastMove` が変更されない場合の再レンダリングを防止
+- **シンプルな実装**: メモ化による最適化は不要。過度な最適化を避け、保守性とシンプルさを優先
 - **Attribute Selector**: `data-last-move` 属性セレクタによるスタイル適用は、CSSエンジンによる高速な選択が可能
 
 ### Scalability Considerations
@@ -479,17 +483,13 @@ interface Position {
 
 1. **Phase 1 - 状態管理の拡張** (リスク: 低)
    - `useGameState` フックに `lastMove` 状態を追加
-   - `updateBoard` 関数のシグネチャ変更（オプショナルパラメータ）
+   - `updateBoard` 関数で `lastMove` パラメータを受け取り、`setLastMove` を呼び出す
    - 既存のテストスイートで回帰テストを実施
 
-2. **Phase 2 - UI統合** (リスク: 低)
+2. **Phase 2 - UI統合とテスト** (リスク: 低)
    - `GameBoard` コンポーネントで `lastMove` を取得し、`data-last-move` 属性を追加
    - CSSスタイル定義を追加
-   - 視覚的回帰テストを実施
-
-3. **Phase 3 - パフォーマンス最適化** (リスク: 低)
-   - `React.memo` によるメモ化を適用
-   - レンダリングパフォーマンステストを実施
+   - 視覚的回帰テストおよびパフォーマンステストを実施
 
 **Rollback Triggers**:
 
@@ -500,5 +500,4 @@ interface Position {
 **Validation Checkpoints**:
 
 - Phase 1完了後: 単体テストおよび統合テストがパスすることを確認
-- Phase 2完了後: E2E視覚的回帰テストがパスすることを確認
-- Phase 3完了後: パフォーマンステストで60fps以上のフレームレートを確認
+- Phase 2完了後: E2E視覚的回帰テストおよびパフォーマンステストがパスすることを確認

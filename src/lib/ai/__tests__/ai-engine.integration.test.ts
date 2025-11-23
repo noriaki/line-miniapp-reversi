@@ -1,5 +1,5 @@
 /**
- * Integration Tests - Task 9.2: AIEngine + WASMBridge Integration
+ * AIEngine + WASMBridge Integration Tests
  *
  * Tests the complete flow from WASM initialization to AI move calculation
  * @jest-environment node
@@ -11,10 +11,7 @@ import type { EgaroucidWASMModule } from '../types';
 import type { EmscriptenModule } from './__types__/worker-global';
 
 describe('Integration Test: AIEngine + WASMBridge', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -48,7 +45,45 @@ describe('Integration Test: AIEngine + WASMBridge', () => {
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
-            resolve(this);
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
+            };
+
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -68,13 +103,33 @@ describe('Integration Test: AIEngine + WASMBridge', () => {
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Inject code to wrap updateMemoryViews and expose HEAP views to Module
+          // This ensures HEAP views are accessible via Module.HEAP32, etc.
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
+
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {

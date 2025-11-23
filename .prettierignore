@@ -26,3 +26,6 @@ coverage/
 # Misc
 *.log
 .DS_Store
+
+# Claude Code configuration
+.claude/

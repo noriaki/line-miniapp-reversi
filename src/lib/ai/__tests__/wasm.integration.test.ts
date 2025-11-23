@@ -7,8 +7,8 @@
  * This is a BLACK-BOX test suite based on C++ source analysis.
  *
  * Resources:
- * - WASM: .specify/specs/line-reversi-miniapp/resources/ai.wasm
- * - Glue: .specify/specs/line-reversi-miniapp/resources/ai.js
+ * - WASM: public/ai.wasm
+ * - Glue: public/ai.js
  * - Spec: .specify/specs/line-reversi-miniapp/wasm-source-analysis/interface-spec.md
  */
 
@@ -17,11 +17,8 @@ import * as fs from 'fs';
 import type { EgaroucidWASMModule } from '../types';
 import type { EmscriptenModule } from './__types__/worker-global';
 
-describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+describe('WASM Module Loading', () => {
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -69,8 +66,45 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
             return path.join(RESOURCES_DIR, filename);
           },
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
-            // 'this' is the fully initialized Module object from Emscripten
-            resolve(this);
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
+            };
+
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -97,6 +131,25 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
 
         try {
           // Execute Emscripten glue code in a context where __dirname is defined
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          // In the minified code: function updateMemoryViews(){var b=wasmMemory.buffer;HEAP8=new Int8Array(b);...}
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           // Create a function that provides __dirname and __filename
           const executeGlue = new Function(
             '__dirname',
@@ -104,7 +157,7 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -186,11 +239,8 @@ describe('WASM Integration Tests - Task 5.1: Module Loading', () => {
   });
 });
 
-describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+describe('Board Encoding and AI Move Calculation', () => {
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -240,7 +290,45 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
-            resolve(this);
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
+            };
+
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -269,13 +357,33 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Execute Emscripten glue code in a context where __dirname is defined
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          // In the minified code: function updateMemoryViews(){var b=wasmMemory.buffer;HEAP8=new Int8Array(b);...}
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -477,7 +585,7 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
     );
   }
 
-  test('Task 5.2 SUCCESS CRITERIA: AI move should be in GameLogic valid moves list (initial board)', () => {
+  test('should return AI moves that are in valid GameLogic moves list', () => {
     // CLEAR SUCCESS STATE:
     // 1. No console.error
     // 2. _ai_js returns a valid move
@@ -935,7 +1043,7 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
     });
   });
 
-  test('Task 5.2 SUCCESS CRITERIA: Level 0 should show randomness (non-deterministic)', () => {
+  test('should show randomness at level 0 (non-deterministic)', () => {
     // CLEAR SUCCESS STATE:
     // Level 0 should return different moves when called multiple times
     // This confirms randomness, not a fixed algorithm
@@ -970,7 +1078,7 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
     // But we can't guarantee it due to randomness nature
   });
 
-  test('Task 5.2 SUCCESS CRITERIA: AI response should be in valid range (0-63 bit positions)', () => {
+  test('should return AI responses within valid bit position range (0-63)', () => {
     // CLEAR SUCCESS STATE: Bit position should be 0-63
 
     const initialBoard = Array(8)
@@ -1002,11 +1110,8 @@ describe('WASM Integration Tests - Task 5.2: Board Encoding and _ai_js', () => {
   });
 });
 
-describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+describe('Position Evaluation (_calc_value)', () => {
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -1039,7 +1144,45 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
-            resolve(this);
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
+            };
+
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -1063,13 +1206,32 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Execute Emscripten glue code with injected HEAP exposure logic
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -1107,7 +1269,7 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
     return ptr;
   }
 
-  test('Task 5.3.1: _calc_value should return evaluation values for all positions', () => {
+  test('should return evaluation values for all valid positions', () => {
     // Create initial board
     const initialBoard = Array(8)
       .fill(null)
@@ -1187,7 +1349,7 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
     Module._free(resPtr);
   });
 
-  test('Task 5.3.2: _calc_value evaluation values should be signed integers', () => {
+  test('should return signed integer evaluation values', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1223,7 +1385,7 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
     Module._free(resPtr);
   });
 
-  test('Task 5.3.3: Level 0 randomness verification with _calc_value', () => {
+  test('should show randomness at level 0 for position evaluation', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1263,7 +1425,7 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
     Module._free(resPtr2);
   });
 
-  test('Task 5.3.4: Illegal moves should have value -1', () => {
+  test('should return -1 for illegal moves', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1293,7 +1455,7 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
     Module._free(resPtr);
   });
 
-  test('Task 5.3.5: Evaluation values should reflect position quality', () => {
+  test('should reflect position quality in evaluation values', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1334,11 +1496,8 @@ describe('WASM Integration Tests - Task 5.3: _calc_value Function Verification',
   });
 });
 
-describe('WASM Integration Tests - Task 5.4: Memory Management Verification', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+describe('Memory Management (_malloc/_free)', () => {
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -1371,7 +1530,45 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
-            resolve(this);
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
+            };
+
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -1395,13 +1592,32 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Execute Emscripten glue code with injected HEAP exposure logic
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -1418,7 +1634,7 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
     Module._free(percentagePtr);
   }, 60000);
 
-  test('Task 5.4.1: _malloc(256) should allocate board memory successfully', () => {
+  test('should allocate memory successfully with _malloc(256)', () => {
     const size = 256; // 64 Int32 elements * 4 bytes
     const ptr = Module._malloc(size);
 
@@ -1429,7 +1645,7 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
     Module._free(ptr);
   });
 
-  test('Task 5.4.2: HEAP32 memory read/write should work correctly', () => {
+  test('should support HEAP32 memory read and write operations', () => {
     const ptr = Module._malloc(256);
     const heap = new Int32Array(Module.HEAP32.buffer, ptr, 64);
 
@@ -1446,7 +1662,7 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
     Module._free(ptr);
   });
 
-  test('Task 5.4.3: _free(ptr) should release memory without errors', () => {
+  test('should release memory without errors using _free()', () => {
     const ptr = Module._malloc(256);
 
     expect(() => {
@@ -1454,7 +1670,7 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
     }).not.toThrow();
   });
 
-  test('Task 5.4.4: 10 consecutive AI calculations should not cause memory leaks', () => {
+  test('should not cause memory leaks during consecutive AI calculations', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1490,7 +1706,7 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
     expect(true).toBe(true);
   });
 
-  test('Task 5.4.5: _free(0) should handle null pointer safely', () => {
+  test('should handle null pointer safely in _free(0)', () => {
     // According to C standard, free(NULL) is safe
     // WASM _free(0) should also be safe
     expect(() => {
@@ -1498,7 +1714,7 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
     }).not.toThrow();
   });
 
-  test('Task 5.4.6: Multiple allocations and deallocations should work correctly', () => {
+  test('should handle multiple allocations and deallocations correctly', () => {
     const pointers: number[] = [];
 
     // Allocate 5 memory blocks
@@ -1516,7 +1732,7 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
     }
   });
 
-  test('Task 5.4.7: Memory isolation - different allocations should not interfere', () => {
+  test('should maintain memory isolation between different allocations', () => {
     const ptr1 = Module._malloc(256);
     const ptr2 = Module._malloc(256);
 
@@ -1540,11 +1756,8 @@ describe('WASM Integration Tests - Task 5.4: Memory Management Verification', ()
   });
 });
 
-describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verification', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+describe('Performance and Timeout Handling', () => {
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -1577,7 +1790,45 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
-            resolve(this);
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
+            };
+
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -1601,13 +1852,31 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -1637,7 +1906,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
 
   const TARGET_TIME_MS = 3000; // 3 seconds per requirement
 
-  test('Task 5.5.1: Level 0 calculation should complete within 3 seconds', () => {
+  test('should complete level 0 calculation within 3 seconds', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1658,7 +1927,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
     expect(elapsedTime).toBeLessThan(TARGET_TIME_MS);
   });
 
-  test('Task 5.5.2: Level 1 calculation should complete within 3 seconds', () => {
+  test('should complete level 1 calculation within 3 seconds', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1679,7 +1948,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
     expect(elapsedTime).toBeLessThan(TARGET_TIME_MS);
   });
 
-  test('Task 5.5.3: Level 2 calculation should complete within 3 seconds', () => {
+  test('should complete level 2 calculation within 3 seconds', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1700,7 +1969,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
     expect(elapsedTime).toBeLessThan(TARGET_TIME_MS);
   });
 
-  test('Task 5.5.4: Level 3 calculation should complete within 3 seconds', () => {
+  test('should complete level 3 calculation within 3 seconds', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1721,7 +1990,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
     expect(elapsedTime).toBeLessThan(TARGET_TIME_MS);
   });
 
-  test('Task 5.5.5: Level 4 calculation should complete within 3 seconds', () => {
+  test('should complete level 4 calculation within 3 seconds', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1742,7 +2011,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
     expect(elapsedTime).toBeLessThan(TARGET_TIME_MS);
   });
 
-  test('Task 5.5.6: Level 5 calculation should complete within 3 seconds', () => {
+  test('should complete level 5 calculation within 3 seconds', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1763,7 +2032,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
     expect(elapsedTime).toBeLessThan(TARGET_TIME_MS);
   });
 
-  test('Task 5.5.7: Mid-game board calculation time (Level 3)', () => {
+  test('should calculate mid-game positions efficiently at level 3', () => {
     // Create mid-game scenario with more stones
     const midGameBoard = Array(8)
       .fill(null)
@@ -1788,7 +2057,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
     expect(elapsedTime).toBeLessThan(TARGET_TIME_MS);
   });
 
-  test('Task 5.5.8: Endgame board calculation time (Level 3)', () => {
+  test('should calculate endgame positions efficiently at level 3', () => {
     // Create endgame scenario with most cells filled
     const endGameBoard = Array(8)
       .fill(null)
@@ -1810,7 +2079,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
     expect(elapsedTime).toBeLessThan(TARGET_TIME_MS);
   });
 
-  test('Task 5.5.9: _stop() function should exist and be callable', () => {
+  test('should expose callable _stop() function', () => {
     expect(Module._stop).toBeDefined();
     expect(typeof Module._stop).toBe('function');
 
@@ -1820,7 +2089,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
     }).not.toThrow();
   });
 
-  test('Task 5.5.10: _resume() function should exist and be callable', () => {
+  test('should expose callable _resume() function', () => {
     expect(Module._resume).toBeDefined();
     expect(typeof Module._resume).toBe('function');
 
@@ -1830,7 +2099,7 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
     }).not.toThrow();
   });
 
-  test('Task 5.5.11: _stop() and _resume() sequence should work', () => {
+  test('should support _stop() and _resume() sequence correctly', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -1859,11 +2128,8 @@ describe('WASM Integration Tests - Task 5.5: Performance and Timeout Verificatio
   });
 });
 
-describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verification', () => {
-  const RESOURCES_DIR = path.join(
-    __dirname,
-    '../../../../.specify/specs/line-reversi-miniapp/resources'
-  );
+describe('Error Handling and Edge Cases', () => {
+  const RESOURCES_DIR = path.join(__dirname, '../../../../public');
   const WASM_PATH = path.join(RESOURCES_DIR, 'ai.wasm');
   const GLUE_PATH = path.join(RESOURCES_DIR, 'ai.js');
 
@@ -1896,7 +2162,45 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
           thisProgram: path.join(RESOURCES_DIR, 'ai.js'),
           locateFile: (filename: string) => path.join(RESOURCES_DIR, filename),
           onRuntimeInitialized: function (this: EgaroucidWASMModule) {
-            resolve(this);
+            // Copy HEAP views from global scope to Module (Emscripten 4.0.17 pattern)
+            const globalObj = global as typeof global & {
+              HEAP8?: Int8Array;
+              HEAPU8?: Uint8Array;
+              HEAP32?: Int32Array;
+              HEAPU32?: Uint32Array;
+              wasmMemory?: WebAssembly.Memory;
+            };
+
+            // Strategy 1: Copy from global scope
+            if (globalObj.HEAP32) {
+              this.HEAP8 = globalObj.HEAP8!;
+              this.HEAPU8 = globalObj.HEAPU8!;
+              this.HEAP32 = globalObj.HEAP32!;
+              this.HEAPU32 = globalObj.HEAPU32!;
+            }
+            // Strategy 2: Create from wasmMemory.buffer
+            else if (globalObj.wasmMemory) {
+              const buffer = globalObj.wasmMemory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+            // Strategy 3: Create from Module.memory.buffer
+            else if (this.memory && this.memory.buffer) {
+              const buffer = this.memory.buffer;
+              this.HEAP8 = new Int8Array(buffer);
+              this.HEAPU8 = new Uint8Array(buffer);
+              this.HEAP32 = new Int32Array(buffer);
+              this.HEAPU32 = new Uint32Array(buffer);
+            }
+
+            // Verify HEAP32 exists and resolve or reject
+            if (this.HEAP32) {
+              resolve(this);
+            } else {
+              reject(new Error('Failed to initialize HEAP views'));
+            }
           },
           onAbort: (reason: unknown) => {
             reject(new Error(`WASM initialization aborted: ${reason}`));
@@ -1920,13 +2224,33 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
         globalObj.Module = moduleConfig as EmscriptenModule;
 
         try {
+          // Execute Emscripten glue code in a context where __dirname is defined
+          // Wrap updateMemoryViews to expose HEAP views to Module
+          // In the minified code: function updateMemoryViews(){var b=wasmMemory.buffer;HEAP8=new Int8Array(b);...}
+          const injectedGlueCode =
+            glueCode +
+            '\n;' +
+            `
+// Wrap updateMemoryViews to expose HEAP and memory to Module
+(function() {
+  var original = updateMemoryViews;
+  updateMemoryViews = function() {
+    original();
+    Module.HEAP8 = HEAP8;
+    Module.HEAPU8 = HEAPU8;
+    Module.HEAP32 = HEAP32;
+    Module.HEAPU32 = HEAPU32;
+    Module.memory = wasmMemory;
+  };
+})();
+`;
           const executeGlue = new Function(
             '__dirname',
             '__filename',
             'Module',
             'process',
             'require',
-            glueCode
+            injectedGlueCode
           );
           executeGlue(RESOURCES_DIR, GLUE_PATH, moduleConfig, process, require);
         } catch (error) {
@@ -1943,7 +2267,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     Module._free(percentagePtr);
   }, 60000);
 
-  test('Task 5.6.1: Invalid board size (63 elements) handling', () => {
+  test('should handle invalid board size with 63 elements', () => {
     // Create 63-element board (one short)
     const ptr = Module._malloc(63 * 4);
     const heap = new Int32Array(Module.HEAP32.buffer, ptr, 63);
@@ -1969,7 +2293,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     }
   });
 
-  test('Task 5.6.2: Invalid board size (65 elements) handling', () => {
+  test('should handle invalid board size with 65 elements', () => {
     // Create 65-element board (one extra)
     const ptr = Module._malloc(65 * 4);
     const heap = new Int32Array(Module.HEAP32.buffer, ptr, 65);
@@ -1992,7 +2316,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     }
   });
 
-  test('Task 5.6.3: Invalid cell value (out of range -2) handling', () => {
+  test('should handle out-of-range cell value (-2)', () => {
     const ptr = Module._malloc(64 * 4);
     const heap = new Int32Array(Module.HEAP32.buffer, ptr, 64);
 
@@ -2020,7 +2344,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     }
   });
 
-  test('Task 5.6.4: Invalid cell value (out of range 2) handling', () => {
+  test('should handle out-of-range cell value (2)', () => {
     const ptr = Module._malloc(64 * 4);
     const heap = new Int32Array(Module.HEAP32.buffer, ptr, 64);
 
@@ -2046,7 +2370,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     }
   });
 
-  test('Task 5.6.5: Invalid cell value (large positive) handling', () => {
+  test('should handle large positive cell values', () => {
     const ptr = Module._malloc(64 * 4);
     const heap = new Int32Array(Module.HEAP32.buffer, ptr, 64);
 
@@ -2072,7 +2396,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     }
   });
 
-  test('Task 5.6.6: _malloc failure simulation (request huge memory)', () => {
+  test('should handle _malloc failure when requesting huge memory', () => {
     // Request unreasonably large memory (10GB)
     const hugeSize = 10 * 1024 * 1024 * 1024;
 
@@ -2091,7 +2415,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     }
   });
 
-  test('Task 5.6.7: Response value range check (should be within 0-63)', () => {
+  test('should return response values within valid range (0-63)', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -2117,7 +2441,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     expect(policy).toBeLessThanOrEqual(63);
   });
 
-  test('Task 5.6.8: All empty board (no stones) handling', () => {
+  test('should handle empty board with no stones', () => {
     const emptyBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -2143,7 +2467,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     }
   });
 
-  test('Task 5.6.9: All filled board (no empty cells) handling', () => {
+  test('should handle completely filled board', () => {
     const filledBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(0)); // All black
@@ -2168,7 +2492,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     }
   });
 
-  test('Task 5.6.10: Invalid ai_player value (2) handling', () => {
+  test('should handle invalid ai_player value (2)', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -2197,7 +2521,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     }
   });
 
-  test('Task 5.6.11: Invalid level value (-1) handling', () => {
+  test('should handle invalid level value (-1)', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));
@@ -2226,7 +2550,7 @@ describe('WASM Integration Tests - Task 5.6: Error Cases and Edge Cases Verifica
     }
   });
 
-  test('Task 5.6.12: Invalid level value (100) handling', () => {
+  test('should handle invalid level value (100)', () => {
     const initialBoard = Array(8)
       .fill(null)
       .map(() => Array(8).fill(-1));

@@ -2,7 +2,7 @@
 
 ## 実装タスク
 
-- [ ] 1. Message型システムの実装
+- [x] 1. Message型システムの実装
   - Discriminated unionによるMessage型定義（info/warning バリアント）
   - MessageBoxPropsインターフェース定義（message、testId プロパティ）
   - UseMessageQueueReturnインターフェース定義（currentMessage、addMessage、clearMessage）

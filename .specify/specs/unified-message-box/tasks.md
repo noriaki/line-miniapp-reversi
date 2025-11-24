@@ -36,8 +36,8 @@
   - デバウンス/スロットルなしの即時置き換え方式
   - _Requirements: 1.3, 6.4_
 
-- [ ] 3. (P) MessageBoxコンポーネントの実装
-- [ ] 3.1 固定高さレイアウトとopacity遷移の実装
+- [x] 3. (P) MessageBoxコンポーネントの実装
+- [x] 3.1 固定高さレイアウトとopacity遷移の実装
   - 固定高さコンテナ（h-16 = 64px）の実装
   - message null時はopacity: 0、非null時はopacity: 1での表示制御
   - Tailwind CSS `transition-opacity duration-300` での滑らかなフェード遷移（0.3秒以下）
@@ -47,7 +47,7 @@
   - React 18のクライアントコンポーネントとして実装（'use client' directive）
   - _Requirements: 1.1, 1.5, 2.1, 2.2, 2.3, 2.4, 4.1, 4.2, 4.3, 4.4, 6.1, 6.2, 6.3, 6.4, 6.6_
 
-- [ ] 3.2 メッセージタイプ別スタイリングの実装
+- [x] 3.2 メッセージタイプ別スタイリングの実装
   - info typeの控えめな背景色と情報アイコン実装
   - warning typeの識別可能な背景色と警告アイコン実装
   - 派手な色を避けた低彩度カラーパレット使用（ゲーム盤面を主役として維持）
@@ -56,7 +56,7 @@
   - Tailwind CSS主体のスタイリング、必要に応じてPlain CSSファイル使用
   - _Requirements: 3.2, 3.3, 3.4, 3.5, 5.5, 6.2, 6.3, 6.4_
 
-- [ ] 3.3 日本語テキストハンドリングの実装
+- [x] 3.3 日本語テキストハンドリングの実装
   - font-family設定（-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif）
   - line-height: 1.5の適用
   - -webkit-box, -webkit-line-clamp: 2, -webkit-box-orient: verticalの設定
@@ -128,7 +128,7 @@
   - 高頻度発行時の最新メッセージ優先処理検証
   - _Requirements: 6.7_
 
-- [ ] 7.2 (P) MessageBoxコンポーネントユニットテストの実装
+- [x] 7.2 (P) MessageBoxコンポーネントユニットテストの実装
   - info messageでのレンダリングとスタイル検証
   - warning messageでのレンダリングとスタイル検証
   - null messageでの非表示状態（opacity: 0）と領域確保検証

@@ -17,7 +17,6 @@ export function createInitialBoard(): Board {
   for (let row = 0; row < 8; row++) {
     const cols: Cell[] = [];
     for (let col = 0; col < 8; col++) {
-      // Initialize center 4 positions
       if (row === 3 && col === 3) {
         cols.push('white');
       } else if (row === 3 && col === 4) {
@@ -116,5 +115,4 @@ function validatePosition(position: Position): void {
   }
 }
 
-// Re-export types for convenience
 export type { Board, Cell, Player, Position, StoneCount };

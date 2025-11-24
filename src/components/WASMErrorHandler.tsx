@@ -1,7 +1,6 @@
 /**
  * WASM Error Handler Component
  * Displays user-friendly error messages for WASM-related failures
- * Requirements: 4.5, 9.1, 9.3
  */
 
 'use client';

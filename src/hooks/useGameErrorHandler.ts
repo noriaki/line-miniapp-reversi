@@ -1,7 +1,6 @@
 /**
  * Game Error Handler Hook
  * Manages user input errors and business logic error handling
- * Requirements: 2.2, 2.4, 9.2, 9.4
  */
 
 'use client';

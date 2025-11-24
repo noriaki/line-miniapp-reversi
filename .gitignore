@@ -150,3 +150,6 @@ test-results/
 
 # pnpm
 .pnpm-store/
+
+# temp
+.tmp/

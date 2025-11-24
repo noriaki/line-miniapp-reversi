@@ -1,8 +1,8 @@
 /**
- * Integration Tests - GameBoard + useGameErrorHandler Integration
+ * Integration Tests - GameBoard + Message System Integration
  *
- * Tests the interaction between GameBoard and useGameErrorHandler:
- * - Pass message display timing (5 seconds)
+ * Tests the interaction between GameBoard, useMessageQueue, and useGameInconsistencyDetector:
+ * - Pass message display timing (3 seconds)
  * - Timer reset on new pass operation
  * - No layout shift during message visibility toggle
  */
@@ -34,7 +34,7 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
-describe('Integration Test: GameBoard + useGameErrorHandler - Message Display', () => {
+describe('Integration Test: GameBoard + Message System - Message Display', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();

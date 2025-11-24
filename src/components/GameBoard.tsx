@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useGameState } from '@/hooks/useGameState';
 import { useAIPlayer } from '@/hooks/useAIPlayer';
-import { useGameErrorHandler } from '@/hooks/useGameErrorHandler';
+import { useGameInconsistencyDetector } from '@/hooks/useGameInconsistencyDetector';
 import { useMessageQueue } from '@/hooks/useMessageQueue';
 import { useLiff } from '@/hooks/useLiff';
 import { MessageBox } from '@/components/MessageBox';
@@ -49,7 +49,7 @@ export default function GameBoard(): JSX.Element {
   const { calculateMove } = useAIPlayer();
 
   const { hasInconsistency, clearInconsistency, getInconsistencyMessage } =
-    useGameErrorHandler(); // Phase 2: Only handles hasInconsistency detection
+    useGameInconsistencyDetector(); // Phase 3: Separated inconsistency detection
 
   const { currentMessage, addMessage } = useMessageQueue();
 

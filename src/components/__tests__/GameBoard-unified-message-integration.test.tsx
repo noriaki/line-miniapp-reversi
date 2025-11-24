@@ -290,7 +290,7 @@ describe('Integration Test: GameBoard + useMessageQueue + MessageBox', () => {
   describe('Task 4 Regression: hasInconsistency remains unchanged', () => {
     it('should still display hasInconsistency UI independently from MessageBox', () => {
       // This test ensures hasInconsistency logic is NOT migrated yet (Phase 3)
-      // It should remain with useGameErrorHandler for now
+      // It now uses useGameInconsistencyDetector
 
       render(<GameBoard />);
 

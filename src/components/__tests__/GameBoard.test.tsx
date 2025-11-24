@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import GameBoard from '../GameBoard';
 import * as gameLogic from '@/lib/game/game-logic';
-import { useGameErrorHandler } from '@/hooks/useGameErrorHandler';
+import { useGameInconsistencyDetector } from '@/hooks/useGameInconsistencyDetector';
 
 // Mock useAIPlayer hook to avoid import.meta issues in tests
 jest.mock('@/hooks/useAIPlayer', () => ({
@@ -844,37 +844,22 @@ describe('GameBoard Component', () => {
     });
   });
 
-  describe('Task 5.2: useGameErrorHandler Coexistence Verification', () => {
-    it('should verify useGameErrorHandler no longer exports handleInvalidMove', () => {
-      // This test verifies the interface change at compile time
-      // useGameErrorHandler should only provide hasInconsistency functionality
-      const { result } = renderHook(() => useGameErrorHandler());
+  describe('Task 6: useGameInconsistencyDetector Separation Verification', () => {
+    it('should verify useGameInconsistencyDetector only exports inconsistency detection', () => {
+      // Phase 3: useGameInconsistencyDetector is a focused hook for inconsistency detection
+      const { result } = renderHook(() => useGameInconsistencyDetector());
 
-      // These should NOT exist after refactoring
-      expect((result.current as any).handleInvalidMove).toBeUndefined();
-      expect((result.current as any).getErrorMessage).toBeUndefined();
-      expect((result.current as any).invalidMovePosition).toBeUndefined();
-      expect((result.current as any).invalidMoveReason).toBeUndefined();
-    });
-
-    it('should verify useGameErrorHandler no longer exports notifyPass', () => {
-      const { result } = renderHook(() => useGameErrorHandler());
-
-      // These should NOT exist after refactoring
-      expect((result.current as any).notifyPass).toBeUndefined();
-      expect((result.current as any).getPassMessage).toBeUndefined();
-      expect((result.current as any).passNotification).toBeUndefined();
-    });
-
-    it('should verify useGameErrorHandler still provides hasInconsistency functionality', () => {
-      const { result } = renderHook(() => useGameErrorHandler());
-
-      // These SHOULD still exist
+      // Should have inconsistency functionality
       expect(result.current.hasInconsistency).toBeDefined();
-      expect(result.current.inconsistencyReason).toBeDefined();
-      expect(result.current.detectInconsistency).toBeDefined();
+      expect(result.current.checkInconsistency).toBeDefined();
       expect(result.current.clearInconsistency).toBeDefined();
       expect(result.current.getInconsistencyMessage).toBeDefined();
+
+      // Should NOT have message queue functionality
+      expect((result.current as any).addMessage).toBeUndefined();
+      expect((result.current as any).currentMessage).toBeUndefined();
+      expect((result.current as any).handleInvalidMove).toBeUndefined();
+      expect((result.current as any).notifyPass).toBeUndefined();
     });
 
     it('should verify hasInconsistency display remains independent in GameBoard', () => {

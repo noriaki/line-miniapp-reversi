@@ -77,7 +77,7 @@ describe('Integration Test: GameBoard + GameLogic', () => {
     }
 
     // エラーフィードバックを待機
-    // useGameErrorHandler が実装されているため、エラーメッセージが表示される
+    // useMessageQueue が実装されているため、エラーメッセージが表示される
     await waitFor(() => {
       const errorMessage = container.querySelector('.error-message');
       // エラーメッセージが存在する、または無効な手でもアプリが正常動作する

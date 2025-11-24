@@ -98,17 +98,17 @@
   - Phase 3への移行準備
   - _Requirements: 5.1, 5.2_
 
-- [ ] 6. Phase 3最終化: useGameInconsistencyDetector分離
-- [ ] 6.1 useGameInconsistencyDetectorの抽出
+- [x] 6. Phase 3最終化: useGameInconsistencyDetector分離
+- [x] 6.1 useGameInconsistencyDetectorの抽出
   - 新規フック作成（/src/hooks/useGameInconsistencyDetector.ts）
   - hasInconsistency検出ロジックの移行
-  - resetGame関数の提供
-  - インターフェース定義（hasInconsistency: boolean, resetGame: () => void）
+  - checkInconsistency, clearInconsistency, getInconsistencyMessage関数の提供
+  - インターフェース定義（hasInconsistency: boolean, checkInconsistency, clearInconsistency, getInconsistencyMessage）
   - ゲーム状態整合性検証のみに特化した責務
   - 不整合メッセージUIはGameBoard内独立表示として維持（MessageBox統合対象外）
   - _Requirements: 6.4, 6.5_
 
-- [ ] 6.2 useGameErrorHandlerの削除
+- [x] 6.2 useGameErrorHandlerの削除
   - useGameErrorHandlerフックファイルの完全削除
   - GameBoardからのuseGameErrorHandler呼び出し削除
   - useMessageQueueとuseGameInconsistencyDetectorへの完全移行確認

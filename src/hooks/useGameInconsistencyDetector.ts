@@ -1,7 +1,9 @@
 /**
- * Game Error Handler Hook
- * Phase 2: Reduced to hasInconsistency detection only
- * handleInvalidMove and notifyPass functionality moved to useMessageQueue
+ * Game Inconsistency Detector Hook
+ * Phase 3: Separated inconsistency detection from useGameErrorHandler
+ *
+ * Responsible for detecting and managing game state inconsistencies
+ * such as invalid board size or corrupted state.
  */
 
 'use client';
@@ -10,32 +12,27 @@ import { useState, useCallback } from 'react';
 
 type InconsistencyReason = 'invalid_board_size' | 'corrupted_state';
 
-interface UseGameErrorHandlerReturn {
+interface UseGameInconsistencyDetectorReturn {
   // Game state inconsistency
   hasInconsistency: boolean;
-  inconsistencyReason: InconsistencyReason | null;
-  detectInconsistency: (reason: InconsistencyReason) => void;
+  checkInconsistency: (reason: InconsistencyReason) => void;
   clearInconsistency: () => void;
   getInconsistencyMessage: () => string | null;
 }
 
 /**
- * Custom hook for game inconsistency detection
- * Phase 2: Only handles game state inconsistencies
- * Invalid move and pass notifications now handled by useMessageQueue
+ * Custom hook for game state inconsistency detection
+ * Detects issues with game state that require user attention
  */
-export function useGameErrorHandler(): UseGameErrorHandlerReturn {
+export function useGameInconsistencyDetector(): UseGameInconsistencyDetectorReturn {
   // Game state inconsistency state
   const [hasInconsistency, setHasInconsistency] = useState<boolean>(false);
-  const [inconsistencyReason, setInconsistencyReason] =
-    useState<InconsistencyReason | null>(null);
 
   /**
-   * Detect game state inconsistency
+   * Check for game state inconsistency
    */
-  const detectInconsistency = useCallback((reason: InconsistencyReason) => {
+  const checkInconsistency = useCallback((_reason: InconsistencyReason) => {
     setHasInconsistency(true);
-    setInconsistencyReason(reason);
   }, []);
 
   /**
@@ -43,7 +40,6 @@ export function useGameErrorHandler(): UseGameErrorHandlerReturn {
    */
   const clearInconsistency = useCallback(() => {
     setHasInconsistency(false);
-    setInconsistencyReason(null);
   }, []);
 
   /**
@@ -59,8 +55,7 @@ export function useGameErrorHandler(): UseGameErrorHandlerReturn {
 
   return {
     hasInconsistency,
-    inconsistencyReason,
-    detectInconsistency,
+    checkInconsistency,
     clearInconsistency,
     getInconsistencyMessage,
   };

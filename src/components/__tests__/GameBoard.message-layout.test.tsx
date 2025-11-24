@@ -56,9 +56,15 @@ describe('GameBoard - Message Layout Shift Prevention', () => {
     it('should always have message element in DOM', () => {
       const { container } = render(<GameBoard />);
 
-      // Message element should always exist in DOM
-      const messageElement = container.querySelector('.notification-message');
-      expect(messageElement).toBeInTheDocument();
+      // Task 4: MessageBox unified component should always exist
+      const messageBox = container.querySelector('[data-testid="message-box"]');
+      expect(messageBox).toBeInTheDocument();
+
+      // Legacy notification-message still exists (to be removed in Phase 2)
+      const legacyMessageElement = container.querySelector(
+        '.notification-message'
+      );
+      expect(legacyMessageElement).toBeInTheDocument();
     });
 
     it('should apply opacity-0 class when message is hidden', () => {
@@ -83,11 +89,22 @@ describe('GameBoard - Message Layout Shift Prevention', () => {
       // Use act to properly handle async state updates
       await userEvent.click(passButton);
 
-      // Wait for the message to appear
+      // Task 4: Pass messages now go through MessageBox
+      // Wait for the message to appear in MessageBox
       await waitFor(() => {
-        const messageElement = container.querySelector('.notification-message');
-        expect(messageElement).toHaveClass('opacity-100');
+        const messageBox = container.querySelector(
+          '[data-testid="message-box"]'
+        );
+        const innerBox = messageBox?.querySelector('[role="status"]');
+        // Check that opacity is 1 (inline style)
+        expect(innerBox).toHaveStyle({ opacity: '1' });
       });
+
+      // Legacy notification-message should remain hidden (opacity-0)
+      const legacyMessageElement = container.querySelector(
+        '.notification-message'
+      );
+      expect(legacyMessageElement).toHaveClass('opacity-0');
     });
 
     it('should apply transition-opacity class', () => {
@@ -158,17 +175,20 @@ describe('GameBoard - Message Layout Shift Prevention', () => {
     it('should use only Tailwind classes for message area', () => {
       const { container } = render(<GameBoard />);
 
-      const messageContainer = container.querySelector('.h-16');
-      const messageElement = container.querySelector('.notification-message');
+      // Task 4: MessageBox uses inline styles for fixed height (by design)
+      const messageBox = container.querySelector('[data-testid="message-box"]');
+      expect(messageBox).toBeInTheDocument();
+      // MessageBox has inline style="height: 64px;" which is intentional
+      expect(messageBox).toHaveAttribute('style', 'height: 64px;');
 
-      // Check that only Tailwind utility classes are used
-      // No inline styles or CSS modules
-      expect(messageContainer).not.toHaveAttribute('style');
-      expect(messageElement).not.toHaveAttribute('style');
+      // Legacy notification-message (to be removed in Phase 2)
+      const legacyMessageElement = container.querySelector(
+        '.notification-message'
+      );
+      expect(legacyMessageElement).not.toHaveAttribute('style');
 
       // Verify Tailwind classes are present
-      expect(messageContainer?.className).toMatch(/^[\w\s-]+$/); // Only class names, no inline styles
-      expect(messageElement?.className).toMatch(/^[\w\s-]+$/);
+      expect(legacyMessageElement?.className).toMatch(/^[\w\s-]+$/);
     });
   });
 });

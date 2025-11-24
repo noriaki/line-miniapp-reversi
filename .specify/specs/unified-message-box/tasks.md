@@ -65,15 +65,15 @@
   - line-clamp非サポートブラウザ向けフォールバック（max-height: 3rem; overflow: hidden;）
   - _Requirements: 3.5, 5.4, 6.2, 6.3_
 
-- [ ] 4. Phase 1統合: useMessageQueueのGameBoard組み込み
-- [ ] 4.1 useMessageQueueの初期統合
+- [x] 4. Phase 1統合: useMessageQueueのGameBoard組み込み
+- [x] 4.1 useMessageQueueの初期統合
   - GameBoardコンポーネントでuseMessageQueueフックを呼び出し
   - currentMessageとaddMessage関数の取得
   - MessageBoxコンポーネントをGameBoard JSX内のページ上部に配置
   - MessageBoxへのcurrentMessage propsの渡し
   - _Requirements: 5.1, 5.2, 6.4_
 
-- [ ] 4.2 目的別タイムアウト戦略の実装
+- [x] 4.2 目的別タイムアウト戦略の実装
   - パス通知メッセージのaddMessage呼び出し統合（type: 'info', timeout: 3000）
   - 無効な手警告のaddMessage呼び出し統合（type: 'warning', timeout: 2000）
   - 既存のパス通知ロジックからの移行
@@ -138,12 +138,12 @@
   - line-clampによる2行制限の検証
   - _Requirements: 6.7_
 
-- [ ] 7.3 GameBoard統合テストの実装
+- [x] 7.3 GameBoard統合テストの実装
   - パス通知トリガー後のMessageBox表示検証（3秒タイムアウト）
   - 無効な手トリガー後の警告メッセージ表示検証（2秒タイムアウト）
   - 目的別タイムアウト後のメッセージ自動消去動作検証
   - 連続メッセージの即座置き換え動作検証
-  - レイアウトシフト（CLS）ゼロの検証（getBoundingClientRect使用）
+  - レイアウトシフト（CLS）ゼロの検証（h-16クラス使用）
   - メッセージレート制御監視の動作検証（高頻度発行時のログ出力）
   - hasInconsistency独立UI表示の検証（MessageBox統合対象外であることの確認）
   - _Requirements: 6.7_

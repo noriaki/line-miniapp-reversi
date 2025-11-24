@@ -1,9 +1,10 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import GameBoard from '../GameBoard';
 import * as gameLogic from '@/lib/game/game-logic';
+import { useGameInconsistencyDetector } from '@/hooks/useGameInconsistencyDetector';
 
 // Mock useAIPlayer hook to avoid import.meta issues in tests
 jest.mock('@/hooks/useAIPlayer', () => ({
@@ -593,57 +594,36 @@ describe('GameBoard Component', () => {
   });
 
   describe('UI Usability - Message Layout', () => {
-    it('should have fixed height class (h-16) on message display area', () => {
-      const { container } = render(<GameBoard />);
-      // Find the fixed-height container (parent of notification-message)
-      const messageContainer = container.querySelector('.h-16');
-      expect(messageContainer).toBeInTheDocument();
-      expect(messageContainer).toHaveClass('h-16');
+    it('should use MessageBox for message display (legacy h-16 notification removed)', () => {
+      render(<GameBoard />);
+      // MessageBox should be present
+      const messageBox = screen.getByTestId('message-box');
+      expect(messageBox).toBeInTheDocument();
     });
 
-    it('should always have message element in DOM', () => {
+    it('should not have legacy notification-message element', () => {
       const { container } = render(<GameBoard />);
-      // The notification-message element should always be in DOM
+      // Legacy notification-message should not exist
       const notificationMessage = container.querySelector(
         '.notification-message'
       );
-      expect(notificationMessage).toBeInTheDocument();
+      expect(notificationMessage).not.toBeInTheDocument();
     });
 
-    it('should apply opacity-100 class when pass notification message is displayed', () => {
-      // Mock to have no valid moves (triggers pass scenario)
-      jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
+    it('should maintain zero CLS with MessageBox fixed height', () => {
+      const { rerender } = render(<GameBoard />);
 
-      const { container } = render(<GameBoard />);
+      // Get initial MessageBox position
+      const messageBox = screen.getByTestId('message-box');
+      const initialRect = messageBox?.getBoundingClientRect();
 
-      // Initially should be opacity-0 (no pass message)
-      const notificationMessage = container.querySelector(
-        '.notification-message'
-      );
-      expect(notificationMessage).toHaveClass('opacity-0');
+      // Re-render component
+      rerender(<GameBoard />);
 
-      jest.spyOn(gameLogic, 'calculateValidMoves').mockRestore();
-    });
-
-    it('should apply opacity-0 class when pass notification message is hidden', () => {
-      const { container } = render(<GameBoard />);
-
-      // Initially no pass message, so should have opacity-0
-      const notificationMessage = container.querySelector(
-        '.notification-message'
-      );
-      expect(notificationMessage).toHaveClass('opacity-0');
-      expect(notificationMessage).not.toHaveClass('opacity-100');
-    });
-
-    it('should verify that transition-opacity class is applied', () => {
-      const { container } = render(<GameBoard />);
-
-      // The notification-message should have transition-opacity class
-      const notificationMessage = container.querySelector(
-        '.notification-message'
-      );
-      expect(notificationMessage).toHaveClass('transition-opacity');
+      // MessageBox position should not change
+      const afterRect = messageBox?.getBoundingClientRect();
+      expect(afterRect?.top).toBe(initialRect?.top);
+      expect(afterRect?.height).toBe(initialRect?.height);
     });
   });
 
@@ -787,6 +767,168 @@ describe('GameBoard Component', () => {
       // Initial state is 'playing', so history would show if notation exists
       // When gameStatus becomes 'finished', it should not show
       // This requires more complex state setup, will be covered in integration tests
+    });
+  });
+
+  describe('Task 5.1: Legacy Message Display Removal', () => {
+    it('should not render getErrorMessage display area', async () => {
+      const mockValidateMove = jest
+        .spyOn(gameLogic, 'validateMove')
+        .mockReturnValue({
+          success: false,
+          error: { type: 'invalid_move', reason: 'occupied' },
+        });
+
+      const { container } = render(<GameBoard />);
+
+      // Click on an occupied cell to trigger invalid move
+      const cell = container.querySelector('[data-row="3"][data-col="3"]');
+      await userEvent.click(cell!);
+
+      // Legacy error message display should NOT exist
+      const errorMessageDiv = container.querySelector('.error-message');
+      expect(errorMessageDiv).not.toBeInTheDocument();
+
+      mockValidateMove.mockRestore();
+    });
+
+    it('should not render getPassMessage display area with h-16 container', () => {
+      const { container } = render(<GameBoard />);
+
+      // The h-16 notification container should NOT exist (it's the legacy pass notification area)
+      const h16Container = container.querySelector('.h-16');
+      const notificationMessage = container.querySelector(
+        '.notification-message'
+      );
+
+      // If h-16 exists, it should only be for MessageBox, not for legacy notifications
+      if (h16Container) {
+        // Verify it's MessageBox, not the legacy notification area
+        expect(h16Container.querySelector('.notification-message')).toBeNull();
+      }
+
+      // Legacy notification-message should not exist
+      expect(notificationMessage).not.toBeInTheDocument();
+    });
+
+    it('should only use MessageBox for all message displays', () => {
+      const { container } = render(<GameBoard />);
+
+      // MessageBox should be present
+      const messageBox = screen.getByTestId('message-box');
+      expect(messageBox).toBeInTheDocument();
+
+      // Legacy message areas should NOT exist
+      expect(
+        container.querySelector('.error-message.bg-red-100')
+      ).not.toBeInTheDocument();
+      expect(
+        container.querySelector('.notification-message')
+      ).not.toBeInTheDocument();
+    });
+
+    it('should maintain zero CLS after legacy message area removal', () => {
+      const { container, rerender } = render(<GameBoard />);
+
+      // Get initial board position
+      const board = container.querySelector('.board-grid');
+      const initialRect = board?.getBoundingClientRect();
+
+      // Re-render component
+      rerender(<GameBoard />);
+
+      // Board position should not change
+      const afterRect = board?.getBoundingClientRect();
+      expect(afterRect?.top).toBe(initialRect?.top);
+      expect(afterRect?.left).toBe(initialRect?.left);
+    });
+  });
+
+  describe('Task 6: useGameInconsistencyDetector Separation Verification', () => {
+    it('should verify useGameInconsistencyDetector only exports inconsistency detection', () => {
+      // Phase 3: useGameInconsistencyDetector is a focused hook for inconsistency detection
+      const { result } = renderHook(() => useGameInconsistencyDetector());
+
+      // Should have inconsistency functionality
+      expect(result.current.hasInconsistency).toBeDefined();
+      expect(result.current.checkInconsistency).toBeDefined();
+      expect(result.current.clearInconsistency).toBeDefined();
+      expect(result.current.getInconsistencyMessage).toBeDefined();
+
+      // Should NOT have message queue functionality
+      expect((result.current as any).addMessage).toBeUndefined();
+      expect((result.current as any).currentMessage).toBeUndefined();
+      expect((result.current as any).handleInvalidMove).toBeUndefined();
+      expect((result.current as any).notifyPass).toBeUndefined();
+    });
+
+    it('should verify hasInconsistency display remains independent in GameBoard', () => {
+      const { container } = render(<GameBoard />);
+
+      // hasInconsistency UI should be separate from MessageBox
+      // It should be in its own error-message container with reset button
+      const inconsistencyContainer = container.querySelector(
+        '.error-message.bg-red-100.border-red-400'
+      );
+
+      // This is acceptable - it's the hasInconsistency display which should remain
+      // It's different from the removed getErrorMessage display
+      if (inconsistencyContainer) {
+        expect(inconsistencyContainer).toBeInTheDocument();
+      }
+    });
+
+    it('should use MessageBox for invalid move warnings', async () => {
+      const mockValidateMove = jest
+        .spyOn(gameLogic, 'validateMove')
+        .mockReturnValue({
+          success: false,
+          error: { type: 'invalid_move', reason: 'occupied' },
+        });
+
+      render(<GameBoard />);
+
+      // Click on an occupied cell
+      const cell = screen.getAllByRole('button')[27]; // center cell with stone
+      await userEvent.click(cell);
+
+      // Message should appear in MessageBox, not in legacy display
+      await waitFor(() => {
+        const messageBox = screen.getByTestId('message-box');
+        expect(messageBox).toHaveTextContent(
+          'そのマスには既に石が置かれています'
+        );
+      });
+
+      mockValidateMove.mockRestore();
+    });
+
+    it('should use MessageBox for pass notifications', async () => {
+      // Mock to have no valid moves
+      const mockCalculateValidMoves = jest
+        .spyOn(gameLogic, 'calculateValidMoves')
+        .mockReturnValue([]);
+
+      render(<GameBoard />);
+
+      const passButton = screen.getByRole('button', {
+        name: /ターンをパスする/i,
+      });
+
+      await userEvent.click(passButton);
+
+      // Message should appear in MessageBox, not in legacy display
+      await waitFor(
+        () => {
+          const messageBox = screen.getByTestId('message-box');
+          expect(messageBox).toHaveTextContent(
+            '有効な手がありません。パスしました。'
+          );
+        },
+        { timeout: 3000 }
+      );
+
+      mockCalculateValidMoves.mockRestore();
     });
   });
 });

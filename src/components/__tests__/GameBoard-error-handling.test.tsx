@@ -243,7 +243,7 @@ describe('GameBoard Error Handling', () => {
   describe('Error Message Display', () => {
     it('should display error message to user when error occurs', async () => {
       // Test that error messages are displayed in the UI
-      // This is handled by useGameErrorHandler hook
+      // This is handled by useGameInconsistencyDetector hook
       // For invalid moves (not passes), error messages are shown
       // For passes, invalid operations are silently ignored (UI prevents them)
       // This requirement is satisfied by existing error handling infrastructure

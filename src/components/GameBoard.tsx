@@ -3,8 +3,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useGameState } from '@/hooks/useGameState';
 import { useAIPlayer } from '@/hooks/useAIPlayer';
-import { useGameErrorHandler } from '@/hooks/useGameErrorHandler';
+import { useGameInconsistencyDetector } from '@/hooks/useGameInconsistencyDetector';
+import { useMessageQueue } from '@/hooks/useMessageQueue';
 import { useLiff } from '@/hooks/useLiff';
+import { MessageBox } from '@/components/MessageBox';
 import {
   applyMove,
   validateMove,
@@ -46,15 +48,10 @@ export default function GameBoard(): JSX.Element {
 
   const { calculateMove } = useAIPlayer();
 
-  const {
-    handleInvalidMove,
-    getErrorMessage,
-    notifyPass,
-    getPassMessage,
-    hasInconsistency,
-    clearInconsistency,
-    getInconsistencyMessage,
-  } = useGameErrorHandler();
+  const { hasInconsistency, clearInconsistency, getInconsistencyMessage } =
+    useGameInconsistencyDetector(); // Phase 3: Separated inconsistency detection
+
+  const { currentMessage, addMessage } = useMessageQueue();
 
   const { profile, isReady, isInClient, isLoggedIn, login } = useLiff();
 
@@ -94,14 +91,19 @@ export default function GameBoard(): JSX.Element {
       return;
     }
 
-    notifyPass(currentPlayer);
+    // Task 4.2: Use unified message box with 3s timeout for pass notification
+    addMessage({
+      type: 'info',
+      text: '有効な手がありません。パスしました。',
+      timeout: 3000,
+    });
     incrementPassCount();
     switchPlayer();
   }, [
     gameStatus,
     board,
     currentPlayer,
-    notifyPass,
+    addMessage,
     incrementPassCount,
     switchPlayer,
   ]);
@@ -114,8 +116,25 @@ export default function GameBoard(): JSX.Element {
 
       const moveResult = validateMove(board, position, currentPlayer);
       if (!moveResult.success) {
-        // Show error feedback with specific reason
-        handleInvalidMove(position, moveResult.error.reason);
+        // Task 4.2: Use unified message box with 2s timeout for invalid move warning
+        const errorText = (() => {
+          switch (moveResult.error.reason) {
+            case 'occupied':
+              return 'そのマスには既に石が置かれています';
+            case 'no_flips':
+              return 'そのマスに置いても石を反転できません';
+            case 'out_of_bounds':
+              return '無効な位置です';
+            default:
+              return '無効な手です';
+          }
+        })();
+
+        addMessage({
+          type: 'warning',
+          text: errorText,
+          timeout: 2000,
+        });
         return;
       }
 
@@ -157,7 +176,7 @@ export default function GameBoard(): JSX.Element {
       updateBoard,
       switchPlayer,
       updateGameStatus,
-      handleInvalidMove,
+      addMessage,
       resetPassCount,
     ]
   );
@@ -208,7 +227,12 @@ export default function GameBoard(): JSX.Element {
       setAIThinking(true);
 
       setTimeout(() => {
-        notifyPass('white');
+        // Task 4.2: Use unified message box with 3s timeout for AI pass notification
+        addMessage({
+          type: 'info',
+          text: 'AIに有効な手がありません。AIがパスしました。',
+          timeout: 3000,
+        });
         incrementPassCount();
 
         setTimeout(() => {
@@ -275,27 +299,18 @@ export default function GameBoard(): JSX.Element {
     updateGameStatus,
     setAIThinking,
     resetPassCount,
-    notifyPass,
+    addMessage,
     incrementPassCount,
   ]);
 
   return (
     <div data-testid="game-board" className="game-board">
-      {/* Error Messages and Notifications */}
-      {getErrorMessage() && (
-        <div className="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {getErrorMessage()}
-        </div>
-      )}
-      <div className="h-16 flex items-center justify-center">
-        <div
-          className={`notification-message bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded transition-opacity duration-200 ${
-            getPassMessage() ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          {getPassMessage() || '\u00A0'}
-        </div>
-      </div>
+      {/* Task 4.1: Unified Message Box Integration */}
+      <MessageBox message={currentMessage} />
+
+      {/* Task 5.1: Legacy message displays removed - now handled by MessageBox */}
+
+      {/* hasInconsistency remains independent (with reset button) */}
       {hasInconsistency && (
         <div className="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {getInconsistencyMessage()}

@@ -101,14 +101,14 @@ graph TB
 
 ### Technology Stack
 
-| Layer                    | Choice / Version        | Role in Feature                                       | Notes                                                      |
-| ------------------------ | ----------------------- | ----------------------------------------------------- | ---------------------------------------------------------- |
-| Frontend / UI            | React 18.x              | MessageBoxコンポーネントのレンダリング（client component） | 既存のクライアントコンポーネントパターンを踏襲             |
-| Frontend / UI            | Tailwind CSS 3.x        | 主要スタイリング（レイアウト、色、間隔、遷移）          | 既存のutility-firstアプローチを継続                        |
-| Frontend / UI            | Plain CSS (optional)    | 複雑なkeyframesアニメーション（必要な場合）            | GameBoard.cssパターンに準拠、Tailwindで不足する場合のみ使用 |
-| State Management         | React Hooks (useState等) | メッセージキュー状態管理、タイマー制御                 | 既存のuseGameStateパターンと整合                           |
-| Language / Type System   | TypeScript 5.x (strict) | 型安全なメッセージインターフェース定義                 | discriminated unions使用、`any`型禁止                      |
-| Testing                  | Jest + React Testing Library | MessageBoxコンポーネントとuseMessageQueueのユニットテスト | 既存テスト戦略を踏襲                                       |
+| Layer                  | Choice / Version             | Role in Feature                                            | Notes                                                       |
+| ---------------------- | ---------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------- |
+| Frontend / UI          | React 18.x                   | MessageBoxコンポーネントのレンダリング（client component） | 既存のクライアントコンポーネントパターンを踏襲              |
+| Frontend / UI          | Tailwind CSS 3.x             | 主要スタイリング（レイアウト、色、間隔、遷移）             | 既存のutility-firstアプローチを継続                         |
+| Frontend / UI          | Plain CSS (optional)         | 複雑なkeyframesアニメーション（必要な場合）                | GameBoard.cssパターンに準拠、Tailwindで不足する場合のみ使用 |
+| State Management       | React Hooks (useState等)     | メッセージキュー状態管理、タイマー制御                     | 既存のuseGameStateパターンと整合                            |
+| Language / Type System | TypeScript 5.x (strict)      | 型安全なメッセージインターフェース定義                     | discriminated unions使用、`any`型禁止                       |
+| Testing                | Jest + React Testing Library | MessageBoxコンポーネントとuseMessageQueueのユニットテスト  | 既存テスト戦略を踏襲                                        |
 
 > **Rationale**: 既存の技術スタック（tech.md）に完全準拠し、新規依存関係を追加しない。Tailwind CSSとPlain CSSの組み合わせは、GameBoard.cssの既存パターンと一貫性を保つ。React Context APIは不要（単一コンポーネントでの使用のため）。詳細な調査結果は`research.md`参照。
 
@@ -157,57 +157,57 @@ sequenceDiagram
 
 ## Requirements Traceability
 
-| Requirement | Summary                                | Components                    | Interfaces                              | Flows                     |
-| ----------- | -------------------------------------- | ----------------------------- | --------------------------------------- | ------------------------- |
-| 1.1         | ページ上部の固定位置に表示             | MessageBox                    | MessageBoxProps                         | -                         |
-| 1.2         | 最新のメッセージのみを表示             | useMessageQueue               | addMessage, currentMessage state        | Message Lifecycle         |
-| 1.3         | タイムアウト期間内の新メッセージで既存を破棄 | useMessageQueue          | addMessage, timer management            | Message Lifecycle         |
-| 1.4         | 目的別タイムアウト後に自動非表示       | useMessageQueue               | timer management, clearMessage          | Message Lifecycle         |
-| 1.5         | メッセージ不在時は非表示を維持         | MessageBox, useMessageQueue   | currentMessage state (null handling)    | Message Lifecycle         |
-| 2.1         | 固定の高さを持ち、高さが変動しない     | MessageBox                    | CSS fixed height (h-16)                 | -                         |
-| 2.2         | 表示/非表示でCLSを引き起こさない       | MessageBox                    | CSS opacity transition only             | -                         |
-| 2.3         | 初期レンダリング時から固定領域を確保   | MessageBox                    | CSS fixed height, always rendered       | -                         |
-| 2.4         | 不透明度のみ変化、レイアウト寸法不変   | MessageBox                    | CSS opacity transition                  | -                         |
-| 3.1         | 通常/警告の2種類のメッセージタイプ     | Message type                  | Message discriminated union             | -                         |
-| 3.2         | 通常メッセージ用の控えめな背景色       | MessageBox                    | CSS conditional styling (type-based)    | -                         |
-| 3.3         | 警告メッセージ用の識別可能な背景色     | MessageBox                    | CSS conditional styling (type-based)    | -                         |
-| 3.4         | 派手な色を使用しない                   | MessageBox                    | CSS color palette (low saturation)      | -                         |
-| 3.5         | モバイルで視認可能なフォントとコントラスト | MessageBox                | CSS font-size, color contrast           | -                         |
-| 4.1         | メッセージ表示時にフェードイン         | MessageBox                    | CSS transition-opacity (fade-in)        | Message Lifecycle         |
-| 4.2         | メッセージ非表示時にフェードアウト     | MessageBox                    | CSS transition-opacity (fade-out)       | Message Lifecycle         |
-| 4.3         | アニメーション持続時間0.3秒以下        | MessageBox                    | CSS transition-duration: 0.3s           | Message Lifecycle         |
-| 4.4         | アニメーション中にCLSを引き起こさない  | MessageBox                    | CSS opacity transition only             | -                         |
-| 4.5         | アニメーション中の新メッセージで中断   | useMessageQueue               | timer cancellation, immediate replace   | Message Lifecycle         |
-| 5.1         | パス通知メッセージを表示               | GameBoard, useMessageQueue    | addMessage API                          | Message Lifecycle         |
-| 5.2         | 無効な打ち手位置の警告メッセージを表示 | GameBoard, useGameErrorHandler | addMessage API (refactored)            | Message Lifecycle         |
-| 5.3         | 汎用テキストメッセージ受け入れ         | Message type                  | Message.text: string                    | -                         |
-| 5.4         | 日本語テキストを適切にレンダリング     | MessageBox                    | CSS font rendering, lang attribute      | -                         |
-| 5.5         | 長文メッセージの切り詰め               | MessageBox                    | CSS text-overflow: ellipsis, line-clamp | -                         |
-| 6.1         | React 18のクライアントコンポーネント   | MessageBox, GameBoard         | 'use client' directive                  | -                         |
-| 6.2         | Tailwind CSSを主要スタイリング手段     | MessageBox                    | Tailwind utility classes                | -                         |
-| 6.3         | 必要に応じてPlain CSSファイル使用      | MessageBox.css (optional)     | CSS keyframes (if needed)               | -                         |
-| 6.4         | TypeScript strict modeで型安全性確保   | All TypeScript files          | Message, MessageBoxProps types          | -                         |
-| 6.5         | カスタムフックでstate管理を分離        | useMessageQueue               | Hook interface                          | -                         |
-| 6.6         | Presentationalコンポーネント配置       | MessageBox                    | /components directory                   | -                         |
-| 6.7         | Jest + React Testing Libraryでテスト   | All components/hooks          | Test suites                             | -                         |
+| Requirement | Summary                                      | Components                     | Interfaces                              | Flows             |
+| ----------- | -------------------------------------------- | ------------------------------ | --------------------------------------- | ----------------- |
+| 1.1         | ページ上部の固定位置に表示                   | MessageBox                     | MessageBoxProps                         | -                 |
+| 1.2         | 最新のメッセージのみを表示                   | useMessageQueue                | addMessage, currentMessage state        | Message Lifecycle |
+| 1.3         | タイムアウト期間内の新メッセージで既存を破棄 | useMessageQueue                | addMessage, timer management            | Message Lifecycle |
+| 1.4         | 目的別タイムアウト後に自動非表示             | useMessageQueue                | timer management, clearMessage          | Message Lifecycle |
+| 1.5         | メッセージ不在時は非表示を維持               | MessageBox, useMessageQueue    | currentMessage state (null handling)    | Message Lifecycle |
+| 2.1         | 固定の高さを持ち、高さが変動しない           | MessageBox                     | CSS fixed height (h-16)                 | -                 |
+| 2.2         | 表示/非表示でCLSを引き起こさない             | MessageBox                     | CSS opacity transition only             | -                 |
+| 2.3         | 初期レンダリング時から固定領域を確保         | MessageBox                     | CSS fixed height, always rendered       | -                 |
+| 2.4         | 不透明度のみ変化、レイアウト寸法不変         | MessageBox                     | CSS opacity transition                  | -                 |
+| 3.1         | 通常/警告の2種類のメッセージタイプ           | Message type                   | Message discriminated union             | -                 |
+| 3.2         | 通常メッセージ用の控えめな背景色             | MessageBox                     | CSS conditional styling (type-based)    | -                 |
+| 3.3         | 警告メッセージ用の識別可能な背景色           | MessageBox                     | CSS conditional styling (type-based)    | -                 |
+| 3.4         | 派手な色を使用しない                         | MessageBox                     | CSS color palette (low saturation)      | -                 |
+| 3.5         | モバイルで視認可能なフォントとコントラスト   | MessageBox                     | CSS font-size, color contrast           | -                 |
+| 4.1         | メッセージ表示時にフェードイン               | MessageBox                     | CSS transition-opacity (fade-in)        | Message Lifecycle |
+| 4.2         | メッセージ非表示時にフェードアウト           | MessageBox                     | CSS transition-opacity (fade-out)       | Message Lifecycle |
+| 4.3         | アニメーション持続時間0.3秒以下              | MessageBox                     | CSS transition-duration: 0.3s           | Message Lifecycle |
+| 4.4         | アニメーション中にCLSを引き起こさない        | MessageBox                     | CSS opacity transition only             | -                 |
+| 4.5         | アニメーション中の新メッセージで中断         | useMessageQueue                | timer cancellation, immediate replace   | Message Lifecycle |
+| 5.1         | パス通知メッセージを表示                     | GameBoard, useMessageQueue     | addMessage API                          | Message Lifecycle |
+| 5.2         | 無効な打ち手位置の警告メッセージを表示       | GameBoard, useGameErrorHandler | addMessage API (refactored)             | Message Lifecycle |
+| 5.3         | 汎用テキストメッセージ受け入れ               | Message type                   | Message.text: string                    | -                 |
+| 5.4         | 日本語テキストを適切にレンダリング           | MessageBox                     | CSS font rendering, lang attribute      | -                 |
+| 5.5         | 長文メッセージの切り詰め                     | MessageBox                     | CSS text-overflow: ellipsis, line-clamp | -                 |
+| 6.1         | React 18のクライアントコンポーネント         | MessageBox, GameBoard          | 'use client' directive                  | -                 |
+| 6.2         | Tailwind CSSを主要スタイリング手段           | MessageBox                     | Tailwind utility classes                | -                 |
+| 6.3         | 必要に応じてPlain CSSファイル使用            | MessageBox.css (optional)      | CSS keyframes (if needed)               | -                 |
+| 6.4         | TypeScript strict modeで型安全性確保         | All TypeScript files           | Message, MessageBoxProps types          | -                 |
+| 6.5         | カスタムフックでstate管理を分離              | useMessageQueue                | Hook interface                          | -                 |
+| 6.6         | Presentationalコンポーネント配置             | MessageBox                     | /components directory                   | -                 |
+| 6.7         | Jest + React Testing Libraryでテスト         | All components/hooks           | Test suites                             | -                 |
 
 ## Components and Interfaces
 
-| Component        | Domain/Layer | Intent                                           | Req Coverage                         | Key Dependencies (P0/P1)                  | Contracts       |
-| ---------------- | ------------ | ------------------------------------------------ | ------------------------------------ | ----------------------------------------- | --------------- |
-| MessageBox       | UI           | メッセージの視覚的表示（type別のスタイリング）   | 1.1, 2.1-2.4, 3.2-3.5, 4.1-4.4, 5.4-5.5, 6.1-6.3, 6.6 | React (P0), Tailwind CSS (P0)             | Props           |
-| useMessageQueue  | State Mgmt   | メッセージキュー状態管理とタイマー制御           | 1.2-1.5, 4.5, 5.1-5.3, 6.4-6.5       | React hooks (P0)                          | Service         |
-| GameBoard        | UI           | メッセージ発行元（既存コンポーネントの拡張）     | 5.1-5.2                              | useMessageQueue (P0), useGameErrorHandler (P1) | -               |
+| Component       | Domain/Layer | Intent                                         | Req Coverage                                          | Key Dependencies (P0/P1)                       | Contracts |
+| --------------- | ------------ | ---------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------- | --------- |
+| MessageBox      | UI           | メッセージの視覚的表示（type別のスタイリング） | 1.1, 2.1-2.4, 3.2-3.5, 4.1-4.4, 5.4-5.5, 6.1-6.3, 6.6 | React (P0), Tailwind CSS (P0)                  | Props     |
+| useMessageQueue | State Mgmt   | メッセージキュー状態管理とタイマー制御         | 1.2-1.5, 4.5, 5.1-5.3, 6.4-6.5                        | React hooks (P0)                               | Service   |
+| GameBoard       | UI           | メッセージ発行元（既存コンポーネントの拡張）   | 5.1-5.2                                               | useMessageQueue (P0), useGameErrorHandler (P1) | -         |
 
 ### UI Layer
 
 #### MessageBox
 
-| Field             | Detail                                                   |
-| ----------------- | -------------------------------------------------------- |
-| Intent            | メッセージテキストとタイプに基づいた視覚的表示を提供     |
+| Field             | Detail                                                                                        |
+| ----------------- | --------------------------------------------------------------------------------------------- |
+| Intent            | メッセージテキストとタイプに基づいた視覚的表示を提供                                          |
 | Requirements      | 1.1, 2.1, 2.2, 2.3, 2.4, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 5.4, 5.5, 6.1, 6.2, 6.3, 6.6 |
-| Owner / Reviewers | Frontend Team                                            |
+| Owner / Reviewers | Frontend Team                                                                                 |
 
 **Responsibilities & Constraints**:
 
@@ -286,7 +286,9 @@ interface MessageBoxProps {
   - CSS Configuration:
     ```css
     .message-box-text {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+      font-family:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP',
+        sans-serif;
       line-height: 1.5;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -304,11 +306,11 @@ interface MessageBoxProps {
 
 #### useMessageQueue
 
-| Field             | Detail                                                           |
-| ----------------- | ---------------------------------------------------------------- |
+| Field             | Detail                                                             |
+| ----------------- | ------------------------------------------------------------------ |
 | Intent            | メッセージキュー状態管理、タイマー制御、メッセージ追加/削除API提供 |
-| Requirements      | 1.2, 1.3, 1.4, 1.5, 4.5, 5.1, 5.2, 5.3, 6.4, 6.5               |
-| Owner / Reviewers | Frontend Team                                                    |
+| Requirements      | 1.2, 1.3, 1.4, 1.5, 4.5, 5.1, 5.2, 5.3, 6.4, 6.5                   |
+| Owner / Reviewers | Frontend Team                                                      |
 
 **Responsibilities & Constraints**:
 
@@ -466,7 +468,9 @@ const addMessage = useCallback((message: Message) => {
   const interval = now - lastMessageTimeRef.current;
 
   if (interval < 100 && lastMessageTimeRef.current !== 0) {
-    console.warn(`High-frequency message detected (${interval}ms interval, minimum: 100ms)`);
+    console.warn(
+      `High-frequency message detected (${interval}ms interval, minimum: 100ms)`
+    );
   }
 
   lastMessageTimeRef.current = now;
@@ -510,14 +514,14 @@ const addMessage = useCallback((message: Message) => {
  */
 type Message =
   | {
-      type: 'info';       // 通常メッセージ（パス通知等）
-      text: string;       // 表示テキスト（日本語）
-      timeout: number;    // タイムアウト時間（ミリ秒）
+      type: 'info'; // 通常メッセージ（パス通知等）
+      text: string; // 表示テキスト（日本語）
+      timeout: number; // タイムアウト時間（ミリ秒）
     }
   | {
-      type: 'warning';    // 警告メッセージ（無効な手等）
-      text: string;       // 表示テキスト（日本語）
-      timeout: number;    // タイムアウト時間（ミリ秒）
+      type: 'warning'; // 警告メッセージ（無効な手等）
+      text: string; // 表示テキスト（日本語）
+      timeout: number; // タイムアウト時間（ミリ秒）
     };
 
 /**

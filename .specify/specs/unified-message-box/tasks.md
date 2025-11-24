@@ -116,7 +116,7 @@
   - 型定義の整理とクリーンアップ
   - _Requirements: 6.4_
 
-- [ ] 7. テストスイート実装
+- [x] 7. テストスイート実装
 - [x] 7.1 (P) useMessageQueueユニットテストの実装
   - addMessage実行後のcurrentMessage状態更新検証
   - 目的別タイムアウト動作検証（パス通知3秒、無効な手警告2秒、jest.advanceTimersByTime使用）

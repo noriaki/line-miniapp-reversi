@@ -1,6 +1,6 @@
 /**
  * AI Fallback Logic Tests
- * Task 7.2: AI タイムアウト時のランダム有効手選択
+
  * Test-Driven Development: Tests written BEFORE implementation
  */
 

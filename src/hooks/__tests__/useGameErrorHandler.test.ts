@@ -1,6 +1,6 @@
 /**
  * Game Error Handler Hook Tests
- * Task 7.3: ユーザ入力とビジネスロジックのエラーハンドリング
+
  * Test-Driven Development: Tests written BEFORE implementation
  */
 
@@ -65,7 +65,7 @@ describe('useGameErrorHandler', () => {
     });
   });
 
-  describe('RED: Pass notification (Task 3)', () => {
+  describe('RED: Pass notification', () => {
     it('should set pass notification when notifyPass is called', () => {
       const { result } = renderHook(() => useGameErrorHandler());
 
@@ -79,7 +79,7 @@ describe('useGameErrorHandler', () => {
       );
     });
 
-    it('should clear pass notification after 5 seconds (Requirement 3.1, 3.2)', () => {
+    it('should clear pass notification after 5 seconds (3.2)', () => {
       jest.useFakeTimers();
       const { result } = renderHook(() => useGameErrorHandler());
 
@@ -104,7 +104,7 @@ describe('useGameErrorHandler', () => {
       jest.useRealTimers();
     });
 
-    it('should cancel previous timer when new notifyPass is called (Requirement 3.3)', () => {
+    it('should cancel previous timer when new notifyPass is called', () => {
       jest.useFakeTimers();
       const { result } = renderHook(() => useGameErrorHandler());
 
@@ -141,7 +141,7 @@ describe('useGameErrorHandler', () => {
       jest.useRealTimers();
     });
 
-    it('should cleanup timer on unmount (Requirement 3.3)', () => {
+    it('should cleanup timer on unmount', () => {
       jest.useFakeTimers();
       const { result, unmount } = renderHook(() => useGameErrorHandler());
 

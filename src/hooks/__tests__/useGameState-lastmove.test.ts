@@ -1,7 +1,7 @@
 /**
  * Last Move State Management Tests
  * Feature: last-move-highlight
- * Tasks 1.1, 1.2, 1.3: lastMove state management
+ * lastMove state management
  * Test-Driven Development: Tests written BEFORE implementation
  */
 
@@ -9,7 +9,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useGameState } from '../useGameState';
 
 describe('useGameState - lastMove management', () => {
-  describe('RED: Task 1.1 - lastMove state initialization', () => {
+  describe('lastMove state initialization', () => {
     it('should initialize lastMove as null', () => {
       const { result } = renderHook(() => useGameState());
 
@@ -23,7 +23,7 @@ describe('useGameState - lastMove management', () => {
     });
   });
 
-  describe('RED: Task 1.2 - updateBoard with lastMove parameter', () => {
+  describe('updateBoard with lastMove parameter', () => {
     it('should update lastMove when updateBoard is called with position', () => {
       const { result } = renderHook(() => useGameState());
 
@@ -99,7 +99,7 @@ describe('useGameState - lastMove management', () => {
     });
   });
 
-  describe('RED: Task 1.3 - resetGame clears lastMove', () => {
+  describe('resetGame clears lastMove', () => {
     it('should reset lastMove to null when resetGame is called', () => {
       const { result } = renderHook(() => useGameState());
 

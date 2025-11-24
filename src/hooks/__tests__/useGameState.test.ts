@@ -1,6 +1,6 @@
 /**
  * Game State Hook Tests
- * Task 1.1: consecutivePassCount state management
+
  * Test-Driven Development: Tests written BEFORE implementation
  */
 
@@ -81,7 +81,7 @@ describe('useGameState', () => {
     });
   });
 
-  describe('RED: Consecutive pass count management (Task 1.1)', () => {
+  describe('RED: Consecutive pass count management', () => {
     it('should initialize consecutivePassCount to 0', () => {
       const { result } = renderHook(() => useGameState());
 
@@ -170,7 +170,7 @@ describe('useGameState', () => {
     });
   });
 
-  describe('RED: Move history management (Task 3.1)', () => {
+  describe('RED: Move history management', () => {
     it('should initialize moveHistory as empty array and notationString as empty string', () => {
       const { result } = renderHook(() => useGameState());
 

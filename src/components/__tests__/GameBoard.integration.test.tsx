@@ -1,5 +1,5 @@
 /**
- * Integration Tests - Task 9.2: GameBoard + GameLogic Integration
+ * Integration Tests - GameBoard + GameLogic Integration
  *
  * Tests the complete user interaction flow from UI click to state updates
  */

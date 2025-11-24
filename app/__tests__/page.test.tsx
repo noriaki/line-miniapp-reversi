@@ -11,13 +11,13 @@ jest.mock('@/components/GameBoard', () => {
 });
 
 describe('Page (Server Component)', () => {
-  it('レンダリングされること', () => {
+  it('should render', () => {
     render(<Page />);
     // ページが正常にレンダリングされることを確認
     expect(screen.getByTestId('game-board')).toBeInTheDocument();
   });
 
-  it('ページタイトルを表示すること', () => {
+  it('should display page title', () => {
     render(<Page />);
     // ヘッダーにタイトルが表示されることを確認
     const title = screen.getByRole('heading', { level: 1 });
@@ -25,7 +25,7 @@ describe('Page (Server Component)', () => {
     expect(title).toHaveTextContent('リバーシ');
   });
 
-  it('GameBoardコンポーネントをマウントすること', () => {
+  it('should mount GameBoard component', () => {
     render(<Page />);
     // GameBoardコンポーネントがマウントされていることを確認
     const gameBoard = screen.getByTestId('game-board');
@@ -33,7 +33,7 @@ describe('Page (Server Component)', () => {
     expect(gameBoard).toHaveTextContent('GameBoard Component');
   });
 
-  it('正しいHTMLセマンティクスを持つこと', () => {
+  it('should have correct HTML semantics', () => {
     const { container } = render(<Page />);
     // main要素が存在することを確認
     const main = container.querySelector('main');

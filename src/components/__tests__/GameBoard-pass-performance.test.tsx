@@ -1,7 +1,7 @@
 /**
  * GameBoard Pass Performance Tests
- * Task 9: Performance and coverage validation
- * Task 9.1: Pass operation performance tests
+
+
  * Test-Driven Development: Performance benchmarks for pass feature
  */
 
@@ -32,12 +32,12 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
-describe('GameBoard - Pass Performance (Task 9.1)', () => {
+describe('GameBoard - Pass Performance', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Task 9.1: Pass operation performance', () => {
+  describe('Pass operation performance', () => {
     test('should execute pass operation within 100ms (visual feedback)', async () => {
       const user = userEvent.setup();
 

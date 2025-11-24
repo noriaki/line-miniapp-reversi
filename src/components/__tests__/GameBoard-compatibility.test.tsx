@@ -26,9 +26,9 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
-describe('GameBoard Compatibility Tests - Task 4.1', () => {
-  describe('Task 4.1: 既存レンダリングロジックとの互換性を確認する', () => {
-    it('石の配置アニメーション（placeStone）が正常に動作すること', async () => {
+describe('GameBoard Compatibility Tests', () => {
+  describe('Compatibility with existing rendering logic', () => {
+    it('should animate stone placement (placeStone) correctly', async () => {
       const user = userEvent.setup();
 
       const mockPosition: Position = { row: 2, col: 3 };
@@ -53,7 +53,7 @@ describe('GameBoard Compatibility Tests - Task 4.1', () => {
       });
     });
 
-    it('有効手のヒント表示（pulse）が正常に動作すること', () => {
+    it('should display valid move hints (pulse) correctly', () => {
       const mockPositions: Position[] = [
         { row: 2, col: 3 },
         { row: 2, col: 4 },
@@ -73,7 +73,7 @@ describe('GameBoard Compatibility Tests - Task 4.1', () => {
       expect(validCells.length).toBeGreaterThan(0);
     });
 
-    it('最終手ハイライトと有効手ヒントが同時に表示されても視覚的に干渉しないこと', async () => {
+    it('should not visually interfere when displaying both last move highlight and valid move hints', async () => {
       const user = userEvent.setup();
 
       // First move
@@ -108,7 +108,7 @@ describe('GameBoard Compatibility Tests - Task 4.1', () => {
       // Different colors and z-indexes ensure no visual conflict
     });
 
-    it('ハイライト効果が既存のCSSクラスと競合しないこと', async () => {
+    it('should not conflict highlight effect with existing CSS classes', async () => {
       const user = userEvent.setup();
 
       const mockPosition: Position = { row: 2, col: 3 };

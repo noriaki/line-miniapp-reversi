@@ -1,8 +1,8 @@
 /**
  * GameBoard Pass Logic Tests
- * Task 6.2: Pass operation handler logic tests
- * Task 6.3: Consecutive pass detection tests
- * Task 6.4: Pass counter reset tests
+
+
+
  * Test-Driven Development: Unit tests for pass handler
  */
 
@@ -36,12 +36,12 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
-describe('GameBoard - Pass Logic (Task 6.2, 6.3, 6.4)', () => {
+describe('GameBoard - Pass Logic (6.3, 6.4)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Task 6.2: Pass operation handler logic', () => {
+  describe('Pass operation handler logic', () => {
     it('should not execute pass when valid moves exist', async () => {
       const user = userEvent.setup();
 
@@ -146,7 +146,7 @@ describe('GameBoard - Pass Logic (Task 6.2, 6.3, 6.4)', () => {
     });
   });
 
-  describe('Task 6.3: Consecutive pass detection', () => {
+  describe('Consecutive pass detection', () => {
     it('should end game when both players pass consecutively', async () => {
       const user = userEvent.setup();
 
@@ -221,10 +221,10 @@ describe('GameBoard - Pass Logic (Task 6.2, 6.3, 6.4)', () => {
     });
   });
 
-  describe('Task 6.4: Pass counter reset on valid move', () => {
+  describe('Pass counter reset on valid move', () => {
     it('should reset pass counter logic when valid move is made', () => {
       // This test verifies the resetPassCount method is exported and works
-      // The actual integration is tested in Task 7 (integration tests)
+      // The actual integration is tested in
       const { result } = renderHook(() => useGameState());
 
       // Simulate pass scenario

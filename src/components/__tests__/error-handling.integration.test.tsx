@@ -1,7 +1,7 @@
 /**
- * Error Handling Integration Tests (Task 5)
+ * Error Handling Integration Tests
  * Tests error propagation and recovery across components
- * Requirements: 6.1-6.7
+
  *
  * This test suite focuses on cross-component error scenarios:
  * - Worker-WASM error chain propagation
@@ -45,7 +45,7 @@ const ErrorSimulator: React.FC<{
   return <div>Normal component</div>;
 };
 
-describe('Error Handling Integration Tests (Task 5)', () => {
+describe('Error Handling Integration Tests', () => {
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -58,8 +58,7 @@ describe('Error Handling Integration Tests (Task 5)', () => {
     jest.restoreAllMocks();
   });
 
-  // Task 5.1: Worker-WASM error chain propagation
-  describe('Task 5.1: Worker-WASM Error Chain', () => {
+  describe('Worker-WASM Error Chain', () => {
     it('should catch WASM initialization error in ErrorBoundary', () => {
       // Given: Component throws error during WASM initialization
       render(
@@ -150,8 +149,7 @@ describe('Error Handling Integration Tests (Task 5)', () => {
     });
   });
 
-  // Task 5.2: Network and timeout error handling
-  describe('Task 5.2: Network & Timeout Error Handling', () => {
+  describe('Network & Timeout Error Handling', () => {
     it('should display network error message for fetch_failed', () => {
       // Given: Network error during WASM fetch
       const error: WASMLoadError = {
@@ -227,8 +225,7 @@ describe('Error Handling Integration Tests (Task 5)', () => {
     });
   });
 
-  // Task 5.3: Multiple error management and retry mechanisms
-  describe('Task 5.3: Multiple Error Management & Retry', () => {
+  describe('Multiple Error Management & Retry', () => {
     it('should display latest error when multiple errors occur', () => {
       // Given: First error is displayed
       const error1: WASMLoadError = {
@@ -341,8 +338,7 @@ describe('Error Handling Integration Tests (Task 5)', () => {
     });
   });
 
-  // Task 5: Additional coverage for event handlers
-  describe('Task 5: Event Handler Coverage', () => {
+  describe('Event Handler Coverage', () => {
     it('should change button style on mouse over/out for ErrorBoundary retry button', async () => {
       // Given: Error is caught
       render(

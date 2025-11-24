@@ -71,7 +71,7 @@ describe('LiffProvider - Business Logic Tests', () => {
     process.env = ORIGINAL_ENV;
   });
 
-  describe('LIFF_ID未設定時の動作テスト', () => {
+  describe('When LIFF_ID is not set', () => {
     it('should output warning log when LIFF_ID is not set', async () => {
       delete process.env.NEXT_PUBLIC_LIFF_ID;
 
@@ -109,7 +109,7 @@ describe('LiffProvider - Business Logic Tests', () => {
     });
   });
 
-  describe('初期化成功フロー', () => {
+  describe('Successful initialization flow', () => {
     it('should successfully initialize and retrieve isInClient status', async () => {
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
 
@@ -243,7 +243,7 @@ describe('LiffProvider - Business Logic Tests', () => {
     });
   });
 
-  describe('初期化失敗フロー', () => {
+  describe('Initialization failure flow', () => {
     it('should set error message when initialization fails', async () => {
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
       const initSpy = jest
@@ -314,7 +314,7 @@ describe('LiffProvider - Business Logic Tests', () => {
     });
   });
 
-  describe('プロフィール取得失敗フロー', () => {
+  describe('Profile retrieval failure flow', () => {
     it('should set error message when profile retrieval fails', async () => {
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
 
@@ -456,7 +456,7 @@ describe('LiffProvider - Business Logic Tests', () => {
     });
   });
 
-  describe('login/logout関数の動作検証', () => {
+  describe('login/logout function behavior', () => {
     it('should call liff.login() when login function is invoked', async () => {
       process.env.NEXT_PUBLIC_LIFF_ID = 'test-liff-id';
 

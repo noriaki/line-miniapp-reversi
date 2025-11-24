@@ -26,9 +26,9 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
-describe('GameBoard CSS Highlight Styles - Task 3', () => {
-  describe('Task 3.1: 基本ハイライトスタイルを定義する', () => {
-    it('data-last-move属性を持つセルにハイライトスタイルが適用されること', async () => {
+describe('GameBoard CSS Highlight Styles', () => {
+  describe('Define basic highlight styles', () => {
+    it('should apply highlight styles to cells with data-last-move attribute', async () => {
       const user = userEvent.setup();
 
       // Mock valid move at position (2, 3)
@@ -66,7 +66,7 @@ describe('GameBoard CSS Highlight Styles - Task 3', () => {
       });
     });
 
-    it('ハイライトスタイルが他のマスと視覚的に区別可能であること', async () => {
+    it('should visually distinguish highlighted cells from others', async () => {
       const user = userEvent.setup();
 
       const mockPosition: Position = { row: 2, col: 3 };
@@ -101,8 +101,8 @@ describe('GameBoard CSS Highlight Styles - Task 3', () => {
     });
   });
 
-  describe('Task 3.2: ダークモード対応スタイルを追加する', () => {
-    it('ライトモードでdata-last-move属性を持つセルが存在すること', async () => {
+  describe('Add dark mode compatible styles', () => {
+    it('should have cells with data-last-move attribute in light mode', async () => {
       const user = userEvent.setup();
 
       const mockPosition: Position = { row: 2, col: 3 };
@@ -130,8 +130,8 @@ describe('GameBoard CSS Highlight Styles - Task 3', () => {
     });
   });
 
-  describe('Task 3.3: レスポンシブデザイン対応を実装する', () => {
-    it('モバイル画面サイズでdata-last-move属性が正しく適用されること', async () => {
+  describe('Implement responsive design', () => {
+    it('should apply data-last-move attribute correctly on mobile screen size', async () => {
       const user = userEvent.setup();
 
       const mockPosition: Position = { row: 2, col: 3 };
@@ -162,7 +162,7 @@ describe('GameBoard CSS Highlight Styles - Task 3', () => {
       });
     });
 
-    it('タブレット画面サイズでdata-last-move属性が正しく適用されること', async () => {
+    it('should apply data-last-move attribute correctly on tablet screen size', async () => {
       const user = userEvent.setup();
 
       const mockPosition: Position = { row: 2, col: 3 };
@@ -192,8 +192,8 @@ describe('GameBoard CSS Highlight Styles - Task 3', () => {
     });
   });
 
-  describe('Integration: CSSスタイルと互換性', () => {
-    it('ハイライトが既存の有効手ヒントと視覚的に干渉しないこと', async () => {
+  describe('Integration: CSS styles compatibility', () => {
+    it('should not visually interfere highlight with existing valid move hints', async () => {
       const user = userEvent.setup();
 
       // Mock two valid moves

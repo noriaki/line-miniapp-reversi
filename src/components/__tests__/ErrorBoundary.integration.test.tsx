@@ -1,5 +1,5 @@
 /**
- * Integration Tests - Task 9.2: Error Boundary Integration
+ * Integration Tests - Error Boundary Integration
  *
  * Tests error handling UI display when errors occur
  */

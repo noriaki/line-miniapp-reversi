@@ -26,19 +26,19 @@ jest.mock('@/hooks/useLiff', () => ({
 }));
 
 describe('GameBoard Component', () => {
-  it('正しくレンダリングされること', () => {
+  it('should render correctly', () => {
     render(<GameBoard />);
     expect(screen.getByTestId('game-board')).toBeInTheDocument();
   });
 
-  it('初期状態で8x8のボードを表示すること', () => {
+  it('should display 8x8 board in initial state', () => {
     render(<GameBoard />);
     const cells = screen.getAllByRole('button');
     // 64 board cells + 1 pass button = 65 total buttons
     expect(cells).toHaveLength(65);
   });
 
-  it('初期配置で中央に4つの石が配置されていること', () => {
+  it('should place 4 stones in center in initial setup', () => {
     const { container } = render(<GameBoard />);
     // 中央4マスに石があることを確認
     const blackStones = container.querySelectorAll('[data-stone="black"]');
@@ -47,12 +47,12 @@ describe('GameBoard Component', () => {
     expect(whiteStones.length).toBe(2);
   });
 
-  it('現在のターンを表示すること', () => {
+  it('should display current turn', () => {
     render(<GameBoard />);
     expect(screen.getByText(/あなたのターン/)).toBeInTheDocument();
   });
 
-  it('石数をリアルタイムで表示すること', () => {
+  it('should display stone count in real-time', () => {
     const { container } = render(<GameBoard />);
     // 初期状態: 黒2個、白2個
     const stoneCountItems = container.querySelectorAll('.stone-count-item');
@@ -62,8 +62,8 @@ describe('GameBoard Component', () => {
     expect(counts.length).toBe(2); // 黒と白の両方
   });
 
-  describe('Pass Button UI Integration (Task 2.1)', () => {
-    it('パスボタンが盤面の下部に表示されること', () => {
+  describe('Pass Button UI Integration', () => {
+    it('should display pass button below the board', () => {
       render(<GameBoard />);
       const passButton = screen.getByRole('button', {
         name: /ターンをパスする/i,
@@ -72,7 +72,7 @@ describe('GameBoard Component', () => {
       expect(passButton).toHaveTextContent('パス');
     });
 
-    it('パスボタンにaria-label属性が設定されていること', () => {
+    it('should have aria-label attribute on pass button', () => {
       render(<GameBoard />);
       const passButton = screen.getByRole('button', {
         name: /ターンをパスする/i,
@@ -80,7 +80,7 @@ describe('GameBoard Component', () => {
       expect(passButton).toHaveAttribute('aria-label', 'ターンをパスする');
     });
 
-    it('有効な手が存在する場合、パスボタンが無効化されていること', () => {
+    it('should disable pass button when valid moves exist', () => {
       // 初期状態では有効な手が存在する
       render(<GameBoard />);
       const passButton = screen.getByRole('button', {
@@ -90,7 +90,7 @@ describe('GameBoard Component', () => {
       expect(passButton).toHaveAttribute('aria-disabled', 'true');
     });
 
-    it('有効な手が存在しない場合、パスボタンが有効化されること', () => {
+    it('should enable pass button when no valid moves exist', () => {
       // Mock calculateValidMoves to return empty array (no valid moves)
       jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
 
@@ -105,7 +105,7 @@ describe('GameBoard Component', () => {
       jest.spyOn(gameLogic, 'calculateValidMoves').mockRestore();
     });
 
-    it('AIのターン時はパスボタンが無効化されていること', async () => {
+    it('should disable pass button during AI turn', async () => {
       // Mock to make AI turn happen immediately
       jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
 
@@ -128,12 +128,12 @@ describe('GameBoard Component', () => {
       jest.spyOn(gameLogic, 'calculateValidMoves').mockRestore();
     });
 
-    it('ゲーム終了時はパスボタンが表示されないこと', () => {
+    it('should not display pass button when game is finished', () => {
       // This test will be implemented after game logic is integrated
       // For now, we'll skip it as it requires complex state setup
     });
 
-    it('パスボタンのタッチターゲットサイズが44x44px以上であること', () => {
+    it('should have touch target size of at least 44x44px for pass button', () => {
       render(<GameBoard />);
       const passButton = screen.getByRole('button', {
         name: /ターンをパスする/i,
@@ -148,8 +148,8 @@ describe('GameBoard Component', () => {
     });
   });
 
-  describe('Board Cell ID Attributes (Task 2.1)', () => {
-    it('盤面の各セルに一意のid属性が設定されること', () => {
+  describe('Board Cell ID Attributes', () => {
+    it('should have unique id attribute on each board cell', () => {
       const { container } = render(<GameBoard />);
       // Get all board cells (64 cells total)
       const cells = container.querySelectorAll('[data-row][data-col]');
@@ -161,25 +161,25 @@ describe('GameBoard Component', () => {
       });
     });
 
-    it('左上隅セル(row=0, col=0)のIDが"a1"であること', () => {
+    it('should have id "a1" for top-left cell (row=0, col=0)', () => {
       const { container } = render(<GameBoard />);
       const cell = container.querySelector('[data-row="0"][data-col="0"]');
       expect(cell).toHaveAttribute('id', 'a1');
     });
 
-    it('右下隅セル(row=7, col=7)のIDが"h8"であること', () => {
+    it('should have id "h8" for bottom-right cell (row=7, col=7)', () => {
       const { container } = render(<GameBoard />);
       const cell = container.querySelector('[data-row="7"][data-col="7"]');
       expect(cell).toHaveAttribute('id', 'h8');
     });
 
-    it('中央セル(row=2, col=3)のIDが"d3"であること', () => {
+    it('should have id "d3" for center cell (row=2, col=3)', () => {
       const { container } = render(<GameBoard />);
       const cell = container.querySelector('[data-row="2"][data-col="3"]');
       expect(cell).toHaveAttribute('id', 'd3');
     });
 
-    it('全64個のセルIDが一意であること', () => {
+    it('should have unique IDs for all 64 cells', () => {
       const { container } = render(<GameBoard />);
       const cells = container.querySelectorAll('[data-row][data-col]');
       const ids = Array.from(cells).map((cell) => cell.getAttribute('id'));
@@ -190,7 +190,7 @@ describe('GameBoard Component', () => {
       expect(uniqueIds.size).toBe(64);
     });
 
-    it('セルIDが棋譜形式(正規表現/^[a-h][1-8]$/)に一致すること', () => {
+    it('should match notation format (regex /^[a-h][1-8]$/) for cell IDs', () => {
       const { container } = render(<GameBoard />);
       const cells = container.querySelectorAll('[data-row][data-col]');
 
@@ -200,7 +200,7 @@ describe('GameBoard Component', () => {
       });
     });
 
-    it('セルID属性が既存のdata-*属性と共存すること', () => {
+    it('should coexist cell ID attribute with existing data-* attributes', () => {
       const { container } = render(<GameBoard />);
       // Use a cell that has a stone (row=3, col=3 has a white stone in initial state)
       const cell = container.querySelector('[data-row="3"][data-col="3"]');
@@ -212,7 +212,7 @@ describe('GameBoard Component', () => {
       expect(cell).toHaveAttribute('data-stone', 'white');
     });
 
-    it('セルクリックイベントがID属性追加後も正常動作すること', async () => {
+    it('should work correctly for cell click events after ID attribute addition', async () => {
       const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
         success: true,
         value: [
@@ -247,8 +247,8 @@ describe('GameBoard Component', () => {
     });
   });
 
-  describe('Move History ID Attribute (Task 2.2)', () => {
-    it('着手履歴コンポーネントにid="history"属性が設定されること', async () => {
+  describe('Move History ID Attribute', () => {
+    it('should have id="history" attribute on move history component', async () => {
       const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
         success: true,
         value: [
@@ -281,7 +281,7 @@ describe('GameBoard Component', () => {
       mockValidateMove.mockRestore();
     });
 
-    it('id="history"とdata-testid="move-history"が共存すること', async () => {
+    it('should coexist id="history" and data-testid="move-history"', async () => {
       const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
         success: true,
         value: [
@@ -318,7 +318,7 @@ describe('GameBoard Component', () => {
       mockValidateMove.mockRestore();
     });
 
-    it('notationString不在時でもid="history"要素がDOM内に存在すること（Requirement 1: AC 1.1）', () => {
+    it('should have history element in DOM even when notationString is absent', () => {
       const { container } = render(<GameBoard />);
       const moveHistory = container.querySelector('#history');
       // Element should exist in DOM even when notation is empty (for Playwright testing)
@@ -329,8 +329,8 @@ describe('GameBoard Component', () => {
     });
   });
 
-  describe('Accessibility - Cell aria-label (Task 5.1)', () => {
-    it('各セルにaria-label属性が設定されること', () => {
+  describe('Accessibility - Cell aria-label', () => {
+    it('should have aria-label attribute on each cell', () => {
       const { container } = render(<GameBoard />);
       const cells = container.querySelectorAll('[data-row][data-col]');
 
@@ -339,32 +339,32 @@ describe('GameBoard Component', () => {
       });
     });
 
-    it('左上隅セル(a1)のaria-labelが"セル a1"であること', () => {
+    it('should have aria-label "セル a1" for top-left cell (a1)', () => {
       const { container } = render(<GameBoard />);
       const cell = container.querySelector('[data-row="0"][data-col="0"]');
       expect(cell).toHaveAttribute('aria-label', 'セル a1');
     });
 
-    it('右下隅セル(h8)のaria-labelが"セル h8"であること', () => {
+    it('should have aria-label "セル h8" for bottom-right cell (h8)', () => {
       const { container } = render(<GameBoard />);
       const cell = container.querySelector('[data-row="7"][data-col="7"]');
       expect(cell).toHaveAttribute('aria-label', 'セル h8');
     });
 
-    it('中央セル(d3)のaria-labelが"セル d3"であること', () => {
+    it('should have aria-label "セル d3" for center cell (d3)', () => {
       const { container } = render(<GameBoard />);
       const cell = container.querySelector('[data-row="2"][data-col="3"]');
       expect(cell).toHaveAttribute('aria-label', 'セル d3');
     });
 
-    it('screen.getByRole("button", { name: /セル a1/i })でセルを選択できること', () => {
+    it('should be able to select cell using screen.getByRole("button", { name: /セル a1/i })', () => {
       render(<GameBoard />);
       const cellA1 = screen.getByRole('button', { name: /セル a1/i });
       expect(cellA1).toBeInTheDocument();
       expect(cellA1).toHaveAttribute('id', 'a1');
     });
 
-    it('aria-label属性が既存のaria-*属性と共存すること', () => {
+    it('should coexist aria-label attribute with existing aria-* attributes', () => {
       render(<GameBoard />);
       // Pass button has aria-label and aria-disabled
       const passButton = screen.getByRole('button', {
@@ -382,7 +382,7 @@ describe('GameBoard Component', () => {
       expect(cellA1).toHaveAttribute('aria-label', 'セル a1');
     });
 
-    it('全64個のセルにaria-labelが設定されていること', () => {
+    it('should have aria-label on all 64 cells', () => {
       const { container } = render(<GameBoard />);
       const cells = container.querySelectorAll('[data-row][data-col]');
 
@@ -394,8 +394,8 @@ describe('GameBoard Component', () => {
     });
   });
 
-  describe('Accessibility - History Component Semantics (Task 5.2)', () => {
-    it('履歴コンポーネントが適切なコンテナ要素(div)を使用していること', async () => {
+  describe('Accessibility - History Component Semantics', () => {
+    it('should use appropriate container element (div) for history component', async () => {
       const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
         success: true,
         value: [
@@ -428,7 +428,7 @@ describe('GameBoard Component', () => {
       mockValidateMove.mockRestore();
     });
 
-    it('履歴コンポーネントにaria-label属性が設定されていること', async () => {
+    it('should have aria-label attribute on history component', async () => {
       const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
         success: true,
         value: [
@@ -461,8 +461,8 @@ describe('GameBoard Component', () => {
     });
   });
 
-  describe('UI Usability - Move History Visual Hiding (Task 1)', () => {
-    it('棋譜要素にsr-onlyクラスが適用されていること', async () => {
+  describe('UI Usability - Move History Visual Hiding', () => {
+    it('should have sr-only class on move history element', async () => {
       const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
         success: true,
         value: [
@@ -494,7 +494,7 @@ describe('GameBoard Component', () => {
       mockValidateMove.mockRestore();
     });
 
-    it('棋譜要素にaria-hidden="true"属性が設定されていること', async () => {
+    it('should have aria-hidden="true" attribute on move history element', async () => {
       const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
         success: true,
         value: [
@@ -526,7 +526,7 @@ describe('GameBoard Component', () => {
       mockValidateMove.mockRestore();
     });
 
-    it('棋譜要素がDOM内に保持されていること', async () => {
+    it('should maintain move history element in DOM', async () => {
       const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
         success: true,
         value: [
@@ -559,7 +559,7 @@ describe('GameBoard Component', () => {
       mockValidateMove.mockRestore();
     });
 
-    it('data-testid="move-history"属性が保持されていること', async () => {
+    it('should maintain data-testid="move-history" attribute', async () => {
       const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
         success: true,
         value: [
@@ -592,8 +592,8 @@ describe('GameBoard Component', () => {
     });
   });
 
-  describe('UI Usability - Message Layout (Task 2, Task 5.1)', () => {
-    it('メッセージ表示領域に固定高さクラス（h-16）が適用されていること', () => {
+  describe('UI Usability - Message Layout', () => {
+    it('should have fixed height class (h-16) on message display area', () => {
       const { container } = render(<GameBoard />);
       // Find the fixed-height container (parent of notification-message)
       const messageContainer = container.querySelector('.h-16');
@@ -601,7 +601,7 @@ describe('GameBoard Component', () => {
       expect(messageContainer).toHaveClass('h-16');
     });
 
-    it('メッセージ要素が常にDOM内に存在すること', () => {
+    it('should always have message element in DOM', () => {
       const { container } = render(<GameBoard />);
       // The notification-message element should always be in DOM
       const notificationMessage = container.querySelector(
@@ -610,7 +610,7 @@ describe('GameBoard Component', () => {
       expect(notificationMessage).toBeInTheDocument();
     });
 
-    it('パス通知メッセージ表示時に opacity-100 クラスが適用されることを検証するテスト', () => {
+    it('should apply opacity-100 class when pass notification message is displayed', () => {
       // Mock to have no valid moves (triggers pass scenario)
       jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
 
@@ -625,7 +625,7 @@ describe('GameBoard Component', () => {
       jest.spyOn(gameLogic, 'calculateValidMoves').mockRestore();
     });
 
-    it('パス通知メッセージ非表示時に opacity-0 クラスが適用されることを検証するテスト', () => {
+    it('should apply opacity-0 class when pass notification message is hidden', () => {
       const { container } = render(<GameBoard />);
 
       // Initially no pass message, so should have opacity-0
@@ -636,7 +636,7 @@ describe('GameBoard Component', () => {
       expect(notificationMessage).not.toHaveClass('opacity-100');
     });
 
-    it('transition-opacity クラスが適用されていることを検証するテスト', () => {
+    it('should verify that transition-opacity class is applied', () => {
       const { container } = render(<GameBoard />);
 
       // The notification-message should have transition-opacity class
@@ -647,8 +647,8 @@ describe('GameBoard Component', () => {
     });
   });
 
-  describe('Move History Display (Task 4)', () => {
-    it('初期状態でも棋譜表示領域がDOM内に存在すること（Requirement 1: AC 1.1）', () => {
+  describe('Move History Display', () => {
+    it('should have move history area in DOM even in initial state', () => {
       render(<GameBoard />);
       const moveHistory = screen.queryByTestId('move-history');
       // Element should exist in DOM even when empty (for Playwright testing)
@@ -658,7 +658,7 @@ describe('GameBoard Component', () => {
       expect(moveHistory).toHaveAttribute('aria-hidden', 'true');
     });
 
-    it('棋譜が空文字列の場合でもDOM内に存在し視覚的に非表示であること（Requirement 1: AC 1.2, 1.4）', () => {
+    it('should exist in DOM but be visually hidden when notation is empty', () => {
       render(<GameBoard />);
       const moveHistory = screen.queryByTestId('move-history');
       // Element exists in DOM
@@ -671,7 +671,7 @@ describe('GameBoard Component', () => {
       expect(textContent.length).toBeGreaterThan(0); // Contains non-breaking space
     });
 
-    it('playing状態でnotationStringが存在する場合に表示されること', async () => {
+    it('should be displayed when notationString exists in playing state', async () => {
       // Mock to simulate a move that generates notation
       const mockApplyMove = jest.spyOn(gameLogic, 'applyMove').mockReturnValue({
         success: true,

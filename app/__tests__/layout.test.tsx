@@ -11,14 +11,14 @@ jest.mock('@/contexts/LiffProvider', () => ({
 }));
 
 describe('RootLayout (Server Component)', () => {
-  it('正しいメタデータを持つこと', () => {
+  it('should have correct metadata', () => {
     expect(metadata).toEqual({
       title: 'LINE Reversi - リバーシゲーム',
       description: 'LINEミニアプリで遊べるリバーシゲーム。AIと対戦しよう!',
     });
   });
 
-  it('正しいviewport設定を持つこと', () => {
+  it('should have correct viewport settings', () => {
     expect(viewport).toEqual({
       width: 'device-width',
       initialScale: 1,
@@ -28,7 +28,7 @@ describe('RootLayout (Server Component)', () => {
     });
   });
 
-  it('childrenを正しくレンダリングすること', () => {
+  it('should render children correctly', () => {
     const { container } = render(
       <RootLayout>
         <div data-testid="child">Test Content</div>
@@ -42,7 +42,7 @@ describe('RootLayout (Server Component)', () => {
     ).toBeInTheDocument();
   });
 
-  it('lang属性が"ja"であること', () => {
+  it('should have lang attribute set to "ja"', () => {
     const { container } = render(
       <RootLayout>
         <div>Test</div>
@@ -53,7 +53,7 @@ describe('RootLayout (Server Component)', () => {
     expect(html).toHaveAttribute('lang', 'ja');
   });
 
-  it('LiffProviderでラップされていること', () => {
+  it('should be wrapped with LiffProvider', () => {
     const { container } = render(
       <RootLayout>
         <div data-testid="child">Test Content</div>

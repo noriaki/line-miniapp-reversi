@@ -1,7 +1,7 @@
 /**
  * WASM Error Handler Tests
- * Requirements: 2.1-2.8
- * Task 3: WASMErrorHandler.tsxのテスト実装
+
+
  * Test-Driven Development: Comprehensive test coverage for all error types and UI interactions
  */
 
@@ -13,9 +13,7 @@ import WASMErrorHandler from '../WASMErrorHandler';
 import type { WASMLoadError, InitializationError } from '@/lib/ai/types';
 
 describe('WASMErrorHandler', () => {
-  // Task 3.1: エラーメッセージ表示のテスト
-
-  describe('Task 3.1: Error Message Display', () => {
+  describe('Error Message Display', () => {
     it('should display fetch_failed error message', () => {
       // Given: fetch_failed error
       const error: WASMLoadError = {
@@ -159,9 +157,7 @@ describe('WASMErrorHandler', () => {
     });
   });
 
-  // Task 3.2: UI要素とユーザー操作のテスト
-
-  describe('Task 3.2: UI Elements and User Interaction', () => {
+  describe('UI Elements and User Interaction', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
@@ -272,9 +268,7 @@ describe('WASMErrorHandler', () => {
     });
   });
 
-  // Task 3.3: エラータイプ別ハンドリングのテスト
-
-  describe('Task 3.3: Error Type-Specific Handling', () => {
+  describe('Error Type-Specific Handling', () => {
     it('should handle all WASMLoadError types correctly', () => {
       // Given: all WASMLoadError reason types
       const errors: WASMLoadError[] = [
@@ -437,9 +431,7 @@ describe('WASMErrorHandler', () => {
     });
   });
 
-  // Task 3.4: アクセシビリティとレスポンシブのテスト
-
-  describe('Task 3.4: Accessibility and Responsive Design', () => {
+  describe('Accessibility and Responsive Design', () => {
     it('should have proper container structure for responsive layout', () => {
       // Given: error
       const error: WASMLoadError = {

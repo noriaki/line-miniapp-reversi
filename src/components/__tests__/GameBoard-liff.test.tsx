@@ -46,7 +46,7 @@ describe('GameBoard - LIFF Integration', () => {
     };
   });
 
-  describe('Task 4.1: Profile Icon Display', () => {
+  describe('Profile Icon Display', () => {
     it('should display LINE profile icon when profile is available', () => {
       // Mock LIFF with profile
       mockLiffState = {
@@ -179,7 +179,7 @@ describe('GameBoard - LIFF Integration', () => {
     });
   });
 
-  describe('Task 4.2: External Browser Login UI', () => {
+  describe('External Browser Login UI', () => {
     it('should display login button when in external browser and not logged in', () => {
       mockLiffState = {
         isReady: true,
@@ -274,7 +274,7 @@ describe('GameBoard - LIFF Integration', () => {
     });
   });
 
-  describe('Task 4.3: Login State UI Updates', () => {
+  describe('Login State UI Updates', () => {
     it('should display profile icon when logged in (displayName removed per optimization)', () => {
       mockLiffState = {
         isReady: true,
@@ -335,7 +335,7 @@ describe('GameBoard - LIFF Integration', () => {
   });
 
   describe('Score UI Optimization Tests', () => {
-    describe('Task 1.1: displayName should NOT be displayed', () => {
+    describe('displayName should NOT be displayed', () => {
       it('should NOT display displayName text even when profile has displayName', () => {
         mockLiffState = {
           isReady: true,
@@ -400,7 +400,7 @@ describe('GameBoard - LIFF Integration', () => {
       });
     });
 
-    describe('Task 1.2 & 1.3: Score element order', () => {
+    describe(' Score element order', () => {
       it('should display score elements in correct order: black icon → black count → vs → white count → white icon', () => {
         mockLiffState = {
           isReady: true,
@@ -569,7 +569,7 @@ describe('GameBoard - LIFF Integration', () => {
       });
     });
 
-    describe('Task 3.3: Accessibility attributes', () => {
+    describe('Accessibility attributes', () => {
       it('should have aria-label on black score', () => {
         mockLiffState = {
           isReady: true,

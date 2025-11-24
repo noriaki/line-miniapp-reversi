@@ -1,6 +1,6 @@
 /**
  * Tests for useAIPlayer hook
- * Requirements: 1.1-1.8, 4.1-4.7, 7.1-7.7
+
  */
 
 // Mock dependencies BEFORE importing useAIPlayer
@@ -79,8 +79,6 @@ describe('useAIPlayer', () => {
     }
   });
 
-  // Task 2.1: Worker initialization and cleanup tests
-
   describe('Worker initialization and cleanup', () => {
     it('should initialize Worker on mount', () => {
       // Given: environment with Worker support
@@ -151,8 +149,6 @@ describe('useAIPlayer', () => {
       }
     });
   });
-
-  // Task 2.2: AI calculation success path tests
 
   describe('AI calculation success path', () => {
     it('should send message to Worker and resolve with AI move', async () => {
@@ -247,8 +243,6 @@ describe('useAIPlayer', () => {
     });
   });
 
-  // Task 2.3: Timeout processing tests
-
   describe('Timeout processing', () => {
     it('should fallback to random move on 3-second timeout', async () => {
       // Given: hook is initialized, Worker never responds
@@ -280,8 +274,6 @@ describe('useAIPlayer', () => {
       consoleWarnSpy.mockRestore();
     });
   });
-
-  // Task 2.4: Error handling tests
 
   describe('Error handling', () => {
     it('should fallback to random move when Worker returns error', async () => {
@@ -418,8 +410,6 @@ describe('useAIPlayer', () => {
       );
     });
   });
-
-  // Task 2.5: Concurrent processing and async control tests
 
   describe('Concurrent processing and async control', () => {
     it('should handle unmount during pending calculation', async () => {

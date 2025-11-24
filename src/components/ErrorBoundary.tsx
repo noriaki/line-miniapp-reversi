@@ -1,7 +1,6 @@
 /**
  * Error Boundary Component
  * Catches unexpected errors and displays user-friendly error UI
- * Requirements: 9.2, 9.4, 9.5
  */
 
 'use client';

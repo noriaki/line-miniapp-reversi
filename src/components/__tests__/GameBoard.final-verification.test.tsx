@@ -1,5 +1,5 @@
 /**
- * Final Verification Test - Task 5
+ * Final Verification Test
  *
  * This test suite validates all requirements for element-id-assignment feature:
  * 1. All test suites (unit, integration) pass successfully
@@ -39,8 +39,8 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
-describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
-  describe('Requirement 1: ID Attribute Uniqueness (64 cell IDs + 1 history ID)', () => {
+describe('Final Verification - Element ID Assignment Feature', () => {
+  describe('ID Attribute Uniqueness (64 cell IDs + 1 history ID)', () => {
     it('should generate exactly 64 unique cell IDs (a1-h8)', () => {
       const { container } = render(<GameBoard />);
 
@@ -81,7 +81,7 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
       const user = userEvent.setup();
       const { container } = render(<GameBoard />);
 
-      // Initially, history element should exist in DOM (Requirement 1: AC 1.1)
+      // Initially, history element should exist in DOM
       let history = container.querySelector('#history');
       expect(history).toBeInTheDocument();
       // Should be visually hidden
@@ -131,7 +131,7 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
     });
   });
 
-  describe('Requirement 2: Existing Functionality - Click Events', () => {
+  describe('Existing Functionality - Click Events', () => {
     it('should trigger click events on cells using ID selectors', async () => {
       const user = userEvent.setup();
       const { container } = render(<GameBoard />);
@@ -182,7 +182,7 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
     });
   });
 
-  describe('Requirement 3: Existing Functionality - Styling', () => {
+  describe('Existing Functionality - Styling', () => {
     it('should preserve CSS classes after ID attribute addition', () => {
       const { container } = render(<GameBoard />);
 
@@ -213,7 +213,7 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
     });
   });
 
-  describe('Requirement 4: Existing Functionality - Stone Placement', () => {
+  describe('Existing Functionality - Stone Placement', () => {
     it('should correctly place stones on cells with ID attributes', async () => {
       const user = userEvent.setup();
       const { container } = render(<GameBoard />);
@@ -275,12 +275,12 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
     });
   });
 
-  describe('Requirement 5: Existing Functionality - History Display', () => {
+  describe('Existing Functionality - History Display', () => {
     it('should display move history with correct ID after moves', async () => {
       const user = userEvent.setup();
       const { container } = render(<GameBoard />);
 
-      // Initially, history element should exist (Requirement 1: AC 1.1)
+      // Initially, history element should exist
       let history = container.querySelector('#history');
       expect(history).toBeInTheDocument();
       expect(history).toHaveClass('sr-only');
@@ -329,7 +329,7 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
     });
   });
 
-  describe('Requirement 6: Accessibility - aria-label Attributes', () => {
+  describe('Accessibility - aria-label Attributes', () => {
     it('should have aria-label on all cells with IDs', () => {
       const { container } = render(<GameBoard />);
 
@@ -358,7 +358,7 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
     });
   });
 
-  describe('Requirement 7: Data Attribute Consistency', () => {
+  describe('Data Attribute Consistency', () => {
     it('should maintain consistent data-row and data-col with ID mapping', () => {
       const { container } = render(<GameBoard />);
 
@@ -398,7 +398,7 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
     });
   });
 
-  describe('Requirement 8: Coordinate Mapping Correctness', () => {
+  describe('Coordinate Mapping Correctness', () => {
     it('should correctly map rowIndex and colIndex to cell IDs', () => {
       const { container } = render(<GameBoard />);
 
@@ -438,7 +438,7 @@ describe('Final Verification - Task 5: Element ID Assignment Feature', () => {
     });
   });
 
-  describe('Requirement 9: No Regressions - Existing Tests', () => {
+  describe('No Regressions - Existing Tests', () => {
     it('should render game board correctly (existing test)', () => {
       render(<GameBoard />);
       expect(screen.getByTestId('game-board')).toBeInTheDocument();

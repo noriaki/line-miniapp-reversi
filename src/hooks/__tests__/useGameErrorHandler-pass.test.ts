@@ -1,13 +1,13 @@
 /**
  * Game Error Handler Hook Tests - Pass Notification
- * Task 1.2: Replace skip notification with pass notification
+
  * Test-Driven Development: Tests written BEFORE implementation
  */
 
 import { renderHook, act } from '@testing-library/react';
 import { useGameErrorHandler } from '../useGameErrorHandler';
 
-describe('useGameErrorHandler - Pass Notification (Task 1.2)', () => {
+describe('useGameErrorHandler - Pass Notification', () => {
   describe('RED: Pass notification functionality', () => {
     it('should set pass notification when player passes', () => {
       const { result } = renderHook(() => useGameErrorHandler());
@@ -29,7 +29,7 @@ describe('useGameErrorHandler - Pass Notification (Task 1.2)', () => {
 
       expect(result.current.passNotification).toBe('white');
 
-      // Fast-forward time by 5 seconds (updated from 3 seconds in Task 3)
+      // Fast-forward time by 5 seconds (updated from 3 seconds )
       act(() => {
         jest.advanceTimersByTime(5000);
       });

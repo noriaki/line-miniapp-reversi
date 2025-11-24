@@ -1,9 +1,9 @@
 /**
- * GameBoard Error Handling Tests (Task 5: エラーハンドリング)
+ * GameBoard Error Handling Tests (エラーハンドリング)
  * Tests for pass operation error handling:
- * - Task 5.1: Invalid pass operation error handling
- * - Task 5.2: Game state inconsistency error handling
- * - Task 5.3: Consecutive pass count range validation
+ * - Invalid pass operation error handling
+ * - Game state inconsistency error handling
+ * - Consecutive pass count range validation
  */
 
 import React from 'react';
@@ -33,7 +33,7 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
-describe('GameBoard Error Handling (Task 5)', () => {
+describe('GameBoard Error Handling', () => {
   // Spy on console methods
   let consoleWarnSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
@@ -49,8 +49,8 @@ describe('GameBoard Error Handling (Task 5)', () => {
     jest.restoreAllMocks();
   });
 
-  describe('Task 5.1: Invalid Pass Operation Error Handling', () => {
-    it('有効な手が存在する場合、パス操作を無視すること', async () => {
+  describe('Invalid Pass Operation Error Handling', () => {
+    it('should ignore pass operation when valid moves exist', async () => {
       // Initial state has valid moves
       render(<GameBoard />);
 
@@ -73,7 +73,7 @@ describe('GameBoard Error Handling (Task 5)', () => {
       expect(consoleWarnSpy).not.toHaveBeenCalled();
     });
 
-    it('パスボタンが無効状態でクリックされた場合、何も実行しないこと', async () => {
+    it('should do nothing when pass button is clicked while disabled', async () => {
       // Initial state has valid moves (pass button disabled)
       render(<GameBoard />);
 
@@ -88,8 +88,8 @@ describe('GameBoard Error Handling (Task 5)', () => {
     });
   });
 
-  describe('Task 5.2: Game State Inconsistency Error Handling', () => {
-    it('ゲーム状態がplayingでない場合、パス操作を中止すること', async () => {
+  describe('Game State Inconsistency Error Handling', () => {
+    it('should abort pass operation when game state is not playing', async () => {
       // Mock to create finished game state
       jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
 
@@ -123,7 +123,7 @@ describe('GameBoard Error Handling (Task 5)', () => {
       jest.spyOn(gameLogic, 'calculateValidMoves').mockRestore();
     });
 
-    it('ゲーム状態が不正な場合、エラーログを記録すること', async () => {
+    it('should log error when game state is invalid', async () => {
       // This test verifies that error logging occurs when game state is invalid
       // We'll test this by checking console.error is called with proper context
 
@@ -152,8 +152,8 @@ describe('GameBoard Error Handling (Task 5)', () => {
     });
   });
 
-  describe('Task 5.3: Consecutive Pass Count Range Validation', () => {
-    it('連続パスカウンタが範囲外の値にならないこと', async () => {
+  describe('Consecutive Pass Count Range Validation', () => {
+    it('should keep consecutive pass counter within valid range', async () => {
       // Mock to have no valid moves
       jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
 
@@ -190,7 +190,7 @@ describe('GameBoard Error Handling (Task 5)', () => {
       jest.spyOn(gameLogic, 'calculateValidMoves').mockRestore();
     }, 10000);
 
-    it('連続パスカウンタが2を超えないこと', async () => {
+    it('should not exceed consecutive pass counter above 2', async () => {
       // This test verifies that incrementPassCount clamps the value to max 2
       // The implementation should use Math.min(prev + 1, 2)
 
@@ -225,7 +225,7 @@ describe('GameBoard Error Handling (Task 5)', () => {
       jest.spyOn(gameLogic, 'calculateValidMoves').mockRestore();
     }, 10000);
 
-    it('カウンタが不正な値の場合、エラーログを記録すること', () => {
+    it('should log error when counter has invalid value', () => {
       // This test verifies defensive error logging
       // In normal operation, this should never happen due to implementation safeguards
       // But we add logging for debugging purposes
@@ -241,7 +241,7 @@ describe('GameBoard Error Handling (Task 5)', () => {
   });
 
   describe('Error Message Display', () => {
-    it('エラー発生時、ユーザーにエラーメッセージを表示すること', async () => {
+    it('should display error message to user when error occurs', async () => {
       // Test that error messages are displayed in the UI
       // This is handled by useGameErrorHandler hook
       // For invalid moves (not passes), error messages are shown
@@ -250,7 +250,7 @@ describe('GameBoard Error Handling (Task 5)', () => {
       // and the pass button being disabled when invalid
     });
 
-    it('パス操作のエラーは無視され、UI状態が説明的であること', () => {
+    it('should ignore pass operation errors with self-explanatory UI state', () => {
       // Initial state: valid moves exist, pass button disabled
       render(<GameBoard />);
 
@@ -268,7 +268,7 @@ describe('GameBoard Error Handling (Task 5)', () => {
   });
 
   describe('Error Logging Requirements', () => {
-    it('エラー詳細をコンソールログに記録すること', async () => {
+    it('should log error details to console', async () => {
       // Verify that defensive error logging exists in handlePass
       // The console.warn is present in the code as a defensive check
       // In normal operation, disabled button prevents this code path

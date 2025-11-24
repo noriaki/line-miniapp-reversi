@@ -52,7 +52,7 @@ describe('useLiff', () => {
     });
   });
 
-  describe('Task 8.2: Error Handling', () => {
+  describe('Error Handling', () => {
     it('should throw error when used outside LiffProvider', () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { useLiff } = require('../useLiff');

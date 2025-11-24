@@ -1,13 +1,13 @@
 /**
  * Game State Hook Tests - Pass Feature
- * Task 6.1: useGameState extension tests
+
  * Test-Driven Development: Comprehensive unit tests for pass counter
  */
 
 import { renderHook, act } from '@testing-library/react';
 import { useGameState } from '../useGameState';
 
-describe('useGameState - Pass Feature (Task 6.1)', () => {
+describe('useGameState - Pass Feature', () => {
   describe('Pass counter state management', () => {
     it('should increment consecutivePassCount by 1', () => {
       const { result } = renderHook(() => useGameState());

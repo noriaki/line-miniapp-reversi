@@ -1,7 +1,6 @@
 /**
  * AI Fallback Logic
  * Provides fallback strategies when AI calculation fails
- * Requirements: 9.1, 9.3
  */
 
 import type { Position } from '../game/types';
@@ -18,7 +17,6 @@ export function selectRandomValidMove(validMoves: Position[]): Position {
     throw new Error('No valid moves available');
   }
 
-  // Select random index
   const randomIndex = Math.floor(Math.random() * validMoves.length);
   return validMoves[randomIndex];
 }

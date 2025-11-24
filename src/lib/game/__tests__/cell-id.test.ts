@@ -1,8 +1,8 @@
 /**
  * Unit tests for Cell ID generation
- * Task 1: ID生成ロジックの実装と単体テスト
+
  *
- * Requirements: 1.2, 1.3, 1.4, 1.5, 1.6
+
  *
  * Tests the generateCellId function which converts board indices to
  * chess notation format IDs for HTML elements.
@@ -16,15 +16,15 @@
 import { generateCellId } from '../cell-id';
 
 describe('generateCellId', () => {
-  describe('境界値テスト - Boundary value tests', () => {
+  describe('Boundary value tests', () => {
     test('should generate "a1" for top-left corner (rowIndex=0, colIndex=0)', () => {
-      // Requirement 1.3: 左上隅セルに`id="a1"`
+      // 左上隅セルに`id="a1"`
       const cellId = generateCellId(0, 0);
       expect(cellId).toBe('a1');
     });
 
     test('should generate "h8" for bottom-right corner (rowIndex=7, colIndex=7)', () => {
-      // Requirement 1.4: 右下隅セルに`id="h8"`
+      // 右下隅セルに`id="h8"`
       const cellId = generateCellId(7, 7);
       expect(cellId).toBe('h8');
     });
@@ -40,9 +40,9 @@ describe('generateCellId', () => {
     });
   });
 
-  describe('中間値テスト - Middle value tests', () => {
+  describe('Middle value tests', () => {
     test('should generate "d3" for middle cell (rowIndex=2, colIndex=3)', () => {
-      // Requirement 1.2: ID形式 `{列文字}{行数字}`
+      // ID形式 `{列文字}{行数字}`
       // colIndex=3 → column 'd' (horizontal position)
       // rowIndex=2 → row '3' (vertical position)
       const cellId = generateCellId(2, 3);
@@ -60,9 +60,9 @@ describe('generateCellId', () => {
     });
   });
 
-  describe('全64セルの一意性テスト - All 64 cells uniqueness test', () => {
+  describe('All 64 cells uniqueness test', () => {
     test('should generate unique IDs for all 64 cells', () => {
-      // Requirement 1.1: 8×8の各セルに一意のid属性を生成
+      // 8×8の各セルに一意のid属性を生成
       const ids = new Set<string>();
 
       for (let row = 0; row < 8; row++) {
@@ -77,7 +77,7 @@ describe('generateCellId', () => {
     });
   });
 
-  describe('ID形式検証テスト - ID format validation test', () => {
+  describe('ID format validation test', () => {
     test('should generate ID of exactly 2 characters', () => {
       for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
@@ -88,7 +88,7 @@ describe('generateCellId', () => {
     });
   });
 
-  describe('既存コードとの整合性テスト - Consistency with existing code', () => {
+  describe('Consistency with existing code', () => {
     test('should match positionToNotation mapping for sample positions', () => {
       // Verify consistency with corrected move-history.ts positionToNotation function
       // positionToNotation({ row: 0, col: 0 }) should return "a1"

@@ -19,18 +19,12 @@ import type { Position } from './types';
 export function positionToNotation(position: Position): string {
   const { row, col } = position;
 
-  // Validate position is within board boundaries (0-7)
   if (row < 0 || row > 7 || col < 0 || col > 7) {
     console.error(`Invalid position: row=${row}, col=${col}`);
     return '??';
   }
 
-  // Convert col index (0-7) to letter (a-h)
-  // Note: 'col' represents the horizontal position (column in chess notation)
   const columnLetter = String.fromCharCode('a'.charCodeAt(0) + col);
-
-  // Convert row index (0-7) to number (1-8)
-  // Note: 'row' represents the vertical position (row in chess notation)
   const rowNumber = String(row + 1);
 
   return columnLetter + rowNumber;

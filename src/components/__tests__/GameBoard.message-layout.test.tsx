@@ -1,7 +1,7 @@
 /**
  * GameBoard Component Tests - Message Layout Shift Prevention
- * Tests for Task 2: メッセージ表示領域のレイアウトシフト防止
- * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6
+ * Tests for メッセージ表示領域のレイアウトシフト防止
+
  */
 
 import React from 'react';
@@ -31,9 +31,9 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
-describe('GameBoard - Message Layout Shift Prevention (Task 2)', () => {
-  describe('Requirement 2.1: Fixed height container', () => {
-    it('メッセージ表示領域に固定高さh-16が適用されていること', () => {
+describe('GameBoard - Message Layout Shift Prevention', () => {
+  describe('Fixed height container', () => {
+    it('should apply fixed height h-16 to message display area', () => {
       const { container } = render(<GameBoard />);
 
       // Find the fixed-height container for messages
@@ -41,7 +41,7 @@ describe('GameBoard - Message Layout Shift Prevention (Task 2)', () => {
       expect(messageContainer).toBeInTheDocument();
     });
 
-    it('メッセージ領域がflex items-center justify-centerを含むこと', () => {
+    it('should have message area with flex items-center justify-center', () => {
       const { container } = render(<GameBoard />);
 
       // Find the container with flex centering classes
@@ -52,8 +52,8 @@ describe('GameBoard - Message Layout Shift Prevention (Task 2)', () => {
     });
   });
 
-  describe('Requirement 2.2, 2.3: Opacity-based visibility', () => {
-    it('メッセージ要素が常にDOM内に存在すること', () => {
+  describe('2.3: Opacity-based visibility', () => {
+    it('should always have message element in DOM', () => {
       const { container } = render(<GameBoard />);
 
       // Message element should always exist in DOM
@@ -61,7 +61,7 @@ describe('GameBoard - Message Layout Shift Prevention (Task 2)', () => {
       expect(messageElement).toBeInTheDocument();
     });
 
-    it('メッセージ非表示時にopacity-0クラスが適用されること', () => {
+    it('should apply opacity-0 class when message is hidden', () => {
       // Initial state: no pass message
       const { container } = render(<GameBoard />);
 
@@ -69,7 +69,7 @@ describe('GameBoard - Message Layout Shift Prevention (Task 2)', () => {
       expect(messageElement).toHaveClass('opacity-0');
     });
 
-    it('メッセージ表示時にopacity-100クラスが適用されること', async () => {
+    it('should apply opacity-100 class when message is displayed', async () => {
       // Mock to simulate pass notification
       jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
 
@@ -90,14 +90,14 @@ describe('GameBoard - Message Layout Shift Prevention (Task 2)', () => {
       });
     });
 
-    it('transition-opacityクラスが適用されていること', () => {
+    it('should apply transition-opacity class', () => {
       const { container } = render(<GameBoard />);
 
       const messageElement = container.querySelector('.notification-message');
       expect(messageElement).toHaveClass('transition-opacity');
     });
 
-    it('duration-200クラスが適用されていること', () => {
+    it('should apply duration-200 class', () => {
       const { container } = render(<GameBoard />);
 
       const messageElement = container.querySelector('.notification-message');
@@ -105,8 +105,8 @@ describe('GameBoard - Message Layout Shift Prevention (Task 2)', () => {
     });
   });
 
-  describe('Requirement 2.4: Message area height invariance', () => {
-    it('メッセージ非表示時でもコンテナ高さが維持されること', () => {
+  describe('Message area height invariance', () => {
+    it('should maintain container height even when message is hidden', () => {
       const { container } = render(<GameBoard />);
 
       const messageContainer = container.querySelector('.h-16');
@@ -116,7 +116,7 @@ describe('GameBoard - Message Layout Shift Prevention (Task 2)', () => {
       expect(messageContainer).toHaveClass('h-16');
     });
 
-    it('メッセージ非表示時にnon-breaking spaceが表示されること', () => {
+    it('should display non-breaking space when message is hidden', () => {
       const { container } = render(<GameBoard />);
 
       const messageElement = container.querySelector('.notification-message');
@@ -126,8 +126,8 @@ describe('GameBoard - Message Layout Shift Prevention (Task 2)', () => {
     });
   });
 
-  describe('Requirement 2.5: No layout shift on message state change', () => {
-    it('メッセージ表示前後でゲームボード位置が変化しないこと', () => {
+  describe('No layout shift on message state change', () => {
+    it('should not change game board position before and after message display', () => {
       // Mock to simulate pass notification
       jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
 
@@ -154,8 +154,8 @@ describe('GameBoard - Message Layout Shift Prevention (Task 2)', () => {
     });
   });
 
-  describe('Requirement 2.6: Tailwind CSS only', () => {
-    it('メッセージ領域がTailwindクラスのみを使用していること', () => {
+  describe('Tailwind CSS only', () => {
+    it('should use only Tailwind classes for message area', () => {
       const { container } = render(<GameBoard />);
 
       const messageContainer = container.querySelector('.h-16');

@@ -51,8 +51,6 @@ describe('wasm-loader', () => {
       delete (global as any).wasmMemory;
     });
 
-    // Task 4.1: WASM正常ロードのテスト
-
     it('should successfully load WASM module with correct path resolution', async () => {
       const result = await loadWASM('/ai.wasm');
 
@@ -117,8 +115,6 @@ describe('wasm-loader', () => {
         'other.wasm'
       );
     });
-
-    // Task 4.2: エラーハンドリングのテスト
 
     it('should return error when importScripts is undefined', async () => {
       if (globalObj.importScripts !== undefined) {
@@ -211,8 +207,6 @@ describe('wasm-loader', () => {
         expect(result.error.message).toContain('Required WASM functions');
       }
     });
-
-    // Task 4.3: 非同期処理とタイミング制御のテスト
 
     it('should timeout if onRuntimeInitialized is not called within 10 seconds', async () => {
       jest.useFakeTimers();
@@ -319,8 +313,6 @@ describe('wasm-loader', () => {
       expect(callbackExecuted).toBe(true);
       expect(result.success).toBe(true);
     });
-
-    // Task 4.4: パス解決とResult型のテスト
 
     it('should resolve relative paths correctly', async () => {
       await loadWASM('/assets/wasm/ai.wasm');

@@ -37,14 +37,7 @@
  * - board[7][7] → "h8"
  */
 export function generateCellId(rowIndex: number, colIndex: number): string {
-  // Convert colIndex (0-7) to column letter (a-h) - horizontal position
-  // Using ASCII: 'a' is 97, so 97 + colIndex gives us the correct letter
   const column = String.fromCharCode(97 + colIndex);
-
-  // Convert rowIndex (0-7) to row number (1-8) - vertical position
-  // Simply add 1 to shift from 0-based to 1-based indexing
   const row = rowIndex + 1;
-
-  // Combine column letter and row number to form the cell ID
   return `${column}${row}`;
 }

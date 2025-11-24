@@ -26,9 +26,9 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
-describe('GameBoard Performance Tests - Task 4.2', () => {
-  describe('Task 4.2: レンダリングパフォーマンスを検証する', () => {
-    it('ハイライト表示時に過度な再レンダリングが発生しないこと', async () => {
+describe('GameBoard Performance Tests', () => {
+  describe('Rendering performance validation', () => {
+    it('should not cause excessive re-renders when displaying highlight', async () => {
       const user = userEvent.setup();
 
       const mockPosition: Position = { row: 2, col: 3 };
@@ -64,7 +64,7 @@ describe('GameBoard Performance Tests - Task 4.2', () => {
       expect(renderDuration).toBeLessThan(500);
     });
 
-    it('CSSトランジションがブラウザのハードウェアアクセラレーションを活用していること', async () => {
+    it('should utilize browser hardware acceleration for CSS transitions', async () => {
       const user = userEvent.setup();
 
       const mockPosition: Position = { row: 2, col: 3 };
@@ -98,7 +98,7 @@ describe('GameBoard Performance Tests - Task 4.2', () => {
       });
     });
 
-    it('シンプルな実装により不要な再レンダリングが発生しないこと', async () => {
+    it('should not cause unnecessary re-renders with simple implementation', async () => {
       const user = userEvent.setup();
 
       // Mock multiple valid moves
@@ -140,7 +140,7 @@ describe('GameBoard Performance Tests - Task 4.2', () => {
       expect(allCells.length).toBe(64);
     });
 
-    it('複数回の着手でもパフォーマンスが一定であること', async () => {
+    it('should maintain consistent performance across multiple moves', async () => {
       const user = userEvent.setup();
 
       const mockPosition1: Position = { row: 2, col: 3 };
@@ -183,7 +183,7 @@ describe('GameBoard Performance Tests - Task 4.2', () => {
       expect(highlightedCells.length).toBe(1);
     });
 
-    it('ハイライト非表示時のパフォーマンスも維持されること', async () => {
+    it('should maintain performance even when highlight is hidden', async () => {
       const mockPosition: Position = { row: 2, col: 3 };
       jest
         .spyOn(gameLogic, 'calculateValidMoves')

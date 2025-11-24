@@ -22,12 +22,9 @@ export class AIEngine {
   private workerPath: string | URL;
 
   constructor(workerPath?: string | URL) {
-    // Default worker path for production
-    // In tests, pass a custom path or mock Worker
     if (workerPath) {
       this.workerPath = workerPath;
     } else {
-      // Fallback for test environments
       this.workerPath = '/ai-worker.js';
     }
   }
@@ -38,7 +35,6 @@ export class AIEngine {
    */
   async initialize(): Promise<Result<void, InitializationError>> {
     try {
-      // Create worker
       this.worker = new Worker(this.workerPath, { type: 'module' });
 
       this.initialized = true;
@@ -87,7 +83,6 @@ export class AIEngine {
       // this.workerの存在が保証されている (Line 75でチェック済み)
       const worker = this.worker!;
 
-      // Set up timeout
       const timeout = setTimeout(() => {
         worker.removeEventListener('message', handleMessage);
         resolve({
@@ -100,7 +95,6 @@ export class AIEngine {
         });
       }, timeoutMs);
 
-      // Set up message listener
       const handleMessage = (event: MessageEvent<AIWorkerResponse>) => {
         clearTimeout(timeout);
         worker.removeEventListener('message', handleMessage);
@@ -124,7 +118,6 @@ export class AIEngine {
 
       worker.addEventListener('message', handleMessage);
 
-      // Send calculation request to worker
       const request: AIWorkerRequest = {
         type: 'calculate',
         payload: {

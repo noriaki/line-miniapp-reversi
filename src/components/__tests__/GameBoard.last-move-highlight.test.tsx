@@ -27,8 +27,8 @@ jest.mock('@/hooks/useLiff', () => ({
 }));
 
 describe('GameBoard Component - Last Move Highlight', () => {
-  describe('Task 2.1: useGameStateから最終手位置を取得する', () => {
-    it('初期状態では最終手がnullであること', () => {
+  describe('Retrieve last move position from useGameState', () => {
+    it('should have last move as null in initial state', () => {
       const { container } = render(<GameBoard />);
 
       // data-last-move属性を持つセルが存在しないことを確認
@@ -39,8 +39,8 @@ describe('GameBoard Component - Last Move Highlight', () => {
     });
   });
 
-  describe('Task 2.2: 盤面セルのレンダリングロジックを拡張する', () => {
-    it('着手後、該当セルにdata-last-move属性が追加されること', async () => {
+  describe('Extend board cell rendering logic', () => {
+    it('should add data-last-move attribute to the cell after a move', async () => {
       const user = userEvent.setup();
 
       // Mock valid move at position (2, 3)
@@ -74,7 +74,7 @@ describe('GameBoard Component - Last Move Highlight', () => {
       });
     });
 
-    it('新しい着手時に前回のdata-last-move属性が削除され、新しいセルに追加されること', async () => {
+    it('should remove previous data-last-move attribute and add to new cell on new move', async () => {
       const user = userEvent.setup();
 
       // First move at (2, 3)
@@ -116,7 +116,7 @@ describe('GameBoard Component - Last Move Highlight', () => {
       );
     });
 
-    it('lastMoveがnullの場合、data-last-move属性を追加しないこと', () => {
+    it('should not add data-last-move attribute when lastMove is null', () => {
       const { container } = render(<GameBoard />);
 
       // ゲーム開始時、lastMoveはnull
@@ -127,8 +127,8 @@ describe('GameBoard Component - Last Move Highlight', () => {
     });
   });
 
-  describe('Task 2.3: 着手操作時にupdateBoardへ位置を渡す', () => {
-    it('人間プレーヤーの着手時にupdateBoardが正しい位置パラメータで呼ばれること', async () => {
+  describe('Pass position to updateBoard on move operation', () => {
+    it('should call updateBoard with correct position parameter on human player move', async () => {
       const user = userEvent.setup();
 
       const mockPosition: Position = { row: 2, col: 3 };
@@ -156,7 +156,7 @@ describe('GameBoard Component - Last Move Highlight', () => {
       });
     });
 
-    it('AIプレーヤーの着手時にハイライトが表示されること', async () => {
+    it('should display highlight on AI player move', async () => {
       const user = userEvent.setup();
 
       // Mock valid moves for human player
@@ -193,8 +193,8 @@ describe('GameBoard Component - Last Move Highlight', () => {
     });
   });
 
-  describe('Integration: ゲームフロー全体での最終手ハイライト', () => {
-    it('ゲームリセット時に全てのdata-last-move属性が削除されること', async () => {
+  describe('Integration: Last move highlight throughout game flow', () => {
+    it('should remove all data-last-move attributes on game reset', async () => {
       const user = userEvent.setup();
 
       const mockPosition: Position = { row: 2, col: 3 };

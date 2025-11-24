@@ -1,5 +1,5 @@
 /**
- * Integration Tests - Task 6: GameBoard + useGameErrorHandler Integration
+ * Integration Tests - GameBoard + useGameErrorHandler Integration
  *
  * Tests the interaction between GameBoard and useGameErrorHandler:
  * - Pass message display timing (5 seconds)
@@ -48,7 +48,7 @@ describe('Integration Test: GameBoard + useGameErrorHandler - Message Display', 
     jest.restoreAllMocks();
   });
 
-  it('パス操作後、メッセージが5秒間表示され自動消去されること (Requirements: 2.4, 3.2)', async () => {
+  it('should display message for 5 seconds and auto-dismiss after pass operation', async () => {
     const user = userEvent.setup({ delay: null });
     const { container } = render(<GameBoard />);
 
@@ -87,7 +87,7 @@ describe('Integration Test: GameBoard + useGameErrorHandler - Message Display', 
     });
   });
 
-  it('メッセージ表示中に新しいパス操作が発生した場合、メッセージが更新されタイマーがリセットされること (Requirements: 2.5, 3.3)', async () => {
+  it('should update message and reset timer when new pass operation occurs during message display', async () => {
     const user = userEvent.setup({ delay: null });
     const { container } = render(<GameBoard />);
 
@@ -141,7 +141,7 @@ describe('Integration Test: GameBoard + useGameErrorHandler - Message Display', 
     });
   });
 
-  it('メッセージ表示/非表示切り替え時にレイアウトシフトが発生しないこと (Requirements: 2.4, 2.5, 3.2)', async () => {
+  it('should not cause layout shift when toggling message visibility', async () => {
     const user = userEvent.setup({ delay: null });
     const { container } = render(<GameBoard />);
 
@@ -207,7 +207,7 @@ describe('Integration Test: GameBoard + useGameErrorHandler - Message Display', 
     expect(afterHideContainerHeight).toBe(initialContainerHeight);
   });
 
-  it('メッセージ領域が常に固定高さを保持すること (Snapshot Test for Layout Stability)', async () => {
+  it('should always maintain fixed height for message area (Snapshot Test for Layout Stability)', async () => {
     const user = userEvent.setup({ delay: null });
     const { container } = render(<GameBoard />);
 

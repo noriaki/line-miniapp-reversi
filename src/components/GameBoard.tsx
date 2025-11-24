@@ -56,13 +56,10 @@ export default function GameBoard(): JSX.Element {
     getInconsistencyMessage,
   } = useGameErrorHandler();
 
-  // LIFF integration for profile icon display (Task 4.1, 4.2, 4.3)
   const { profile, isReady, isInClient, isLoggedIn, login } = useLiff();
 
-  // State for handling image load errors (Task 4.1)
   const [imageError, setImageError] = useState(false);
 
-  // Handle LINE login (Task 4.2)
   const handleLineLogin = useCallback(async () => {
     try {
       await login();
@@ -81,9 +78,7 @@ export default function GameBoard(): JSX.Element {
     [validMoves]
   );
 
-  // Handle pass operation (Task 3.1, Task 5.1, Task 5.2)
   const handlePass = useCallback(async () => {
-    // Task 5.2: Validate game state
     if (gameStatus.type !== 'playing') {
       console.error('Pass attempted while game is not in playing state', {
         gameStatus,
@@ -91,7 +86,6 @@ export default function GameBoard(): JSX.Element {
       return;
     }
 
-    // Task 5.1: Validate no valid moves exist
     // validMoves is recalculated on each render from board/currentPlayer,
     // so we access it directly rather than adding to dependencies
     const currentValidMoves = calculateValidMoves(board, currentPlayer);
@@ -100,13 +94,8 @@ export default function GameBoard(): JSX.Element {
       return;
     }
 
-    // Notify pass
     notifyPass(currentPlayer);
-
-    // Increment pass count
     incrementPassCount();
-
-    // Switch player
     switchPlayer();
   }, [
     gameStatus,
@@ -134,11 +123,8 @@ export default function GameBoard(): JSX.Element {
       if (!applyResult.success) return;
 
       updateBoard(applyResult.value, position);
-
-      // Reset pass count on valid move (Task 3.3)
       resetPassCount();
 
-      // Check game end - calculate valid moves for both players on new board
       const blackValidMovesAfter = calculateValidMoves(
         applyResult.value,
         'black'
@@ -161,7 +147,6 @@ export default function GameBoard(): JSX.Element {
         return;
       }
 
-      // Switch to AI turn
       switchPlayer();
     },
     [
@@ -177,24 +162,20 @@ export default function GameBoard(): JSX.Element {
     ]
   );
 
-  // Consecutive pass detection (Task 4.2, Task 5.3)
   useEffect(() => {
     if (gameStatus.type !== 'playing') {
       return;
     }
 
-    // Task 5.3: Validate consecutivePassCount range
     if (consecutivePassCount < 0 || consecutivePassCount > 2) {
       console.error('Invalid consecutivePassCount value', {
         consecutivePassCount,
       });
-      resetPassCount(); // Reset to safe state
+      resetPassCount();
       return;
     }
 
-    // Task 4.2: Check for consecutive pass (both players passed)
     if (consecutivePassCount === 2) {
-      // Both players have no valid moves - end game
       const blackValidMoves = calculateValidMoves(board, 'black');
       const whiteValidMoves = calculateValidMoves(board, 'white');
       const endResult = checkGameEnd(board, blackValidMoves, whiteValidMoves);
@@ -214,7 +195,6 @@ export default function GameBoard(): JSX.Element {
     resetPassCount,
   ]);
 
-  // AI turn handling (with auto-pass support - Task 4.1)
   useEffect(() => {
     if (
       gameStatus.type !== 'playing' ||
@@ -224,22 +204,14 @@ export default function GameBoard(): JSX.Element {
       return;
     }
 
-    // Task 4.1: Check if AI has valid moves
     if (validMoves.length === 0) {
-      // AI has no valid moves - auto-pass
       setAIThinking(true);
 
-      // Show AI thinking indicator briefly
       setTimeout(() => {
-        // Notify AI pass
         notifyPass('white');
-
-        // Increment pass count
         incrementPassCount();
 
-        // Wait 1 second for user to see notification
         setTimeout(() => {
-          // Switch back to user
           switchPlayer();
           setAIThinking(false);
         }, 1000);
@@ -255,11 +227,8 @@ export default function GameBoard(): JSX.Element {
         const applyResult = applyMove(board, move, currentPlayer);
         if (applyResult.success) {
           updateBoard(applyResult.value, move);
-
-          // Reset pass count on valid move (Task 3.3)
           resetPassCount();
 
-          // Check game end - calculate valid moves for both players on new board
           const blackValidMovesAfter = calculateValidMoves(
             applyResult.value,
             'black'
@@ -282,14 +251,13 @@ export default function GameBoard(): JSX.Element {
             switchPlayer();
           }
         } else {
-          // Fix: AI returned invalid move - skip AI turn to prevent infinite loop
+          // AI returned invalid move - skip turn to prevent infinite loop
           console.error('AI returned invalid move, skipping turn');
           switchPlayer();
         }
       })
       .catch((error) => {
         console.error('AI calculation failed:', error);
-        // Fallback: skip AI turn
         switchPlayer();
       })
       .finally(() => {
@@ -319,7 +287,6 @@ export default function GameBoard(): JSX.Element {
           {getErrorMessage()}
         </div>
       )}
-      {/* Fixed-height container to prevent layout shift (Task 2, Requirement 2.1) */}
       <div className="h-16 flex items-center justify-center">
         <div
           className={`notification-message bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded transition-opacity duration-200 ${
@@ -344,7 +311,6 @@ export default function GameBoard(): JSX.Element {
         </div>
       )}
 
-      {/* LINE Login Button for External Browser (Task 4.2) */}
       {isReady && isInClient === false && isLoggedIn === false && (
         <div className="bg-green-100 border border-green-400 px-4 py-3 rounded mb-4 text-center">
           <button
@@ -401,7 +367,6 @@ export default function GameBoard(): JSX.Element {
         {/* Stone Count */}
         <div className="stone-count">
           <div className="stone-count-item">
-            {/* Profile icon for black player (Task 4.1) */}
             {profile?.pictureUrl && !imageError ? (
               <img
                 src={profile.pictureUrl}
@@ -474,7 +439,6 @@ export default function GameBoard(): JSX.Element {
         )}
       </div>
 
-      {/* Pass Button (Task 2.1) */}
       {gameStatus.type === 'playing' && (
         <button
           className="pass-button"
@@ -491,7 +455,6 @@ export default function GameBoard(): JSX.Element {
         </button>
       )}
 
-      {/* Move History Display (Task 4) - Visually hidden for users (Task 1) */}
       {gameStatus.type === 'playing' && (
         <div
           id="history"

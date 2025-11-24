@@ -10,8 +10,8 @@
   - TypeScript strict modeでの型安全性確保（`any`型の排除）
   - _Requirements: 3.1, 5.3, 6.4_
 
-- [ ] 2. (P) useMessageQueueフックの実装
-- [ ] 2.1 メッセージキュー状態管理の実装
+- [x] 2. (P) useMessageQueueフックの実装
+- [x] 2.1 メッセージキュー状態管理の実装
   - useStateで現在メッセージの状態管理（Message | null 型）
   - useRefによるタイマーID管理（NodeJS.Timeout | null 型）
   - useRefによる最終メッセージ時刻の追跡（レート制御用）
@@ -19,7 +19,7 @@
   - メッセージ不在時の null 状態の適切な処理
   - _Requirements: 1.2, 1.5, 6.4, 6.5_
 
-- [ ] 2.2 メッセージ追加とタイマー制御の実装
+- [x] 2.2 メッセージ追加とタイマー制御の実装
   - addMessage関数の実装（既存タイマークリア、新メッセージ設定、message.timeout値でタイマー開始）
   - 目的別タイムアウト期間内の新メッセージによる既存メッセージの即座置き換えロジック
   - clearMessage関数の実装（タイマークリア、メッセージnull設定）
@@ -28,7 +28,7 @@
   - timeout値の正数チェックと検証
   - _Requirements: 1.3, 1.4, 4.5, 5.1, 5.2, 6.4_
 
-- [ ] 2.3 メッセージレート制御の実装
+- [x] 2.3 メッセージレート制御の実装
   - 最小メッセージ間隔（100ms）の監視ロジック実装
   - Date.now()による最終メッセージ時刻の追跡
   - 100ms以内の高頻度発行時のconsole.warn出力
@@ -117,7 +117,7 @@
   - _Requirements: 6.4_
 
 - [ ] 7. テストスイート実装
-- [ ] 7.1 (P) useMessageQueueユニットテストの実装
+- [x] 7.1 (P) useMessageQueueユニットテストの実装
   - addMessage実行後のcurrentMessage状態更新検証
   - 目的別タイムアウト動作検証（パス通知3秒、無効な手警告2秒、jest.advanceTimersByTime使用）
   - 連続メッセージ追加時の既存タイマーキャンセル検証

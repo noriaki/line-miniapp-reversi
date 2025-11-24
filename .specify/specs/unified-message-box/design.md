@@ -4,7 +4,7 @@
 
 本機能は、リバーシミニアプリにおける分散した複数のメッセージ表示（パス通知、無効な手の警告、ゲーム状態不整合エラー等）を統合し、単一の統一メッセージボックスコンポーネントとして提供する。現在、GameBoardコンポーネント内に3種類の独立したメッセージ表示エリアが存在しているが、これらを`MessageBox`プレゼンテーショナルコンポーネントと`useMessageQueue`カスタムフックに集約することで、一貫性のあるユーザー体験と保守性の向上を実現する。
 
-統一メッセージボックスは、ページ上部の固定高さ領域（64px）に配置され、メッセージの表示/非表示時にレイアウトシフト（Cumulative Layout Shift: CLS）を引き起こさない。表示制御はopacity遷移のみで実現し、最新メッセージのみを表示するシンプルな戦略を採用する。メッセージは5秒間の自動消去タイマーを持ち、新しいメッセージが発行されると既存メッセージを即座に置き換える。
+統一メッセージボックスは、ページ上部の固定高さ領域（64px）に配置され、メッセージの表示/非表示時にレイアウトシフト（Cumulative Layout Shift: CLS）を引き起こさない。表示制御はopacity遷移のみで実現し、最新メッセージのみを表示するシンプルな戦略を採用する。メッセージは目的に応じた自動消去タイマーを持ち（パス通知: 3秒、無効な手警告: 2秒）、新しいメッセージが発行されると既存メッセージを即座に置き換える。
 
 本設計は、既存の`useGameErrorHandler`フックのパターンを拡張し、プロジェクトのアーキテクチャ原則（Components → Hooks → Lib）に準拠した実装を提供する。TypeScript strict modeによる型安全性を確保し、discriminated unionsによるメッセージタイプの明確な区別を実現する。
 
@@ -13,7 +13,7 @@
 - GameBoard内の分散したメッセージ表示を単一のMessageBoxコンポーネントに統合
 - レイアウトシフト（CLS）をゼロに保つ固定高さレイアウトの実装
 - 通常メッセージと警告メッセージの視覚的区別（控えめな配色）
-- 5秒間の自動消去と最新メッセージ優先表示のロジック実装
+- 目的別タイムアウト戦略の実装（パス通知: 3秒、無効な手警告: 2秒）と最新メッセージ優先表示のロジック
 - TypeScript strict modeでの型安全な実装（`any`型の排除）
 - 既存のhooksパターンとの整合性維持
 
@@ -34,7 +34,7 @@
 
 - `useGameErrorHandler`フックが基本的なメッセージ管理を実装済み
   - 無効な手の警告（2秒間の自動消去）
-  - パス通知（5秒間の自動消去）
+  - パス通知（3秒間の自動消去）
   - ゲーム状態不整合の検出
   - `useState`、`useCallback`、`useRef`を用いたタイマー管理
 - GameBoard.tsx内に3種類の独立したメッセージ表示領域:
@@ -125,21 +125,22 @@ sequenceDiagram
     participant Timer as Timer (useRef)
 
     GL->>GB: イベント発生 (無効な手/パス)
-    GB->>Hook: addMessage({type, text})
+    GB->>Hook: addMessage({type, text, timeout})
+    Hook->>Hook: レート制御チェック (100ms)
     Hook->>Hook: 既存タイマークリア
     Hook->>Hook: setCurrentMessage(newMessage)
-    Hook->>Timer: setTimeout(clearMessage, 5000ms)
+    Hook->>Timer: setTimeout(clearMessage, message.timeout)
     Hook->>MB: currentMessage更新
     MB->>MB: opacity: 0 → 1 (fade-in)
     Note over MB: メッセージ表示中
 
-    alt 5秒以内に新メッセージ
+    alt タイムアウト前に新メッセージ
         GB->>Hook: addMessage(newerMessage)
         Hook->>Timer: clearTimeout(existing)
         Hook->>Hook: setCurrentMessage(newerMessage)
-        Hook->>Timer: setTimeout(clearMessage, 5000ms)
+        Hook->>Timer: setTimeout(clearMessage, newerMessage.timeout)
         MB->>MB: 即座に新メッセージへ遷移
-    else 5秒経過
+    else タイムアウト経過 (2秒 or 3秒)
         Timer->>Hook: clearMessage実行
         Hook->>Hook: setCurrentMessage(null)
         Hook->>MB: currentMessage = null
@@ -150,7 +151,8 @@ sequenceDiagram
 **Key Decisions**:
 
 - タイマー管理には`useRef`を使用し、コンポーネント再レンダリングの影響を受けない
-- 新メッセージ追加時は既存タイマーを即座にクリアし、新タイマーを開始
+- 新メッセージ追加時は既存タイマーを即座にクリアし、新タイマーを開始（timeout値を使用）
+- レート制御監視（100ms間隔）で高頻度発行をログ出力、ただし最新メッセージは常に処理
 - フェードアニメーションはCSS `transition-opacity`で実現し、JavaScriptは状態変更のみ担当
 
 ## Requirements Traceability
@@ -159,8 +161,8 @@ sequenceDiagram
 | ----------- | -------------------------------------- | ----------------------------- | --------------------------------------- | ------------------------- |
 | 1.1         | ページ上部の固定位置に表示             | MessageBox                    | MessageBoxProps                         | -                         |
 | 1.2         | 最新のメッセージのみを表示             | useMessageQueue               | addMessage, currentMessage state        | Message Lifecycle         |
-| 1.3         | 5秒以内の新メッセージで既存を破棄      | useMessageQueue               | addMessage, timer management            | Message Lifecycle         |
-| 1.4         | 5秒間経過後に自動非表示                | useMessageQueue               | timer management, clearMessage          | Message Lifecycle         |
+| 1.3         | タイムアウト期間内の新メッセージで既存を破棄 | useMessageQueue          | addMessage, timer management            | Message Lifecycle         |
+| 1.4         | 目的別タイムアウト後に自動非表示       | useMessageQueue               | timer management, clearMessage          | Message Lifecycle         |
 | 1.5         | メッセージ不在時は非表示を維持         | MessageBox, useMessageQueue   | currentMessage state (null handling)    | Message Lifecycle         |
 | 2.1         | 固定の高さを持ち、高さが変動しない     | MessageBox                    | CSS fixed height (h-16)                 | -                         |
 | 2.2         | 表示/非表示でCLSを引き起こさない       | MessageBox                    | CSS opacity transition only             | -                         |
@@ -234,10 +236,12 @@ type Message =
   | {
       type: 'info';
       text: string;
+      timeout: number; // タイムアウト時間（ミリ秒）
     }
   | {
       type: 'warning';
       text: string;
+      timeout: number; // タイムアウト時間（ミリ秒）
     };
 
 /**
@@ -278,6 +282,22 @@ interface MessageBoxProps {
 
 - **Integration**: GameBoardコンポーネント内でuseMessageQueueの`currentMessage`をpropsとして受け取る
 - **Validation**: `message.text`が極端に長い場合、`line-clamp-2`等で2行以内に制限
+- **Japanese Text Handling**:
+  - CSS Configuration:
+    ```css
+    .message-box-text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-all;
+    }
+    ```
+  - HTML Attributes: MessageBoxコンテナに`lang="ja"`属性を追加
+  - Browser Fallback: line-clampをサポートしないブラウザ向けに`max-height: 3rem; overflow: hidden;`をフォールバックとして提供
 - **Risks**: 日本語の長文でellipsisが適切に動作しない可能性 → テストで検証必要
 
 ### State Management Layer
@@ -316,10 +336,12 @@ type Message =
   | {
       type: 'info';
       text: string;
+      timeout: number; // タイムアウト時間（ミリ秒）
     }
   | {
       type: 'warning';
       text: string;
+      timeout: number; // タイムアウト時間（ミリ秒）
     };
 
 /**
@@ -334,6 +356,7 @@ interface UseMessageQueueReturn {
   /**
    * 新しいメッセージを追加
    * 既存メッセージがある場合は即座に置き換える
+   * @param message - 表示するメッセージ（timeout値を含む）
    */
   addMessage: (message: Message) => void;
 
@@ -353,12 +376,13 @@ function useMessageQueue(): UseMessageQueueReturn;
 
 - `addMessage`呼び出し時、`message.text`は空文字列でないこと
 - `addMessage`呼び出し時、`message.type`は`'info'`または`'warning'`
+- `addMessage`呼び出し時、`message.timeout`は正の整数（ミリ秒）であること
 
 **Postconditions**:
 
 - `addMessage`呼び出し後、`currentMessage`が即座に更新される
-- 5秒後に`currentMessage`が自動的に`null`にクリアされる
-- 5秒以内に再度`addMessage`が呼ばれた場合、既存タイマーがクリアされ新タイマーが開始される
+- `message.timeout`ミリ秒後に`currentMessage`が自動的に`null`にクリアされる
+- タイムアウト期間内に再度`addMessage`が呼ばれた場合、既存タイマーがクリアされ新タイマーが開始される
 
 **Invariants**:
 
@@ -369,26 +393,93 @@ function useMessageQueue(): UseMessageQueueReturn;
 
 - **Integration**:
   - GameBoardコンポーネントで`const { currentMessage, addMessage } = useMessageQueue();`を呼び出し
-  - パス通知時: `addMessage({ type: 'info', text: 'パスしました' })`
-  - 無効な手警告時: `addMessage({ type: 'warning', text: 'その手は置けません' })`
+  - パス通知時: `addMessage({ type: 'info', text: 'パスしました', timeout: 3000 })`（3秒タイムアウト）
+  - 無効な手警告時: `addMessage({ type: 'warning', text: 'その手は置けません', timeout: 2000 })`（2秒タイムアウト）
 - **Validation**:
   - `addMessage`内でmessage.textの存在チェック（空文字列の場合はconsole.warnして無視）
+  - `addMessage`内でmessage.timeoutの正数チェック（負数や0の場合はconsole.warnして無視）
+- **Message Rate Control**:
+  - 最小メッセージ間隔: 100ms
+  - 実装: useRefで最終メッセージ時刻を追跡し、100ms以内の呼び出しではconsole.warnでログ出力（ただし最新メッセージ優先のため処理は継続）
+  - 詳細は「メッセージレート制御仕様」セクション参照
 - **Risks**:
-  - 高頻度メッセージ発行時のパフォーマンス低下 → useCallbackによるメモ化で対策
+  - 高頻度メッセージ発行時のパフォーマンス低下 → useCallbackによるメモ化で対策、レート制御監視でログ出力
   - タイマーリークの可能性 → useEffectのcleanup関数で確実にclearTimeout
 
 ### Integration Strategy
 
-**既存の`useGameErrorHandler`との統合**:
+**既存の`useGameErrorHandler`との統合 - 3フェーズアプローチ**:
 
-1. **Option A**: `useGameErrorHandler`を完全に`useMessageQueue`に置き換える
-   - `handleInvalidMove` → `addMessage({ type: 'warning', text: '...' })`
-   - `notifyPass` → `addMessage({ type: 'info', text: '...' })`
-   - `hasInconsistency`関連はそのまま保持（別ロジックのため）
-2. **Option B**: `useGameErrorHandler`を`useMessageQueue`を内部で使用するように拡張
-   - 既存APIを保持しつつ、内部実装を`addMessage`呼び出しに変更
+#### Phase 1: useMessageQueue独立実装
 
-**推奨**: Option A（完全置き換え）を採用し、コードの重複を排除。
+- **Scope**: `handleInvalidMove`（2秒タイムアウト）と`notifyPass`（3秒タイムアウト）のみ統合
+- **Implementation**:
+  - GameBoardで`useMessageQueue`を導入
+  - `handleInvalidMove` → `addMessage({ type: 'warning', text: 'その手は置けません', timeout: 2000 })`
+  - `notifyPass` → `addMessage({ type: 'info', text: 'パスしました', timeout: 3000 })`
+- **hasInconsistency**: `useGameErrorHandler`に残し、後続フェーズで対応
+- **Goal**: メッセージ表示機能の統一とタイムアウト戦略の実装
+
+#### Phase 2: GameBoardでの併用期間
+
+- **Scope**: 移行期間中の並行運用
+- **useMessageQueue**: メッセージ表示専用（`handleInvalidMove`, `notifyPass`）
+- **useGameErrorHandler**: `hasInconsistency`検出のみに縮小
+- **Goal**: 統合メッセージボックスの安定性検証
+
+#### Phase 3: 最終リファクタリング
+
+- **hasInconsistency分離**:
+  - 新規フック: `useGameInconsistencyDetector`として独立抽出
+  - Location: `/src/hooks/useGameInconsistencyDetector.ts`
+  - Responsibility: ゲーム状態の整合性検証のみ
+  - Returns: `{ hasInconsistency: boolean, resetGame: () => void }`
+- **不整合メッセージUI**: GameBoard内に独立表示を維持（MessageBox統合対象外）
+  - Rationale: 不整合エラーはリセットボタンを伴う特殊なUIであり、一時的な通知とは性質が異なる
+- **useGameErrorHandler**: 完全削除
+- **Goal**: 責務の明確な分離とコードの保守性向上
+
+### メッセージレート制御仕様
+
+**Strategy**: 最新メッセージ優先 + 最小間隔監視
+
+#### 1. 最小メッセージ間隔
+
+- **Interval**: 100ms
+- **Rationale**: 人間の認知限界（200ms程度）の半分を設定し、十分な余裕を確保。ゲーム操作の高速連打に対する防御策。
+
+#### 2. 実装方針
+
+- **Timestamp Tracking**: useRefで最終メッセージ時刻を追跡
+- **Warning on High Frequency**: addMessage呼び出しが100ms以内の場合、console.warnでログ出力
+- **Latest Message Priority**: 警告は出すが、最新メッセージは常に処理（即座に置き換え戦略）
+- **No Debounce/Throttle**: デバウンス/スロットルは不要（最新メッセージ即時置き換え方式のため）
+
+#### 3. Monitoring Implementation
+
+```typescript
+// useMessageQueue内での実装例
+const lastMessageTimeRef = useRef<number>(0);
+
+const addMessage = useCallback((message: Message) => {
+  const now = Date.now();
+  const interval = now - lastMessageTimeRef.current;
+
+  if (interval < 100 && lastMessageTimeRef.current !== 0) {
+    console.warn(`High-frequency message detected (${interval}ms interval, minimum: 100ms)`);
+  }
+
+  lastMessageTimeRef.current = now;
+
+  // ... 既存のメッセージ追加ロジック
+}, []);
+```
+
+#### 4. Observable Metrics
+
+- **Log Format**: `"High-frequency message detected (XXms interval, minimum: 100ms)"`
+- **Analysis**: コンソールログで高頻度発行パターンを検出し、必要に応じてゲームロジック側の呼び出し制御を検討
+- **Performance Impact**: 最小限（Date.now()呼び出しとログ出力のみ）
 
 ## Data Models
 
@@ -399,12 +490,14 @@ function useMessageQueue(): UseMessageQueueReturn;
 - メッセージは一時的な通知オブジェクトであり、永続化されない
 - ドメインイベント（無効な手、パス、ゲーム状態不整合）から生成される
 - 2つのバリアント（info, warning）を持つdiscriminated union
+- 各メッセージは目的別のタイムアウト値を持つ（パス通知: 3秒、無効な手警告: 2秒）
 
 **Business Rules**:
 
 - 最新メッセージのみが表示される（キューイングなし）
-- メッセージは5秒間の生存期間を持つ
+- メッセージは目的別の生存期間を持つ（timeout値により制御）
 - 新メッセージの発行は既存メッセージを即座に破棄する
+- 高頻度発行（100ms以内）は監視されるが、最新メッセージは常に優先される
 
 ### Logical Data Model
 
@@ -417,12 +510,14 @@ function useMessageQueue(): UseMessageQueueReturn;
  */
 type Message =
   | {
-      type: 'info';    // 通常メッセージ（パス通知等）
-      text: string;    // 表示テキスト（日本語）
+      type: 'info';       // 通常メッセージ（パス通知等）
+      text: string;       // 表示テキスト（日本語）
+      timeout: number;    // タイムアウト時間（ミリ秒）
     }
   | {
-      type: 'warning'; // 警告メッセージ（無効な手等）
-      text: string;    // 表示テキスト（日本語）
+      type: 'warning';    // 警告メッセージ（無効な手等）
+      text: string;       // 表示テキスト（日本語）
+      timeout: number;    // タイムアウト時間（ミリ秒）
     };
 
 /**
@@ -431,6 +526,7 @@ type Message =
 interface MessageQueueState {
   currentMessage: Message | null; // 現在表示中のメッセージ（1つのみ）
   timerRef: React.MutableRefObject<NodeJS.Timeout | null>; // 自動消去タイマー
+  lastMessageTimeRef: React.MutableRefObject<number>; // レート制御用の最終メッセージ時刻
 }
 ```
 
@@ -470,41 +566,39 @@ interface MessageQueueState {
 ### Monitoring
 
 - **Error Logging**: console.errorによる開発環境でのログ出力
+- **Rate Control Logging**: console.warnによる高頻度メッセージ発行の監視
 - **Test Coverage**: Jest + React Testing Libraryで90%以上のカバレッジ目標
-- **Visual Regression**: Playwrightでメッセージ表示のスクリーンショット比較
+- **Manual Testing**: 開発環境でのメッセージ表示とタイムアウト動作の確認
 
 ## Testing Strategy
 
 ### Unit Tests (MessageBox Component)
 
-1. **Rendering with info message**: `message={{ type: 'info', text: 'テスト' }}`でレンダリングし、テキストと背景色を検証
-2. **Rendering with warning message**: `message={{ type: 'warning', text: '警告' }}`で警告スタイルを検証
+1. **Rendering with info message**: `message={{ type: 'info', text: 'テスト', timeout: 3000 }}`でレンダリングし、テキストと背景色を検証
+2. **Rendering with warning message**: `message={{ type: 'warning', text: '警告', timeout: 2000 }}`で警告スタイルを検証
 3. **Rendering with null message**: `message={null}`で非表示状態（opacity: 0）を検証、ただし領域は確保されていることを確認
 4. **Fixed height maintenance**: 全ケースで`h-16`（64px）が維持されることをgetComputedStyleで検証
 5. **Text overflow handling**: 極端に長いテキスト（200文字）でellipsisが適用されることを検証
+6. **Japanese text rendering**: 日本語テキストが適切にレンダリングされ、`lang="ja"`属性が設定されていることを検証
 
 ### Unit Tests (useMessageQueue Hook)
 
-1. **Add message updates currentMessage**: `addMessage({ type: 'info', text: 'test' })`後、`currentMessage`が更新されることを検証
-2. **Auto-clear after 5 seconds**: `addMessage`後、jest.advanceTimersByTime(5000)で`currentMessage`がnullになることを検証
-3. **Replace message cancels previous timer**: 連続して2つのメッセージを追加し、最初のタイマーがクリアされることを検証
-4. **Cleanup on unmount**: アンマウント時にタイマーがクリアされることを検証
-5. **Empty text handling**: `addMessage({ type: 'info', text: '' })`でconsole.warnが呼ばれ、メッセージが追加されないことを検証
+1. **Add message updates currentMessage**: `addMessage({ type: 'info', text: 'test', timeout: 3000 })`後、`currentMessage`が更新されることを検証
+2. **Auto-clear with custom timeout**: `addMessage`後、jest.advanceTimersByTime(message.timeout)で`currentMessage`がnullになることを検証
+3. **Purpose-based timeout validation**: パス通知（3秒）と無効な手警告（2秒）で異なるタイムアウトが適用されることを検証
+4. **Replace message cancels previous timer**: 連続して2つのメッセージを追加し、最初のタイマーがクリアされることを検証
+5. **Cleanup on unmount**: アンマウント時にタイマーがクリアされることを検証
+6. **Empty text handling**: `addMessage({ type: 'info', text: '', timeout: 3000 })`でconsole.warnが呼ばれ、メッセージが追加されないことを検証
+7. **Rate control warning**: 100ms以内に連続してaddMessageを呼び出した場合、console.warnが出力されることを検証
 
 ### Integration Tests (GameBoard + MessageBox)
 
-1. **Pass notification triggers message**: パスボタンクリック後、MessageBoxに「パスしました」が表示されることを検証
-2. **Invalid move triggers warning**: 無効なマスクリック後、MessageBoxに警告メッセージが表示されることを検証
-3. **Message auto-clears after 5 seconds**: メッセージ表示後5秒待機し、非表示になることを検証
-4. **Consecutive messages replace each other**: 2秒間隔で2つのメッセージを発行し、2つ目が1つ目を置き換えることを検証
-5. **No layout shift during message display**: メッセージ表示前後でゲーム盤面の位置が変わらないことを検証（getBoundingClientRect）
-
-### E2E Tests (Playwright)
-
-1. **Message display in real game flow**: 実際のゲームプレイ中にメッセージが適切に表示されることを検証
-2. **Mobile viewport message visibility**: モバイル画面サイズでメッセージが視認可能であることを検証
-3. **Fade animation smoothness**: フェードアニメーションが滑らかに動作することを目視確認（スクリーンショット比較）
-4. **Zero CLS verification**: Lighthouse CLS scoreが0であることを検証
+1. **Pass notification with 3s timeout**: パスボタンクリック後、MessageBoxに「パスしました」が表示され、3秒後に非表示になることを検証
+2. **Invalid move warning with 2s timeout**: 無効なマスクリック後、MessageBoxに警告メッセージが表示され、2秒後に非表示になることを検証
+3. **Consecutive messages replace each other**: 短い間隔で2つのメッセージを発行し、2つ目が1つ目を即座に置き換えることを検証
+4. **No layout shift during message display**: メッセージ表示前後でゲーム盤面の位置が変わらないことを検証（getBoundingClientRect）
+5. **Message rate control monitoring**: 高頻度でメッセージを発行した場合、console.warnが出力されるが最新メッセージは表示されることを検証
+6. **hasInconsistency UI separation**: 不整合エラーがGameBoard内の独立UIで表示され、MessageBoxには統合されないことを検証
 
 ## Optional Sections
 
@@ -555,9 +649,9 @@ interface MessageQueueState {
 
 **Validation Checkpoints**:
 
-- Phase 1完了時: 単体テストカバレッジ90%以上
-- Phase 2完了時: 既存E2Eテストが全てパス
-- Phase 3完了時: Lighthouse CLS score = 0.00
+- Phase 1完了時: 単体テストカバレッジ90%以上、目的別タイムアウト動作の手動確認
+- Phase 2完了時: 統合テストが全てパス、useGameErrorHandlerとの併用で不具合なし
+- Phase 3完了時: useGameInconsistencyDetector分離完了、全テストパス、CLS = 0.00の手動確認
 
 ```mermaid
 flowchart LR

@@ -1,7 +1,7 @@
 /**
  * GameBoard Component Tests - Message Layout Shift Prevention
- * Tests for メッセージ表示領域のレイアウトシフト防止
-
+ * Phase 2: Tests for MessageBox-based unified message display
+ * Legacy notification-message removed
  */
 
 import React from 'react';
@@ -31,51 +31,47 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
-describe('GameBoard - Message Layout Shift Prevention', () => {
-  describe('Fixed height container', () => {
-    it('should apply fixed height h-16 to message display area', () => {
-      const { container } = render(<GameBoard />);
+describe('GameBoard - Message Layout Shift Prevention (Phase 2)', () => {
+  describe('MessageBox fixed height', () => {
+    it('should use MessageBox for message display', () => {
+      render(<GameBoard />);
 
-      // Find the fixed-height container for messages
-      const messageContainer = container.querySelector('.h-16');
-      expect(messageContainer).toBeInTheDocument();
-    });
-
-    it('should have message area with flex items-center justify-center', () => {
-      const { container } = render(<GameBoard />);
-
-      // Find the container with flex centering classes
-      const messageContainer = container.querySelector(
-        '.h-16.flex.items-center.justify-center'
-      );
-      expect(messageContainer).toBeInTheDocument();
-    });
-  });
-
-  describe('2.3: Opacity-based visibility', () => {
-    it('should always have message element in DOM', () => {
-      const { container } = render(<GameBoard />);
-
-      // Task 4: MessageBox unified component should always exist
-      const messageBox = container.querySelector('[data-testid="message-box"]');
+      // MessageBox should be present
+      const messageBox = screen.getByTestId('message-box');
       expect(messageBox).toBeInTheDocument();
+    });
 
-      // Legacy notification-message still exists (to be removed in Phase 2)
+    it('should have MessageBox with fixed height', () => {
+      const { container } = render(<GameBoard />);
+
+      // MessageBox has fixed height via inline style
+      const messageBox = container.querySelector('[data-testid="message-box"]');
+      expect(messageBox).toHaveAttribute('style', 'height: 64px;');
+    });
+
+    it('should not have legacy notification-message element', () => {
+      const { container } = render(<GameBoard />);
+
+      // Legacy notification-message should not exist after Phase 2
       const legacyMessageElement = container.querySelector(
         '.notification-message'
       );
-      expect(legacyMessageElement).toBeInTheDocument();
+      expect(legacyMessageElement).not.toBeInTheDocument();
     });
 
-    it('should apply opacity-0 class when message is hidden', () => {
-      // Initial state: no pass message
+    it('should not have legacy h-16 notification container', () => {
       const { container } = render(<GameBoard />);
 
-      const messageElement = container.querySelector('.notification-message');
-      expect(messageElement).toHaveClass('opacity-0');
+      // Legacy h-16 container with notification-message should not exist
+      const legacyContainer = container.querySelector(
+        '.h-16 .notification-message'
+      );
+      expect(legacyContainer).not.toBeInTheDocument();
     });
+  });
 
-    it('should apply opacity-100 class when message is displayed', async () => {
+  describe('Opacity-based visibility', () => {
+    it('should show message in MessageBox when pass notification triggered', async () => {
       // Mock to simulate pass notification
       jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
 
@@ -86,10 +82,8 @@ describe('GameBoard - Message Layout Shift Prevention', () => {
         name: /ターンをパスする/i,
       });
 
-      // Use act to properly handle async state updates
       await userEvent.click(passButton);
 
-      // Task 4: Pass messages now go through MessageBox
       // Wait for the message to appear in MessageBox
       await waitFor(() => {
         const messageBox = container.querySelector(
@@ -99,52 +93,21 @@ describe('GameBoard - Message Layout Shift Prevention', () => {
         // Check that opacity is 1 (inline style)
         expect(innerBox).toHaveStyle({ opacity: '1' });
       });
-
-      // Legacy notification-message should remain hidden (opacity-0)
-      const legacyMessageElement = container.querySelector(
-        '.notification-message'
-      );
-      expect(legacyMessageElement).toHaveClass('opacity-0');
     });
 
-    it('should apply transition-opacity class', () => {
+    it('should hide MessageBox when no message is present', () => {
       const { container } = render(<GameBoard />);
 
-      const messageElement = container.querySelector('.notification-message');
-      expect(messageElement).toHaveClass('transition-opacity');
-    });
+      const messageBox = container.querySelector('[data-testid="message-box"]');
+      const innerBox = messageBox?.querySelector('[role="status"]');
 
-    it('should apply duration-200 class', () => {
-      const { container } = render(<GameBoard />);
-
-      const messageElement = container.querySelector('.notification-message');
-      expect(messageElement).toHaveClass('duration-200');
-    });
-  });
-
-  describe('Message area height invariance', () => {
-    it('should maintain container height even when message is hidden', () => {
-      const { container } = render(<GameBoard />);
-
-      const messageContainer = container.querySelector('.h-16');
-
-      // Verify the h-16 class is applied (fixed height)
-      // Note: jsdom doesn't compute Tailwind CSS styles, so we check the class
-      expect(messageContainer).toHaveClass('h-16');
-    });
-
-    it('should display non-breaking space when message is hidden', () => {
-      const { container } = render(<GameBoard />);
-
-      const messageElement = container.querySelector('.notification-message');
-
-      // Should contain non-breaking space when no message
-      expect(messageElement?.textContent).toContain('\u00A0');
+      // No message, so opacity should be 0
+      expect(innerBox).toHaveStyle({ opacity: '0' });
     });
   });
 
   describe('No layout shift on message state change', () => {
-    it('should not change game board position before and after message display', () => {
+    it('should not change game board position before and after message display', async () => {
       // Mock to simulate pass notification
       jest.spyOn(gameLogic, 'calculateValidMoves').mockReturnValue([]);
 
@@ -158,7 +121,7 @@ describe('GameBoard - Message Layout Shift Prevention', () => {
       const passButton = screen.getByRole('button', {
         name: /ターンをパスする/i,
       });
-      passButton.click();
+      await userEvent.click(passButton);
 
       // Get board position after pass
       const rectAfter = boardGrid?.getBoundingClientRect();
@@ -169,26 +132,54 @@ describe('GameBoard - Message Layout Shift Prevention', () => {
       expect(rectAfter?.height).toBe(rectBefore?.height);
       expect(rectAfter?.width).toBe(rectBefore?.width);
     });
+
+    it('should maintain MessageBox height regardless of message presence', () => {
+      const { container, rerender } = render(<GameBoard />);
+
+      const messageBox = container.querySelector('[data-testid="message-box"]');
+      const heightBefore = messageBox?.getBoundingClientRect().height;
+
+      // Re-render
+      rerender(<GameBoard />);
+
+      const heightAfter = messageBox?.getBoundingClientRect().height;
+
+      // Height should remain constant
+      expect(heightAfter).toBe(heightBefore);
+    });
   });
 
-  describe('Tailwind CSS only', () => {
-    it('should use only Tailwind classes for message area', () => {
+  describe('MessageBox styling', () => {
+    it('should use inline style for fixed height', () => {
       const { container } = render(<GameBoard />);
 
-      // Task 4: MessageBox uses inline styles for fixed height (by design)
       const messageBox = container.querySelector('[data-testid="message-box"]');
-      expect(messageBox).toBeInTheDocument();
-      // MessageBox has inline style="height: 64px;" which is intentional
       expect(messageBox).toHaveAttribute('style', 'height: 64px;');
+    });
 
-      // Legacy notification-message (to be removed in Phase 2)
-      const legacyMessageElement = container.querySelector(
-        '.notification-message'
-      );
-      expect(legacyMessageElement).not.toHaveAttribute('style');
+    it('should show invalid move warning in MessageBox', async () => {
+      const mockValidateMove = jest
+        .spyOn(gameLogic, 'validateMove')
+        .mockReturnValue({
+          success: false,
+          error: { type: 'invalid_move', reason: 'occupied' },
+        });
 
-      // Verify Tailwind classes are present
-      expect(legacyMessageElement?.className).toMatch(/^[\w\s-]+$/);
+      render(<GameBoard />);
+
+      // Click on an occupied cell
+      const cell = screen.getAllByRole('button')[27];
+      await userEvent.click(cell);
+
+      // Message should appear in MessageBox
+      await waitFor(() => {
+        const messageBox = screen.getByTestId('message-box');
+        expect(messageBox).toHaveTextContent(
+          'そのマスには既に石が置かれています'
+        );
+      });
+
+      mockValidateMove.mockRestore();
     });
   });
 });

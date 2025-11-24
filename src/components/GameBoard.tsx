@@ -48,13 +48,8 @@ export default function GameBoard(): JSX.Element {
 
   const { calculateMove } = useAIPlayer();
 
-  const {
-    getErrorMessage,
-    getPassMessage,
-    hasInconsistency,
-    clearInconsistency,
-    getInconsistencyMessage,
-  } = useGameErrorHandler(); // handleInvalidMove, notifyPassはPhase 2で削除予定
+  const { hasInconsistency, clearInconsistency, getInconsistencyMessage } =
+    useGameErrorHandler(); // Phase 2: Only handles hasInconsistency detection
 
   const { currentMessage, addMessage } = useMessageQueue();
 
@@ -313,21 +308,9 @@ export default function GameBoard(): JSX.Element {
       {/* Task 4.1: Unified Message Box Integration */}
       <MessageBox message={currentMessage} />
 
-      {/* Error Messages and Notifications */}
-      {getErrorMessage() && (
-        <div className="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {getErrorMessage()}
-        </div>
-      )}
-      <div className="h-16 flex items-center justify-center">
-        <div
-          className={`notification-message bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded transition-opacity duration-200 ${
-            getPassMessage() ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          {getPassMessage() || '\u00A0'}
-        </div>
-      </div>
+      {/* Task 5.1: Legacy message displays removed - now handled by MessageBox */}
+
+      {/* hasInconsistency remains independent (with reset button) */}
       {hasInconsistency && (
         <div className="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {getInconsistencyMessage()}

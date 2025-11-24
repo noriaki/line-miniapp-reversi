@@ -81,8 +81,8 @@
   - hasInconsistencyは後続フェーズ対応のため現状維持
   - _Requirements: 1.3, 1.4, 5.1, 5.2_
 
-- [ ] 5. Phase 2移行: 既存メッセージ表示の置き換え
-- [ ] 5.1 GameBoard内メッセージ表示の移行
+- [x] 5. Phase 2移行: 既存メッセージ表示の置き換え
+- [x] 5.1 GameBoard内メッセージ表示の移行
   - GameBoard内の既存3種類のメッセージ表示領域の削除
   - パス通知用の独立表示領域の削除
   - 無効な手警告用の独立表示領域の削除
@@ -90,7 +90,7 @@
   - レイアウトシフト（CLS）ゼロの維持確認
   - _Requirements: 2.2, 5.1, 5.2_
 
-- [ ] 5.2 useGameErrorHandler併用動作の検証
+- [x] 5.2 useGameErrorHandler併用動作の検証
   - useMessageQueueとuseGameErrorHandlerの並行運用確認
   - useMessageQueueがhandleInvalidMoveとnotifyPassを処理
   - useGameErrorHandlerがhasInconsistency検出のみに縮小

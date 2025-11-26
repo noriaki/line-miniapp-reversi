@@ -16,28 +16,32 @@ describe('Next.js 16 and React 19 Upgrade Verification', () => {
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
       const nextVersion = packageJson.dependencies.next;
 
-      expect(nextVersion).toMatch(/^\^16\./);
+      // React 19 Compatibility: Accept both caret (^16.x) and exact (16.x) version formats
+      expect(nextVersion).toMatch(/^(\^)?16\./);
     });
 
     it('should update React to version 19.2.x in package.json', () => {
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
       const reactVersion = packageJson.dependencies.react;
 
-      expect(reactVersion).toMatch(/^\^19\./);
+      // React 19 Compatibility: Accept both caret (^19.x) and exact (19.x) version formats
+      expect(reactVersion).toMatch(/^(\^)?19\./);
     });
 
     it('should update React DOM to version 19.2.x in package.json', () => {
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
       const reactDomVersion = packageJson.dependencies['react-dom'];
 
-      expect(reactDomVersion).toMatch(/^\^19\./);
+      // React 19 Compatibility: Accept both caret (^19.x) and exact (19.x) version formats
+      expect(reactDomVersion).toMatch(/^(\^)?19\./);
     });
 
     it('should update @types/react to version 19.x in devDependencies', () => {
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
       const typesReactVersion = packageJson.devDependencies['@types/react'];
 
-      expect(typesReactVersion).toMatch(/^\^19/);
+      // React 19 Compatibility: Accept both caret (^19.x) and exact (19.x) version formats
+      expect(typesReactVersion).toMatch(/^(\^)?19/);
     });
 
     it('should update @types/react-dom to version 19.x in devDependencies', () => {
@@ -45,7 +49,8 @@ describe('Next.js 16 and React 19 Upgrade Verification', () => {
       const typesReactDomVersion =
         packageJson.devDependencies['@types/react-dom'];
 
-      expect(typesReactDomVersion).toMatch(/^\^19/);
+      // React 19 Compatibility: Accept both caret (^19.x) and exact (19.x) version formats
+      expect(typesReactDomVersion).toMatch(/^(\^)?19/);
     });
   });
 

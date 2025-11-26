@@ -2,40 +2,40 @@
 
 ## Phase 0: バージョン管理の準備
 
-- [ ] 1. Git作業環境のセットアップ
-- [ ] 1.1 現在の作業中の変更をコミット
+- [x] 1. Git作業環境のセットアップ
+- [x] 1.1 現在の作業中の変更をコミット
   - 未コミットの変更を確認し、適切なコミットメッセージで保存
   - クリーンな状態からアップグレード作業を開始できるようにする
   - _Requirements: 9_
 
-- [ ] 1.2 フィーチャーブランチの作成
+- [x] 1.2 フィーチャーブランチの作成
   - `git flow feature start upgrade-nextjs-16` コマンドを実行
   - Git Flow戦略に従ってブランチを作成
   - _Requirements: 9_
 
-- [ ] 1.3 バックアップブランチの作成
+- [x] 1.3 バックアップブランチの作成
   - `backup/pre-nextjs-16` ブランチを作成してロールバックポイントを確保
   - 現在の安定状態を保存
   - _Requirements: 9_
 
 ## Phase 1: 公式Codemodによる自動マイグレーション
 
-- [ ] 2. Next.js 16とReact 19へのマイグレーション実行
-- [ ] 2.1 (P) 公式Codemodの実行
+- [x] 2. Next.js 16とReact 19へのマイグレーション実行
+- [x] 2.1 (P) 公式Codemodの実行
   - `npx @next/codemod@canary upgrade latest` コマンドを実行
   - package.jsonのNext.js 16.0.4とReact 19.2.xへの自動更新
   - 該当する破壊的変更の自動修正を適用
   - Codemod実行ログを記録し、変更内容を確認
   - _Requirements: 1, 2_
 
-- [ ] 2.2 (P) 依存関係の再インストール
+- [x] 2.2 (P) 依存関係の再インストール
   - `pnpm install` を実行して依存関係ツリーを更新
   - `pnpm-lock.yaml` の整合性を確認
   - `@types/react` 19.xおよび `@types/react-dom` 19.xの型定義パッケージが更新されたことを検証
   - node_modulesディレクトリが正常に生成されたことを確認
   - _Requirements: 1, 2_
 
-- [ ] 2.3 (P) マイグレーション内容の検証
+- [x] 2.3 (P) マイグレーション内容の検証
   - `git diff` で変更内容を確認
   - package.jsonのバージョン番号が正しく更新されているか検証
   - ソースコードの自動修正箇所を確認

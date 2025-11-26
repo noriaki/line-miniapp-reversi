@@ -28,7 +28,7 @@ const JAPANESE_FONT_FAMILY =
 /**
  * Info icon component (circle with 'i')
  */
-function InfoIcon(): React.ReactElement {
+function InfoIcon(): React.ReactElement<any> {
   return (
     <svg
       className="w-5 h-5 text-blue-600"
@@ -48,7 +48,7 @@ function InfoIcon(): React.ReactElement {
 /**
  * Warning icon component (triangle with exclamation mark)
  */
-function WarningIcon(): React.ReactElement {
+function WarningIcon(): React.ReactElement<any> {
   return (
     <svg
       className="w-5 h-5 text-amber-600"
@@ -82,7 +82,7 @@ function WarningIcon(): React.ReactElement {
 export function MessageBox({
   message,
   testId = 'message-box',
-}: MessageBoxProps): React.ReactElement {
+}: MessageBoxProps): React.ReactElement<any> {
   // Determine styling based on message type
   const isWarning = message?.type === 'warning';
   const bgColor = isWarning ? 'bg-amber-50' : 'bg-blue-50';

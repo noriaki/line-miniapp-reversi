@@ -64,11 +64,15 @@
     "ts-jest": "^29.4.5",
     "typescript": "^5"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.23.0",
   "pnpm": {
     "overrides": {
       "@types/react": "19.2.7",
       "@types/react-dom": "19.2.3"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }

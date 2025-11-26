@@ -5,7 +5,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { type JSX } from 'react';
 import type { WASMLoadError, InitializationError } from '@/lib/ai/types';
 
 interface WASMErrorHandlerProps {

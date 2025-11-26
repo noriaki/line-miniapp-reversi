@@ -71,7 +71,6 @@ describe('useAIPlayer', () => {
 
     // Restore original Worker
     if (originalWorker === undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete (global as Record<string, unknown>).Worker;
     } else {
       (global as typeof globalThis & { Worker: unknown }).Worker =
@@ -141,7 +140,6 @@ describe('useAIPlayer', () => {
 
       // Cleanup: restore original Worker
       if (originalWorker === undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete (global as Record<string, unknown>).Worker;
       } else {
         (global as typeof globalThis & { Worker: unknown }).Worker =

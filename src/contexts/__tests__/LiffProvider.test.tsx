@@ -129,12 +129,17 @@ describe('LiffProvider - Business Logic Tests', () => {
         </LiffProvider>
       );
 
+      // React 19 Compatibility: Wait for ready state first
       await waitFor(() => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
+      // React 19 Compatibility: Wait for all state updates to complete
+      await waitFor(() => {
+        expect(screen.getByTestId('in-client')).toHaveTextContent('true');
+      });
+
       expect(screen.getByTestId('error')).toHaveTextContent('no-error');
-      expect(screen.getByTestId('in-client')).toHaveTextContent('true');
       expect(screen.getByTestId('logged-in')).toHaveTextContent('false');
 
       initSpy.mockRestore();
@@ -161,11 +166,16 @@ describe('LiffProvider - Business Logic Tests', () => {
         </LiffProvider>
       );
 
+      // React 19 Compatibility: Wait for ready state first
       await waitFor(() => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
-      expect(screen.getByTestId('in-client')).toHaveTextContent('false');
+      // React 19 Compatibility: Wait for all state updates to complete
+      await waitFor(() => {
+        expect(screen.getByTestId('in-client')).toHaveTextContent('false');
+      });
+
       expect(screen.getByTestId('logged-in')).toHaveTextContent('true');
 
       initSpy.mockRestore();
@@ -202,7 +212,11 @@ describe('LiffProvider - Business Logic Tests', () => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
-      expect(screen.getByTestId('profile')).toHaveTextContent('Test User');
+      // React 19 Compatibility: Wait for profile to be loaded after async getProfile call
+      await waitFor(() => {
+        expect(screen.getByTestId('profile')).toHaveTextContent('Test User');
+      });
+
       expect(screen.getByTestId('error')).toHaveTextContent('no-error');
 
       initSpy.mockRestore();
@@ -234,8 +248,12 @@ describe('LiffProvider - Business Logic Tests', () => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
+      // React 19 Compatibility: Wait for all state updates to complete
+      await waitFor(() => {
+        expect(screen.getByTestId('logged-in')).toHaveTextContent('false');
+      });
+
       expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
-      expect(screen.getByTestId('logged-in')).toHaveTextContent('false');
 
       initSpy.mockRestore();
       isInClientSpy.mockRestore();
@@ -260,9 +278,12 @@ describe('LiffProvider - Business Logic Tests', () => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
-      expect(screen.getByTestId('error')).toHaveTextContent(
-        'LINE integration is unavailable. You can continue playing in normal mode.'
-      );
+      // React 19 Compatibility: Wait for error state update after init failure
+      await waitFor(() => {
+        expect(screen.getByTestId('error')).toHaveTextContent(
+          'LINE integration is unavailable. You can continue playing in normal mode.'
+        );
+      });
 
       initSpy.mockRestore();
     });
@@ -283,8 +304,12 @@ describe('LiffProvider - Business Logic Tests', () => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
+      // React 19 Compatibility: Wait for error state to be set after init failure
+      await waitFor(() => {
+        expect(screen.getByTestId('error')).not.toHaveTextContent('no-error');
+      });
+
       // Fallback mode: ready=true, error is set, LIFF features are null
-      expect(screen.getByTestId('error')).not.toHaveTextContent('no-error');
       expect(screen.getByTestId('in-client')).toHaveTextContent('null');
       expect(screen.getByTestId('logged-in')).toHaveTextContent('null');
       expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
@@ -340,9 +365,12 @@ describe('LiffProvider - Business Logic Tests', () => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
-      expect(screen.getByTestId('error')).toHaveTextContent(
-        'Failed to retrieve profile information'
-      );
+      // React 19 Compatibility: Wait for error state update after profile failure
+      await waitFor(() => {
+        expect(screen.getByTestId('error')).toHaveTextContent(
+          'Failed to retrieve profile information'
+        );
+      });
 
       initSpy.mockRestore();
       isInClientSpy.mockRestore();
@@ -444,8 +472,12 @@ describe('LiffProvider - Business Logic Tests', () => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
+      // React 19 Compatibility: Wait for all LIFF state updates to complete
+      await waitFor(() => {
+        expect(screen.getByTestId('in-client')).toHaveTextContent('false');
+      });
+
       // LIFF state is correct except for profile
-      expect(screen.getByTestId('in-client')).toHaveTextContent('false');
       expect(screen.getByTestId('logged-in')).toHaveTextContent('true');
       expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
 
@@ -587,8 +619,12 @@ describe('LiffProvider - Business Logic Tests', () => {
         expect(screen.getByTestId('ready')).toHaveTextContent('ready');
       });
 
+      // React 19 Compatibility: Wait for profile to be loaded after initialization
+      await waitFor(() => {
+        expect(screen.getByTestId('profile')).toHaveTextContent('Test User');
+      });
+
       // Verify logged in with profile
-      expect(screen.getByTestId('profile')).toHaveTextContent('Test User');
       expect(screen.getByTestId('logged-in')).toHaveTextContent('true');
 
       const user = userEvent.setup();

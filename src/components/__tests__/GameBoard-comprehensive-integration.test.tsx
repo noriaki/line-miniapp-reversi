@@ -47,7 +47,11 @@ describe('Task 7.3: Comprehensive Integration Tests - MessageBox + useMessageQue
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    // React 19: Wrap timer execution in act() to avoid "not wrapped in act(...)" warnings
+    // This ensures state updates from setTimeout callbacks are properly handled
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
     jest.useRealTimers();
     jest.restoreAllMocks();
   });

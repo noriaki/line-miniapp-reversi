@@ -9,10 +9,10 @@
 ## Core Technologies
 
 - **Language**: TypeScript 5.x (strict mode enabled)
-- **Framework**: Next.js 15.x (App Router, Static Export mode)
-- **Runtime**: Node.js 24.x (development), Static HTML/JS (production)
-- **UI Library**: React 18.x (client components for interactivity)
-- **Package Manager**: pnpm 9.x
+- **Framework**: Next.js 16.0.4 (App Router, Static Export mode)
+- **Runtime**: Node.js 24.9.0 (development), Static HTML/JS (production)
+- **UI Library**: React 19.2.0 (client components for interactivity)
+- **Package Manager**: pnpm 10.23.0
 
 ## Key Libraries
 
@@ -32,7 +32,7 @@
 
 ### Code Quality
 
-- **Linting**: ESLint with Next.js config + Prettier integration
+- **Linting**: ESLint 9 with flat config (`eslint.config.mjs`) + Next.js rules + Prettier integration
 - **Pre-commit**: Husky + lint-staged for automated quality gates
 - **Formatting**: Prettier enforced on all commits
 - **Pure Functions**: Game logic implemented as stateless pure functions for testability
@@ -48,8 +48,8 @@
 
 ### Required Tools
 
-- Node.js 24.x (managed via nodenv)
-- pnpm 9.x
+- Node.js 24.9.0 (managed via nodenv)
+- pnpm 10.23.0
 - Optional: dev3000 for AI-assisted debugging
 
 ### Common Commands
@@ -76,5 +76,7 @@
 **Pure Function Game Logic**: Game rules (`/lib/game`) are stateless pure functions. React hooks (`/hooks`) manage state, components handle UI. Clear separation of concerns.
 
 ---
+
+_Updated: 2025-11-26 (Next.js 16.0.4, React 19.2.0, pnpm 10.23.0, ESLint 9 flat config)_
 
 _Document standards and patterns, not every dependency_

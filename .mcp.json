@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "next-devtools": {
+      "command": "pnpx",
+      "args": ["next-devtools-mcp@latest"]
+    },
     "dev3000": {
       "type": "http",
       "url": "http://localhost:3684/mcp"

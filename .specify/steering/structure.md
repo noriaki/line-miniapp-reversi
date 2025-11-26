@@ -44,9 +44,25 @@ export async function getAIMove(board: Board, level: number): Promise<Position>;
 export type { Profile } from '@line/liff';
 ```
 
+### Shared Types (`/src/types/`)
+
+**Purpose**: Cross-domain type definitions and interfaces
+**Pattern**: Discriminated unions, interface definitions for shared concerns
+**Example**:
+
+```typescript
+// message.ts - Message type system with discriminated unions
+export type Message =
+  | { type: 'info'; text: string; timeout: number }
+  | { type: 'warning'; text: string; timeout: number };
+export interface MessageBoxProps {
+  message: Message | null;
+}
+```
+
 ### React State Management (`/src/hooks/`)
 
-**Purpose**: Custom React hooks for game state, AI player, LIFF integration
+**Purpose**: Custom React hooks for game state, AI player, LIFF integration, message queue
 **Pattern**: Encapsulate stateful logic, consume pure lib functions
 **Example**:
 
@@ -54,6 +70,8 @@ export type { Profile } from '@line/liff';
 // useGameState.ts - Game state machine
 // useAIPlayer.ts - AI worker coordination
 // useLiff.ts - LIFF context consumer
+// useMessageQueue.ts - Message display queue with timeout management
+// useGameInconsistencyDetector.ts - Game state validation and error detection
 // worker-factory.ts - Worker instantiation abstraction (testable)
 ```
 
@@ -61,7 +79,14 @@ export type { Profile } from '@line/liff';
 
 **Purpose**: Presentational components with visual logic
 **Pattern**: Receive props from hooks, render UI, emit events
-**Example**: `GameBoard.tsx` (game grid + animations), `ErrorBoundary.tsx`
+**Example**:
+
+```typescript
+// GameBoard.tsx - Game grid with animations (uses GameBoard.css)
+// MessageBox.tsx - Unified message display (info/warning)
+// ErrorBoundary.tsx - React error boundary wrapper
+// WASMErrorHandler.tsx - WASM-specific error handling
+```
 
 ### React Context (`/src/contexts/`)
 
@@ -135,5 +160,7 @@ import type { Board, Position } from './types';
 - Enables unit testing of Worker-dependent hooks without bundler setup
 
 ---
+
+_Updated: 2025-11-26 (Added /src/types/ domain, new hooks: useMessageQueue, useGameInconsistencyDetector, new component: MessageBox)_
 
 _Document patterns, not file trees. New files following patterns shouldn't require updates_

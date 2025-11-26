@@ -138,7 +138,7 @@
   - Turbopackが `/public` ディレクトリを自動配信していることを確認
   - _Requirements: 4_
 
-- [ ] 8. (P) パフォーマンス測定
+- [x] 8. (P) パフォーマンス測定
   - Next.js 15とNext.js 16のビルド時間を比較測定
   - Turbopackによるビルド時間短縮（30-50%）を確認
   - Fast Refresh速度の体感確認

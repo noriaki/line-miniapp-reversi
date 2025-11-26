@@ -9,9 +9,9 @@
 ## Core Technologies
 
 - **Language**: TypeScript 5.x (strict mode enabled)
-- **Framework**: Next.js 15.x (App Router, Static Export mode)
+- **Framework**: Next.js 16.x (App Router, Static Export mode)
 - **Runtime**: Node.js 24.x (development), Static HTML/JS (production)
-- **UI Library**: React 18.x (client components for interactivity)
+- **UI Library**: React 19.x (client components for interactivity)
 - **Package Manager**: pnpm 9.x
 
 ## Key Libraries

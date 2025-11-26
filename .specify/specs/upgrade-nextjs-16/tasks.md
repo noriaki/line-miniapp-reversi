@@ -148,14 +148,14 @@
 
 ## Phase 5: ドキュメント更新と最終検証
 
-- [ ] 9. ステアリングドキュメントの更新
-- [ ] 9.1 (P) tech.mdのバージョン番号更新: 以下をコンテキストに保持して `/kiro:steering` を実行
+- [x] 9. ステアリングドキュメントの更新
+- [x] 9.1 (P) tech.mdのバージョン番号更新: 以下をコンテキストに保持して `/kiro:steering` を実行
   - `.specify/steering/tech.md` のNext.jsバージョン番号を16.xに更新
   - `.specify/steering/tech.md` のReactバージョン番号を19.xに更新
   - Markdown構文が壊れていないことを確認
   - _Requirements: 10_
 
-- [ ] 9.2 (P) 変更内容のコミット
+- [x] 9.2 (P) 変更内容のコミット
   - Semantic Commit Message形式でコミットを作成
   - コミットメッセージに変更内容の概要を含める
   - 破壊的変更への対応内容を記載

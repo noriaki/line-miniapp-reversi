@@ -42,7 +42,8 @@ describe('Next.js 16 and React 19 Upgrade Verification', () => {
 
     it('should update @types/react-dom to version 19.x in devDependencies', () => {
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-      const typesReactDomVersion = packageJson.devDependencies['@types/react-dom'];
+      const typesReactDomVersion =
+        packageJson.devDependencies['@types/react-dom'];
 
       expect(typesReactDomVersion).toMatch(/^\^19/);
     });
@@ -100,7 +101,7 @@ describe('Next.js 16 and React 19 Upgrade Verification', () => {
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 
       const requiredDeps = ['@line/liff', 'next', 'react', 'react-dom'];
-      requiredDeps.forEach(dep => {
+      requiredDeps.forEach((dep) => {
         expect(packageJson.dependencies[dep]).toBeDefined();
       });
     });
@@ -113,10 +114,10 @@ describe('Next.js 16 and React 19 Upgrade Verification', () => {
         '@types/react-dom',
         'typescript',
         'jest',
-        '@testing-library/react'
+        '@testing-library/react',
       ];
 
-      requiredDevDeps.forEach(dep => {
+      requiredDevDeps.forEach((dep) => {
         expect(packageJson.devDependencies[dep]).toBeDefined();
       });
     });

@@ -44,8 +44,8 @@
 
 ## Phase 2: ビルド検証
 
-- [ ] 3. TypeScript型チェックとLintの実行
-- [ ] 3.1 TypeScript型チェックの実行
+- [x] 3. TypeScript型チェックとLintの実行
+- [x] 3.1 TypeScript型チェックの実行
   - `pnpm type-check` (= `tsc --noEmit`) を実行
   - strict モード設定が維持されていることを確認
   - React 19型定義との互換性を検証
@@ -53,14 +53,14 @@
   - 既存のすべてのTypeScriptファイルで型エラーが発生しないことを検証
   - _Requirements: 3_
 
-- [ ] 3.2 ESLintとPrettierチェックの実行
+- [x] 3.2 ESLintとPrettierチェックの実行
   - `pnpm lint` を実行してNext.js 16のESLintルールでコード品質を検証
   - Prettierフォーマットルールへの準拠を確認
   - エラーが発生した場合は `eslint --fix` で自動修正を試行
   - コーディング規約が維持されていることを確認
   - _Requirements: 8_
 
-- [ ] 3.3 Prettierフォーマットチェックの実行
+- [x] 3.3 Prettierフォーマットチェックの実行
   - `pnpm format:check` を実行してPrettierフォーマットルールへの準拠を検証
   - フォーマット違反がないことを確認
   - 違反が検出された場合は `pnpm format` で自動修正を実行

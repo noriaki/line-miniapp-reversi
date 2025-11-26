@@ -1,4 +1,3 @@
-/* eslint-disable no-var */
 /**
  * Web Worker環境のグローバル型定義（テスト専用）
  *

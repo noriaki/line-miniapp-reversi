@@ -42,11 +42,15 @@ try {
 
   const buildDuration = Date.now() - buildStart;
 
-  console.log(`\n✅ Build completed in ${buildDuration}ms (${(buildDuration / 1000).toFixed(2)}s)`);
+  console.log(
+    `\n✅ Build completed in ${buildDuration}ms (${(buildDuration / 1000).toFixed(2)}s)`
+  );
 
   // Extract compilation and static page generation times
   const compileMatch = buildOutput.match(/Compiled successfully in ([\d.]+)ms/);
-  const generateMatch = buildOutput.match(/Generating static pages.*in ([\d.]+)ms/);
+  const generateMatch = buildOutput.match(
+    /Generating static pages.*in ([\d.]+)ms/
+  );
 
   if (compileMatch) {
     console.log(`   - Compilation: ${compileMatch[1]}ms`);
@@ -64,12 +68,15 @@ try {
 
   // Compare with Next.js 15 baseline
   const nextjs15Baseline = 1750; // Conservative estimate from project history
-  const improvement = ((nextjs15Baseline - buildDuration) / nextjs15Baseline) * 100;
+  const improvement =
+    ((nextjs15Baseline - buildDuration) / nextjs15Baseline) * 100;
 
   console.log(`\n📈 Performance Comparison:`);
   console.log(`   - Next.js 15 baseline: ~${nextjs15Baseline}ms`);
   console.log(`   - Next.js 16 actual: ${buildDuration}ms`);
-  console.log(`   - Improvement: ${improvement > 0 ? improvement.toFixed(1) : '0'}% faster`);
+  console.log(
+    `   - Improvement: ${improvement > 0 ? improvement.toFixed(1) : '0'}% faster`
+  );
 
   if (improvement >= 30) {
     console.log('   ✅ Meets 30-50% reduction target');
@@ -138,9 +145,11 @@ if (existsSync(indexHtml)) {
 
   // Estimate initial load (HTML + critical JS)
   const estimatedInitialLoad = htmlSize;
-  const loadTimeEstimate = (estimatedInitialLoad / 1024 / 100); // Rough estimate: 100KB/s
+  const loadTimeEstimate = estimatedInitialLoad / 1024 / 100; // Rough estimate: 100KB/s
 
-  console.log(`\nEstimated initial load time (3G): ${loadTimeEstimate.toFixed(2)}s`);
+  console.log(
+    `\nEstimated initial load time (3G): ${loadTimeEstimate.toFixed(2)}s`
+  );
 
   if (loadTimeEstimate < 2.0) {
     console.log('✅ Meets sub-2-second initial load target');

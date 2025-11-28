@@ -3,20 +3,12 @@
  *
  * Single file containing all basic game operation tests for LINE miniapp Reversi.
  * Tests mobile devices only (Pixel 5, iPhone 12).
- *
- * Requirements Coverage:
- * - 1.1-1.4: Initial board display
- * - 2.1-2.3: Stone placement and flipping
- * - 3.1-3.4: Turn switching
- * - 4.1-4.3: Invalid move handling
- * - 5.1-5.5: AI battle (2 rounds)
- * - 6.2, 6.6: data-testid usage, single file structure
  */
 
 import { test, expect, type Page, type Locator } from '@playwright/test';
 
 // =============================================================================
-// Selectors (Req 6.2: data-testid usage)
+// Selectors
 // =============================================================================
 
 const SELECTORS = {
@@ -192,7 +184,7 @@ async function waitForMessageBoxWithText(
 }
 
 // =============================================================================
-// Test Suite (Req 6.6: Single file structure)
+// Test Suite
 // =============================================================================
 
 test.describe('E2E Test - Game Basic Operations', () => {
@@ -204,12 +196,11 @@ test.describe('E2E Test - Game Basic Operations', () => {
   });
 
   // ===========================================================================
-  // 3.2: Initial Board Display Tests (Req 1.1, 1.2, 1.3, 1.4)
+  // Initial Board Display Tests
   // ===========================================================================
 
   test.describe('Initial Board Display', () => {
     test('should display 8x8 game board', async ({ page }) => {
-      // Req 1.1: Verify 8x8 grid (64 cells)
       const cells = page.locator('[data-row][data-col]');
       await expect(cells).toHaveCount(64);
 
@@ -225,7 +216,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     test('should display initial 4 stones at correct positions', async ({
       page,
     }) => {
-      // Req 1.2: Verify initial 4 stones (black: 2, white: 2)
       const stoneCount = await getStoneCount(page);
       expect(stoneCount.black).toBe(2);
       expect(stoneCount.white).toBe(2);
@@ -255,7 +245,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     });
 
     test('should display valid move hints', async ({ page }) => {
-      // Req 1.3: Verify valid move hints (data-valid="true")
       const validMoves = page.locator(SELECTORS.validMoves);
       const validCount = await validMoves.count();
 
@@ -269,18 +258,16 @@ test.describe('E2E Test - Game Basic Operations', () => {
     });
 
     test('should display player turn indicator', async ({ page }) => {
-      // Req 1.4: Verify turn display shows "Your turn"
       await expect(page.getByText(TURN_TEXT.player)).toBeVisible();
     });
   });
 
   // ===========================================================================
-  // 3.3: Stone Placement and Flipping Tests (Req 2.1, 2.2, 2.3)
+  // Stone Placement and Flipping Tests
   // ===========================================================================
 
   test.describe('Stone Placement and Flipping', () => {
     test('should place stone on valid cell when tapped', async ({ page }) => {
-      // Req 2.1: Verify stone placement on valid move tap
       const initialStoneCount = await getStoneCount(page);
 
       // Get a valid move position before tapping
@@ -307,7 +294,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     });
 
     test('should flip opponent stones when capturing', async ({ page }) => {
-      // Req 2.2: Verify opponent stones flip to player color
       const initialCount = await getStoneCount(page);
 
       // Tap a valid move
@@ -325,7 +311,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     });
 
     test('should update stone count display correctly', async ({ page }) => {
-      // Req 2.3: Verify stone count display (aria-label) updates correctly
       const initialScore = await getDisplayedScore(page);
       expect(initialScore.black).toBe(2);
       expect(initialScore.white).toBe(2);
@@ -344,12 +329,11 @@ test.describe('E2E Test - Game Basic Operations', () => {
   });
 
   // ===========================================================================
-  // 3.4: Turn Switching Tests (Req 3.1, 3.2, 3.3, 3.4)
+  // Turn Switching Tests
   // ===========================================================================
 
   test.describe('Turn Switching', () => {
     test('should switch to AI turn after player move', async ({ page }) => {
-      // Req 3.1: Verify turn display changes to "AI's turn" after player move
       await expect(page.getByText(TURN_TEXT.player)).toBeVisible();
 
       // Player makes a move
@@ -363,7 +347,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     test('should switch back to player turn after AI response', async ({
       page,
     }) => {
-      // Req 3.2: Verify turn display returns to "Your turn" after AI response
       // Player makes a move
       await tapValidMove(page);
 
@@ -376,7 +359,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     test('should display valid move hints during player turn', async ({
       page,
     }) => {
-      // Req 3.3: Verify valid move hints are visible during player turn
       await expect(page.getByText(TURN_TEXT.player)).toBeVisible();
 
       const validMoves = page.locator(SELECTORS.validMoves);
@@ -390,11 +372,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     });
 
     test('should hide valid move hints during AI turn', async ({ page }) => {
-      // Req 3.4: Verify valid move hints are hidden during AI turn
-      // Note: The implementation shows AI's valid moves during AI turn (data-valid="true"),
-      // but the visual hint elements (valid-hint class) are rendered based on the current player.
-      // During AI turn, any valid cells shown are for AI (white), not for the player (black).
-
       // Get player's initial valid move positions
       const initialValidMoves = page.locator(SELECTORS.validMoves);
       const initialValidPositions: Array<{
@@ -416,9 +393,7 @@ test.describe('E2E Test - Game Basic Operations', () => {
       // Wait for AI turn
       await waitForAITurn(page);
 
-      // During AI turn, the valid moves shown (if any) should be different from player's moves
-      // The visual hints (valid-hint divs) should not be visible to user as actionable options
-      // Verify that the button is disabled during AI turn (player cannot interact)
+      // Verify cells are disabled during AI turn (player cannot interact)
       const allCells = page.locator('[data-row][data-col]');
       const cellCount = await allCells.count();
 
@@ -432,14 +407,13 @@ test.describe('E2E Test - Game Basic Operations', () => {
   });
 
   // ===========================================================================
-  // 3.5: Invalid Move Handling Tests (Req 4.1, 4.2, 4.3)
+  // Invalid Move Handling Tests
   // ===========================================================================
 
   test.describe('Invalid Move Handling', () => {
     test('should show error message when tapping occupied cell', async ({
       page,
     }) => {
-      // Req 4.1: Verify error message for occupied cell tap
       // Tap an occupied cell (initial white stone at d4 = row 3, col 3)
       await tapCellAt(page, 3, 3);
 
@@ -454,7 +428,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     test('should show error message when tapping cell that cannot flip stones', async ({
       page,
     }) => {
-      // Req 4.2: Verify error message for no-flip cell tap
       // Tap a cell that's not a valid move (e.g., corner a1 = row 0, col 0)
       await tapCellAt(page, 0, 0);
 
@@ -467,7 +440,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     });
 
     test('should allow game to continue after error', async ({ page }) => {
-      // Req 4.3: Verify game continues after error (valid move can be made)
       // First, trigger an error
       await tapCellAt(page, 0, 0);
 
@@ -492,14 +464,13 @@ test.describe('E2E Test - Game Basic Operations', () => {
   });
 
   // ===========================================================================
-  // 3.6: AI Battle (2 Rounds) Tests (Req 5.1, 5.2, 5.3, 5.4, 5.5)
+  // AI Battle (2 Rounds) Tests
   // ===========================================================================
 
   test.describe('AI Battle - 2 Rounds', () => {
     test('should complete AI response after player first move', async ({
       page,
     }) => {
-      // Req 5.1: Verify AI responds to player's first move
       const initialCount = await getStoneCount(page);
 
       // Player's first move
@@ -516,8 +487,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     test('should allow player second move after AI first response', async ({
       page,
     }) => {
-      // Req 5.2: Verify player can make second move after AI's first response
-
       // Player's first move
       await tapValidMove(page);
 
@@ -544,8 +513,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
     test('should complete AI second response after player second move', async ({
       page,
     }) => {
-      // Req 5.3: Verify AI completes second response
-
       // Round 1: Player move -> AI response
       await tapValidMove(page);
       await waitForPlayerTurn(page, WAIT_CONFIG.aiResponseTimeout);
@@ -564,34 +531,23 @@ test.describe('E2E Test - Game Basic Operations', () => {
     test('should display thinking indicator during AI turn', async ({
       page,
     }) => {
-      // Req 5.4: Verify "thinking" display during AI turn
-      // Note: AI may respond very quickly. We use a polling approach to detect
-      // either the thinking indicator OR verify that the game state progressed
-      // (indicating AI did respond, even if too fast to observe thinking state)
-
+      // AI may respond very quickly, so check for either thinking indicator or completed state
       const initialCount = await getStoneCount(page);
 
       // Player makes a move
       await tapValidMove(page);
 
-      // Try to observe thinking indicator, but allow for fast AI response
-      // We check if either:
-      // 1. Thinking indicator is shown, OR
-      // 2. Game has progressed (AI made a move)
       const thinkingOrCompleted = await Promise.race([
-        // Option 1: See thinking indicator
         page
           .getByText(TURN_TEXT.thinking)
           .waitFor({ state: 'visible', timeout: 1000 })
           .then(() => 'thinking_shown'),
-        // Option 2: AI completed (player turn returned with more stones)
         (async () => {
           await page.waitForTimeout(500);
           const currentCount = await getStoneCount(page);
           if (currentCount.white > initialCount.white) {
             return 'ai_completed';
           }
-          // Still waiting
           await page
             .getByText(TURN_TEXT.thinking)
             .waitFor({ state: 'visible', timeout: 2500 });
@@ -599,13 +555,10 @@ test.describe('E2E Test - Game Basic Operations', () => {
         })(),
       ]);
 
-      // Either outcome is acceptable - thinking was shown OR AI was fast
       expect(['thinking_shown', 'ai_completed']).toContain(thinkingOrCompleted);
     });
 
     test('should complete AI response within 3 seconds', async ({ page }) => {
-      // Req 5.5: Verify AI response completes within 3 seconds
-
       // Player makes a move
       await tapValidMove(page);
 

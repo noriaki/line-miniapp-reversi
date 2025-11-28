@@ -2,14 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Playwright Configuration for E2E Tests
- * Mobile-only configuration with dynamic reporter switching
- *
- * Requirements:
- * - 6.1: Mobile device profiles only (Pixel 5, iPhone 12)
- * - 6.3: Local environment uses 'line' reporter
- * - 6.4: CI environment uses 'github' reporter
- * - 6.5: Screenshot on failure
- * - 7.2, 7.3: Desktop projects removed
+ * Mobile-only configuration (Pixel 5, iPhone 12) with dynamic reporter switching
  */
 export default defineConfig({
   testDir: './e2e',
@@ -30,7 +23,6 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
 
-  // Mobile-only projects (Req 6.1, 7.2, 7.3)
   projects: [
     {
       name: 'mobile-chrome',

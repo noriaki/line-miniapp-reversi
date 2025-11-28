@@ -7,7 +7,8 @@ const buildEslintCommand = (filenames) =>
 
 /** @type {import('lint-staged').Configuration} */
 export default {
-  '*.{js,jsx,ts,tsx,mjs,cjs}': [buildEslintCommand, 'prettier --write'],
+  '*.{ts,tsx}': [() => 'tsc --noEmit', buildEslintCommand, 'prettier --write'],
+  '*.{js,jsx,mjs,cjs}': [buildEslintCommand, 'prettier --write'],
   '*.{json,md,yml,yaml}': ['prettier --write'],
   '*.css': ['prettier --write'],
 };

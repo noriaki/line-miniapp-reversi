@@ -7,7 +7,7 @@
   - 対象: ai-game, ai-negative-value-fix, cross-browser-compatibility, element-id-assignment, game-flow, last-move-highlight, move-history, pass-feature, responsive, ui-usability-improvement, wasm-error
   - _Requirements: 7.1_
 
-- [ ] 2. (P) Playwright設定のモバイル専用化
+- [x] 2. (P) Playwright設定のモバイル専用化
   - デスクトッププロジェクト（chromium）設定を削除し、モバイルプロジェクトのみに変更する
   - Pixel 5（Chrome）とiPhone 12（Safari）の2デバイスのみを対象とする
   - CI環境判定（process.env.CI）に基づくレポーター動的切り替えを実装する（ローカル: line、CI: github）

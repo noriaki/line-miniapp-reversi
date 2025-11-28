@@ -2,7 +2,7 @@
 
 ## Tasks
 
-- [ ] 1. (P) 既存E2Eテストファイルの削除
+- [x] 1. (P) 既存E2Eテストファイルの削除
   - e2eディレクトリ内の11個のspecファイルを全て削除する
   - 対象: ai-game, ai-negative-value-fix, cross-browser-compatibility, element-id-assignment, game-flow, last-move-highlight, move-history, pass-feature, responsive, ui-usability-improvement, wasm-error
   - _Requirements: 7.1_

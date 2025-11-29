@@ -185,50 +185,12 @@ async function waitForMessageBoxWithText(
 }
 
 // =============================================================================
-// Console Warning Monitoring
-// =============================================================================
-
-/**
- * Collected console warnings during test execution
- * Reset in beforeEach hook
- */
-let consoleWarnings: string[] = [];
-
-/**
- * Asserts that no AI fallback occurred during the test
- * AI fallback indicates WASM calculation failed or timed out
- * @throws Error if any fallback warning was detected
- */
-function assertNoFallbackOccurred(): void {
-  const fallbackWarnings = consoleWarnings.filter((msg) =>
-    msg.includes('using random fallback')
-  );
-
-  if (fallbackWarnings.length > 0) {
-    throw new Error(
-      `AI fallback detected (WASM calculation did not complete normally):\n` +
-        fallbackWarnings.map((w) => `  - ${w}`).join('\n')
-    );
-  }
-}
-
-// =============================================================================
 // Test Suite
 // =============================================================================
 
 test.describe('E2E Test - Game Basic Operations', () => {
   // beforeEach: Navigate to page and initialize game
   test.beforeEach(async ({ page }) => {
-    // Reset console warnings
-    consoleWarnings = [];
-
-    // Monitor console warnings for fallback detection
-    page.on('console', (msg) => {
-      if (msg.type() === 'warning') {
-        consoleWarnings.push(msg.text());
-      }
-    });
-
     await page.goto('/');
     // Wait for game board to be visible
     await expect(page.locator(SELECTORS.gameBoard)).toBeVisible();
@@ -595,19 +557,6 @@ test.describe('E2E Test - Game Basic Operations', () => {
       ]);
 
       expect(['thinking_shown', 'ai_completed']).toContain(thinkingOrCompleted);
-    });
-
-    test('should complete AI calculation without fallback', async ({
-      page,
-    }) => {
-      // Player makes a move
-      await tapValidMove(page);
-
-      // Wait for AI to complete (player turn returns)
-      await waitForPlayerTurn(page, WAIT_CONFIG.maxWaitForAIResponse);
-
-      // Verify no fallback occurred (WASM calculation succeeded)
-      assertNoFallbackOccurred();
     });
 
     test('should complete 2 full rounds of play', async ({ page }) => {

@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Playwright Configuration for E2E Tests
- * Task 9.3, 9.4: E2E and AI E2E Tests
+ * Mobile-only configuration (Pixel 5, iPhone 12) with dynamic reporter switching
  */
 export default defineConfig({
   testDir: './e2e',
@@ -10,7 +10,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+
+  // Dynamic reporter switching based on CI environment
+  // Both environments include HTML reporter for full result archiving
+  reporter: process.env.CI
+    ? [['github'], ['html', { outputFolder: 'playwright-report' }]]
+    : [['line'], ['html', { outputFolder: 'playwright-report' }]],
 
   use: {
     baseURL: 'http://localhost:3000',
@@ -19,10 +24,6 @@ export default defineConfig({
   },
 
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
     {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },

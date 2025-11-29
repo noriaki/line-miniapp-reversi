@@ -50,6 +50,35 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 - Default files: `product.md`, `tech.md`, `structure.md`
 - Custom files are supported (managed via `/kiro:steering-custom`)
 
+## Quality Checks
+
+### Automated (Git Hooks)
+
+- **pre-commit**: TypeCheck, ESLint, Prettier (via lint-staged)
+- **pre-push**: Unit + Integration Tests (`pnpm run test:all --silent`)
+
+### Manual Commands
+
+| Purpose          | Command                          | When to Run                             |
+| ---------------- | -------------------------------- | --------------------------------------- |
+| Lint             | `pnpm lint`                      | After code changes                      |
+| Type Check       | `pnpm type-check`                | After code changes                      |
+| Format Check     | `pnpm format:check`              | Before commit (auto via hook)           |
+| Unit Test        | `pnpm test:unit --silent`        | After logic changes                     |
+| Integration Test | `pnpm test:integration --silent` | After WASM/external integration changes |
+| All Tests        | `pnpm test:all --silent`         | Before push (auto via hook)             |
+| Coverage         | `pnpm test:coverage`             | To verify test coverage                 |
+| E2E Test         | `pnpm test:e2e`                  | After UI/UX changes (AI judgment)       |
+| Build            | `pnpm build`                     | To verify production build              |
+
+### Completion Checkpoint
+
+When implementation reaches a milestone:
+
+1. Verify lint and type-check pass
+2. Run relevant tests (unit/integration based on changes)
+3. For UI changes, consider E2E test execution
+
 ## Git/GitHub Workflow
 
 **IMPORTANT**: All `git` and `gh` commands MUST be executed outside the sandbox (`dangerouslyDisableSandbox: true`).

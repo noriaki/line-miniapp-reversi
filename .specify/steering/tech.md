@@ -41,8 +41,10 @@
 
 - **Unit Tests**: Jest + React Testing Library (90%+ coverage target)
 - **Integration Tests**: WASM bridge, AI engine, LIFF integration
-- **E2E Tests**: Playwright (mobile Chrome + Safari profiles)
+- **E2E Tests**: Playwright (mobile-only: Pixel 5 for Chrome, iPhone 12 for Safari)
 - **LIFF Mocking**: `@line/liff-mock` for LINE-specific scenarios
+
+**E2E Strategy**: Mobile-first testing aligned with LINE Mini App target platform. Desktop browsers excluded intentionally. Parallel execution in CI with artifact archiving.
 
 ## Development Environment
 
@@ -77,6 +79,6 @@
 
 ---
 
-_Updated: 2025-11-26 (Next.js 16.0.4, React 19.2.0, pnpm 10.23.0, ESLint 9 flat config)_
+_Updated: 2025-11-29 (E2E mobile-only strategy documented)_
 
 _Document standards and patterns, not every dependency_

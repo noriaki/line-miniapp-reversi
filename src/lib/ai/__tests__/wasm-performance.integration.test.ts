@@ -288,6 +288,27 @@ describe('Performance and Timeout Handling', () => {
     expect(elapsedTime).toBeLessThan(TARGET_TIME_MS);
   });
 
+  test('should complete level 15 calculation within 3 seconds (production level)', () => {
+    const initialBoard = Array(8)
+      .fill(null)
+      .map(() => Array(8).fill(-1));
+    initialBoard[3][3] = 1;
+    initialBoard[3][4] = 0;
+    initialBoard[4][3] = 0;
+    initialBoard[4][4] = 1;
+
+    const ptr = encodeBoard(initialBoard);
+    const startTime = Date.now();
+
+    const result = Module._ai_js(ptr, 15, 0);
+
+    const elapsedTime = Date.now() - startTime;
+    Module._free(ptr);
+
+    expect(result).toBeGreaterThan(0);
+    expect(elapsedTime).toBeLessThan(TARGET_TIME_MS);
+  });
+
   test('should calculate mid-game positions efficiently at level 3', () => {
     // Create mid-game scenario with more stones
     const midGameBoard = Array(8)

@@ -4,41 +4,15 @@
 
 ## テスト概要
 
-### Task 9.3: ゲームフロー E2E テスト
+### game-basic.spec.ts
 
-- **game-flow.spec.ts**: ゲーム起動から終了までの完全プレイフロー
-  - 8×8ボードの表示確認
-  - 初期配置（黒2個、白2個）の検証
-  - ユーザの手→AI手のターン切り替え
-  - 石数のリアルタイム更新
-  - 有効手ハイライト表示
-  - ゲーム終了と結果表示
+ゲームの基本動作を検証するテストスイートです。
 
-- **wasm-error.spec.ts**: WASM初期化失敗シナリオ
-  - WASMロード失敗時のエラー表示
-  - リロードボタンの動作確認
-  - アプリケーションクラッシュの防止
-  - タイムアウトエラーのハンドリング
-
-- **responsive.spec.ts**: レスポンシブデザインテスト
-  - 各種スマートフォン画面サイズでの表示確認
-    - iPhone SE (375x667)
-    - iPhone 12 Pro (390x844)
-    - Pixel 5 (393x851)
-    - Samsung Galaxy S20 (360x800)
-    - iPhone 12 Pro Max (428x926)
-  - 横向き表示の対応
-  - タッチターゲットサイズの検証
-  - ズーム・ピンチジェスチャー対応
-
-### Task 9.4: AI対戦 E2E テスト
-
-- **ai-game.spec.ts**: AI対戦の完全フロー
-  - ゲーム起動からAI対戦完了までのフロー
-  - AI計算中のUI応答性確認
-  - ローディングインジケーター表示
-  - WASMエラーケース（ロード失敗、タイムアウト）
-  - メモリリーク検証（5ターン分）
+- **Initial Board Display**: 8×8ボードの表示、初期4石の配置、有効手ヒント表示
+- **Stone Placement and Flipping**: 石の配置と反転、スコア表示の更新
+- **Turn Switching**: プレイヤー/AIのターン切替、有効手ヒントの表示制御
+- **Invalid Move Handling**: 無効な手へのエラーメッセージ表示とゲーム継続
+- **AI Battle - 2 Rounds**: AI対戦（2往復）、思考中表示、応答時間検証
 
 ## テスト実行方法
 
@@ -60,52 +34,23 @@ pnpm test:e2e:ui
 pnpm test:e2e:headed
 ```
 
-### Chromium のみで実行
-
-```bash
-pnpm test:e2e:chromium
-```
-
-### モバイルブラウザのみで実行
-
-```bash
-pnpm test:e2e:mobile
-```
-
 ## テスト環境
 
 - **ベースURL**: http://localhost:3000
-- **テストブラウザ**:
-  - Desktop Chrome (Chromium)
+- **テストデバイス**（モバイルのみ）:
   - Mobile Chrome (Pixel 5)
   - Mobile Safari (iPhone 12)
-- **Web Server**: Next.js production build (`pnpm build && pnpm start`)
+- **Web Server**: `pnpm run dev`（ローカル）/ `pnpm run build && npx serve@latest out -l 3000`（CI）
 
 ## テスト要件
 
 - Node.js 24.x
-- pnpm 9.x
+- pnpm 10.x
 - Playwright 1.56.x
 
 ## 注意事項
 
-- E2Eテストは production build を実行するため、初回実行時は時間がかかります
+- ローカル環境では開発サーバーが自動起動します
 - CI環境では自動的にリトライ（最大2回）が有効になります
-- テスト失敗時はスクリーンショットとトレースが保存されます
-
-## カバレッジ
-
-- ゲーム起動から終了までのフルフロー: ✅
-- AI対戦機能: ✅
-- エラーハンドリング（WASM失敗、タイムアウト）: ✅
-- レスポンシブデザイン（5種類のデバイス）: ✅
-- UI応答性: ✅
-- メモリリーク検証: ✅ (簡易版、5ターン)
-
-## 対象外項目
-
-- 連続プレイでのメモリリーク検証（10ゲーム連続）: 対象外
-- クロスブラウザテスト（Firefox, Safari デスクトップ）: 対象外
-- CI/CDパイプラインでのヘッドレスブラウザ自動実行: 対象外
-
-これらは将来的な拡張として考慮可能です。
+- テスト失敗時はスクリーンショットが保存されます
+- HTMLレポートは `playwright-report/` に出力されます

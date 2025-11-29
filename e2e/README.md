@@ -40,12 +40,12 @@ pnpm test:e2e:headed
 - **テストデバイス**（モバイルのみ）:
   - Mobile Chrome (Pixel 5)
   - Mobile Safari (iPhone 12)
-- **Web Server**: `pnpm run dev`（ローカル）/ `pnpm run build && serve out`（CI）
+- **Web Server**: `pnpm run dev`（ローカル）/ `pnpm run build && npx serve@latest out -l 3000`（CI）
 
 ## テスト要件
 
 - Node.js 24.x
-- pnpm 9.x
+- pnpm 10.x
 - Playwright 1.56.x
 
 ## 注意事項

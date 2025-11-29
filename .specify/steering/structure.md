@@ -106,6 +106,37 @@ export interface MessageBoxProps {
 **Pattern**: Message-passing interface, Worker-compatible module
 **Example**: `ai-worker.ts` (loads WASM, processes AI move requests)
 
+### E2E Tests (`/e2e/`)
+
+**Purpose**: End-to-end tests for mobile user scenarios
+**Pattern**: Consolidated single-file approach, mobile-only testing (Pixel 5, iPhone 12)
+**Example**:
+
+```typescript
+// game-basic.spec.ts - All basic game operations
+// Pattern: Selectors constant, helper functions, test.describe groups
+const SELECTORS = {
+  gameBoard: '[data-testid="game-board"]',
+  cell: (row: number, col: number) => `[data-row="${row}"][data-col="${col}"]`,
+  // ...
+} as const;
+
+// Tests grouped by functionality
+test.describe('Initial Board Display', () => {
+  /* ... */
+});
+test.describe('Stone Placement and Flipping', () => {
+  /* ... */
+});
+```
+
+**E2E Conventions**:
+
+- Mobile-first: Only Pixel 5 and iPhone 12 profiles (no desktop)
+- Data attributes for selectors: `data-testid`, `data-row`, `data-col`, `data-stone`, `data-valid`
+- Console monitoring for WASM fallback detection
+- Async helpers: `waitForAITurn`, `waitForPlayerTurn` for turn-based interactions
+
 ### Next.js App Router (`/app/`)
 
 **Purpose**: Server Components, layouts, page routes
@@ -161,6 +192,6 @@ import type { Board, Position } from './types';
 
 ---
 
-_Updated: 2025-11-26 (Added /src/types/ domain, new hooks: useMessageQueue, useGameInconsistencyDetector, new component: MessageBox)_
+_Updated: 2025-11-29 (Added /e2e/ E2E testing domain with mobile-only patterns)_
 
 _Document patterns, not file trees. New files following patterns shouldn't require updates_

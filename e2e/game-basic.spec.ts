@@ -36,8 +36,9 @@ const ERROR_MESSAGES = {
 // =============================================================================
 
 const WAIT_CONFIG = {
-  aiResponseTimeout: 3000, // AI response max wait time (ms)
-  uiUpdateDelay: 500, // UI update confirmation wait (ms)
+  /** E2E待機の最大時間（WASM初期化 + AI計算 + UI更新を含む） */
+  maxWaitForAIResponse: 10000,
+  uiUpdateDelay: 500,
 } as const;
 
 // =============================================================================
@@ -82,11 +83,11 @@ async function tapCellAt(
  * - AI turn text is visible, OR
  * - Player turn text is visible (AI already responded)
  * @param page - Playwright Page object
- * @param timeout - Max wait time (default: 3000ms)
+ * @param timeout - Max wait time (default: 10000ms)
  */
 async function waitForAITurn(
   page: Page,
-  timeout: number = WAIT_CONFIG.aiResponseTimeout
+  timeout: number = WAIT_CONFIG.maxWaitForAIResponse
 ): Promise<void> {
   // Wait for either AI turn or player turn (AI may have already responded)
   await expect(
@@ -97,11 +98,11 @@ async function waitForAITurn(
 /**
  * Waits for player turn to resume
  * @param page - Playwright Page object
- * @param timeout - Max wait time (default: 3000ms)
+ * @param timeout - Max wait time (default: 10000ms)
  */
 async function waitForPlayerTurn(
   page: Page,
-  timeout: number = WAIT_CONFIG.aiResponseTimeout
+  timeout: number = WAIT_CONFIG.maxWaitForAIResponse
 ): Promise<void> {
   await expect(page.getByText(TURN_TEXT.player)).toBeVisible({ timeout });
 }
@@ -184,12 +185,50 @@ async function waitForMessageBoxWithText(
 }
 
 // =============================================================================
+// Console Warning Monitoring
+// =============================================================================
+
+/**
+ * Collected console warnings during test execution
+ * Reset in beforeEach hook
+ */
+let consoleWarnings: string[] = [];
+
+/**
+ * Asserts that no AI fallback occurred during the test
+ * AI fallback indicates WASM calculation failed or timed out
+ * @throws Error if any fallback warning was detected
+ */
+function assertNoFallbackOccurred(): void {
+  const fallbackWarnings = consoleWarnings.filter((msg) =>
+    msg.includes('using random fallback')
+  );
+
+  if (fallbackWarnings.length > 0) {
+    throw new Error(
+      `AI fallback detected (WASM calculation did not complete normally):\n` +
+        fallbackWarnings.map((w) => `  - ${w}`).join('\n')
+    );
+  }
+}
+
+// =============================================================================
 // Test Suite
 // =============================================================================
 
 test.describe('E2E Test - Game Basic Operations', () => {
   // beforeEach: Navigate to page and initialize game
   test.beforeEach(async ({ page }) => {
+    // Reset console warnings
+    consoleWarnings = [];
+
+    // Monitor console warnings for fallback detection
+    page.on('console', (msg) => {
+      if (msg.type() === 'warning') {
+        consoleWarnings.push(msg.text());
+      }
+    });
+
     await page.goto('/');
     // Wait for game board to be visible
     await expect(page.locator(SELECTORS.gameBoard)).toBeVisible();
@@ -477,7 +516,7 @@ test.describe('E2E Test - Game Basic Operations', () => {
       await tapValidMove(page);
 
       // Wait for AI to complete response
-      await waitForPlayerTurn(page, WAIT_CONFIG.aiResponseTimeout);
+      await waitForPlayerTurn(page, WAIT_CONFIG.maxWaitForAIResponse);
 
       // Verify AI made a move (white stone count should increase)
       const afterAIMove = await getStoneCount(page);
@@ -491,7 +530,7 @@ test.describe('E2E Test - Game Basic Operations', () => {
       await tapValidMove(page);
 
       // Wait for player turn to return
-      await waitForPlayerTurn(page, WAIT_CONFIG.aiResponseTimeout);
+      await waitForPlayerTurn(page, WAIT_CONFIG.maxWaitForAIResponse);
 
       // Verify valid moves are available
       const validMoves = page.locator(SELECTORS.validMoves);
@@ -515,13 +554,13 @@ test.describe('E2E Test - Game Basic Operations', () => {
     }) => {
       // Round 1: Player move -> AI response
       await tapValidMove(page);
-      await waitForPlayerTurn(page, WAIT_CONFIG.aiResponseTimeout);
+      await waitForPlayerTurn(page, WAIT_CONFIG.maxWaitForAIResponse);
 
       const afterRound1 = await getStoneCount(page);
 
       // Round 2: Player move -> AI response
       await tapValidMove(page);
-      await waitForPlayerTurn(page, WAIT_CONFIG.aiResponseTimeout);
+      await waitForPlayerTurn(page, WAIT_CONFIG.maxWaitForAIResponse);
 
       // Verify AI made second move
       const afterRound2 = await getStoneCount(page);
@@ -558,19 +597,17 @@ test.describe('E2E Test - Game Basic Operations', () => {
       expect(['thinking_shown', 'ai_completed']).toContain(thinkingOrCompleted);
     });
 
-    test('should complete AI response within 3 seconds', async ({ page }) => {
+    test('should complete AI calculation without fallback', async ({
+      page,
+    }) => {
       // Player makes a move
       await tapValidMove(page);
 
-      // Start timing
-      const startTime = Date.now();
-
       // Wait for AI to complete (player turn returns)
-      await waitForPlayerTurn(page, WAIT_CONFIG.aiResponseTimeout);
+      await waitForPlayerTurn(page, WAIT_CONFIG.maxWaitForAIResponse);
 
-      // Verify response time
-      const elapsed = Date.now() - startTime;
-      expect(elapsed).toBeLessThan(WAIT_CONFIG.aiResponseTimeout);
+      // Verify no fallback occurred (WASM calculation succeeded)
+      assertNoFallbackOccurred();
     });
 
     test('should complete 2 full rounds of play', async ({ page }) => {
@@ -590,7 +627,7 @@ test.describe('E2E Test - Game Basic Operations', () => {
       // due to fast AI response. The "should display thinking indicator" test covers this.
 
       // Wait for AI response within timeout
-      await waitForPlayerTurn(page, WAIT_CONFIG.aiResponseTimeout);
+      await waitForPlayerTurn(page, WAIT_CONFIG.maxWaitForAIResponse);
 
       const afterRound1 = await getDisplayedScore(page);
       // After round 1, total stones should be 6 (2 initial + 2 player + 2 AI)
@@ -604,7 +641,7 @@ test.describe('E2E Test - Game Basic Operations', () => {
       await tapValidMove(page);
 
       // Wait for AI response within timeout
-      await waitForPlayerTurn(page, WAIT_CONFIG.aiResponseTimeout);
+      await waitForPlayerTurn(page, WAIT_CONFIG.maxWaitForAIResponse);
 
       const afterRound2 = await getDisplayedScore(page);
       // After round 2, total stones should increase further

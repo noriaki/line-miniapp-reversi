@@ -31,6 +31,9 @@
 5. The Game Result Share shall Flex Messageにシェア画像を含める
 6. The Game Result Share shall Flex Messageに結果テキストと招待文を含める
 7. The Game Result Share shall Flex Messageに「リバーシで遊ぶ」アプリ起動ボタンを含める
+8. When 非ログイン状態で「LINEでシェア」ボタンがタップされた, the Game Result Share shall ゲーム終了状態（盤面・スコア・勝敗）をブラウザストレージに一時保存する
+9. When LINEログイン完了後にページがリロードされた, the Game Result Share shall 保存済みのゲーム終了状態を復元し、シェアフローを自動継続する
+10. The Game Result Share shall 保存されたゲーム状態が1時間以上経過している場合、無効化する
 
 ### Requirement 3: OS標準シェア機能
 

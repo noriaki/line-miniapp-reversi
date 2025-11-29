@@ -6,13 +6,14 @@
 
 **Users**: リバーシをプレイしたユーザーが、ゲーム結果を友人やグループに共有し、ゲームへの招待を行う。
 
-**Impact**: 既存のGameBoardコンポーネントのゲーム終了画面を拡張し、シェアボタンとシェア機能を追加する。
+**Impact**: 既存のGameBoardコンポーネントのゲーム終了画面を拡張し、シェアボタンとシェア機能を追加する。新規インフラとしてCloudflare R2/Workersを導入。
 
 ### Goals
 
 - ゲーム終了時に視覚的に魅力的なシェア画像を生成する
 - LINEログイン済みユーザーはFlex Messageでリッチなシェアを実現する
 - LINE非ログインでもOS標準シェア機能で画像共有を可能にする
+- 非ログイン時のシェア操作をログイン後も継続可能にする
 - シェア操作の成功/失敗をユーザーに適切にフィードバックする
 
 ### Non-Goals
@@ -57,12 +58,15 @@ graph TB
         ShareImageGenerator[share-image-generator]
         FlexMessageBuilder[flex-message-builder]
         ShareService[share-service]
+        PendingShareStorage[pending-share-storage]
     end
 
     subgraph External
         LiffSDK[LIFF SDK]
         WebShareAPI[Web Share API]
         CloudflareR2[Cloudflare R2]
+        CloudflareWorkers[Cloudflare Workers]
+        SessionStorage[sessionStorage]
     end
 
     GameBoard --> ShareButtons
@@ -71,11 +75,14 @@ graph TB
     useShare --> useLiff
     useShare --> useMessageQueue
     useShare --> ShareService
+    useShare --> PendingShareStorage
     ShareService --> ShareImageGenerator
     ShareService --> FlexMessageBuilder
     ShareService --> LiffSDK
     ShareService --> WebShareAPI
-    ShareImageGenerator --> CloudflareR2
+    ShareImageGenerator --> CloudflareWorkers
+    CloudflareWorkers --> CloudflareR2
+    PendingShareStorage --> SessionStorage
 ```
 
 **Architecture Integration**:
@@ -84,18 +91,22 @@ graph TB
 - **Domain boundaries**: UI（Components）→ State Management（Hooks）→ Business Logic（Lib）の単方向依存
 - **Existing patterns preserved**: useLiff, useMessageQueue, GameBoard構造を維持
 - **New components rationale**: シェア固有のロジックを分離し、テスタビリティと再利用性を確保
+- **State persistence**: PendingShareStorageでログインリダイレクト間の状態を保持
 - **Steering compliance**: Pure Logic vs Stateful Hooks の分離原則に準拠
 
 ### Technology Stack
 
-| Layer            | Choice / Version      | Role in Feature                 | Notes        |
-| ---------------- | --------------------- | ------------------------------- | ------------ |
-| Frontend         | React 19.2.0          | UIコンポーネント、フック        | 既存         |
-| Image Generation | html2canvas ^1.4.1    | Canvas画像生成                  | 新規依存     |
-| LINE Integration | @line/liff 2.x        | shareTargetPicker, Flex Message | 既存         |
-| Web Share        | Navigator.share() API | OS標準シェア                    | ブラウザAPI  |
-| Storage          | Cloudflare R2         | 画像ホスティング                | 新規インフラ |
-| Storage API      | Cloudflare Workers    | Presigned URL生成               | 新規インフラ |
+| Layer            | Choice / Version      | Role in Feature                  | Notes                    |
+| ---------------- | --------------------- | -------------------------------- | ------------------------ |
+| Frontend         | React 19.2.0          | UIコンポーネント、フック         | 既存                     |
+| Image Generation | html2canvas ^1.4.1    | Canvas画像生成                   | 新規依存                 |
+| LINE Integration | @line/liff 2.x        | shareTargetPicker, Flex Message  | 既存                     |
+| Web Share        | Navigator.share() API | OS標準シェア                     | ブラウザAPI              |
+| State Persist    | sessionStorage        | ログインリダイレクト間の状態保持 | ブラウザAPI              |
+| Storage          | Cloudflare R2         | 画像ホスティング                 | 新規インフラ（許容済み） |
+| Storage API      | Cloudflare Workers    | Presigned URL生成                | 新規インフラ（許容済み） |
+
+**インフラ方針**: 静的エクスポート（`output: 'export'`）の方針を維持しつつ、画像ストレージ用に新規Cloudflare R2/Workersインフラの構築を許容。フロントエンドとストレージAPIは独立してデプロイ可能。
 
 ## System Flows
 
@@ -150,49 +161,104 @@ sequenceDiagram
 
 ゲーム終了時（`gameStatus.type === 'finished'`）に画像生成を開始し、バックグラウンドでアップロードを完了する。ユーザーがシェアボタンをタップする時点で画像URLが利用可能であることを目指す。
 
+### ログイン後シェア継続フロー
+
+非ログイン状態で「LINEでシェア」をタップした場合、`liff.login()` によるページリダイレクトが発生する。リダイレクト間でゲーム状態を保持し、シェアフローを自動継続する。
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant useShare
+    participant PendingShareStorage
+    participant useLiff
+    participant LIFF
+    participant ShareService
+
+    User->>useShare: 「LINEでシェア」タップ（非ログイン）
+    useShare->>useLiff: liff.isLoggedIn()
+    useLiff-->>useShare: false
+
+    Note over useShare,PendingShareStorage: 状態永続化
+    useShare->>PendingShareStorage: save(board, scores, winner)
+    PendingShareStorage->>PendingShareStorage: sessionStorage に保存
+
+    useShare->>useLiff: liff.login()
+    useLiff->>LIFF: リダイレクト開始
+    LIFF-->>User: LINE ログイン画面
+
+    Note over User,LIFF: ログイン完了後リダイレクト返却
+
+    User->>useShare: ページロード（ログイン済み）
+    useShare->>PendingShareStorage: load()
+    PendingShareStorage-->>useShare: PendingShareData（有効）
+
+    alt 有効期限内（1時間以内）
+        useShare->>ShareService: シェアフロー自動継続
+        ShareService->>LIFF: liff.shareTargetPicker()
+        LIFF-->>User: Target Picker 表示
+        User->>LIFF: 送信先選択
+        LIFF-->>useShare: success
+        useShare->>PendingShareStorage: clear()
+    else 有効期限切れ
+        useShare->>PendingShareStorage: clear()
+        Note over useShare: シェアフローを継続せず終了
+    end
+```
+
+**State Persistence選択理由（sessionStorage）**:
+
+- LIFFリダイレクト後もデータ保持される（同一オリジン）
+- 全ブラウザ環境（LINEアプリ内ブラウザ、Safari、Chrome）で安定動作
+- タブを閉じると自動クリア（プライバシー配慮）
+- localStorageと異なり永続化しないため、古いデータが残り続けるリスクが低い
+
 ## Requirements Traceability
 
-| Requirement | Summary                    | Components             | Interfaces                 | Flows        |
-| ----------- | -------------------------- | ---------------------- | -------------------------- | ------------ |
-| 1.1         | シェアボタン表示           | ShareButtons           | -                          | -            |
-| 1.2         | ボタン配置                 | ShareButtons           | -                          | -            |
-| 1.3         | LINEブランドカラー         | ShareButtons           | -                          | -            |
-| 1.4         | ボタンサイズ               | ShareButtons           | -                          | -            |
-| 1.5         | Web Share非対応時の非表示  | ShareButtons           | useShare.canWebShare       | -            |
-| 2.1         | ログイン済みでのシェア     | useShare               | ShareService.shareViaLine  | シェアフロー |
-| 2.2         | 非ログイン時のログイン処理 | useShare               | useLiff.login              | シェアフロー |
-| 2.3         | ログイン後のシェア継続     | useShare               | -                          | シェアフロー |
-| 2.4         | Flex Message形式           | FlexMessageBuilder     | buildShareFlexMessage      | -            |
-| 2.5         | Flex Messageに画像含む     | FlexMessageBuilder     | -                          | -            |
-| 2.6         | 結果テキスト・招待文       | FlexMessageBuilder     | -                          | -            |
-| 2.7         | アプリ起動ボタン           | FlexMessageBuilder     | -                          | -            |
-| 3.1         | Web Share API呼び出し      | ShareService           | shareViaWebShare           | シェアフロー |
-| 3.2         | 画像ファイル共有           | ShareService           | -                          | -            |
-| 3.3         | シェアテキスト             | ShareService           | -                          | -            |
-| 3.4         | ログイン状態非依存         | ShareButtons, useShare | -                          | -            |
-| 4.1         | 画像生成開始               | ShareImageGenerator    | generateShareImage         | シェアフロー |
-| 4.2         | 盤面状態含む               | ShareImagePreview      | -                          | -            |
-| 4.3         | スコア表示                 | ShareImagePreview      | -                          | -            |
-| 4.4         | 勝敗テキスト               | ShareImagePreview      | -                          | -            |
-| 4.5         | ブランディング要素         | ShareImagePreview      | -                          | -            |
-| 4.6         | 外部ストレージアップロード | ShareService           | uploadImage                | シェアフロー |
-| 5.1-5.4     | シェアテキスト構成         | ShareService           | buildShareText             | -            |
-| 6.1         | シェア完了通知             | useShare               | useMessageQueue.addMessage | -            |
-| 6.2         | エラー通知                 | useShare               | useMessageQueue.addMessage | -            |
-| 6.3         | キャンセル時の挙動         | useShare               | -                          | -            |
-| 7.1-7.4     | クロスプラットフォーム     | 全コンポーネント       | -                          | -            |
-| 8.1-8.2     | パフォーマンス             | ShareService           | -                          | シェアフロー |
+| Requirement | Summary                    | Components                        | Interfaces                     | Flows                      |
+| ----------- | -------------------------- | --------------------------------- | ------------------------------ | -------------------------- |
+| 1.1         | シェアボタン表示           | ShareButtons                      | -                              | -                          |
+| 1.2         | ボタン配置                 | ShareButtons                      | -                              | -                          |
+| 1.3         | LINEブランドカラー         | ShareButtons                      | -                              | -                          |
+| 1.4         | ボタンサイズ               | ShareButtons                      | -                              | -                          |
+| 1.5         | Web Share非対応時の非表示  | ShareButtons                      | useShare.canWebShare           | -                          |
+| 2.1         | ログイン済みでのシェア     | useShare                          | ShareService.shareViaLine      | シェアフロー               |
+| 2.2         | 非ログイン時のログイン処理 | useShare                          | useLiff.login                  | シェアフロー               |
+| 2.3         | ログイン後のシェア継続     | useShare                          | -                              | シェアフロー               |
+| 2.4         | Flex Message形式           | FlexMessageBuilder                | buildShareFlexMessage          | -                          |
+| 2.5         | Flex Messageに画像含む     | FlexMessageBuilder                | -                              | -                          |
+| 2.6         | 結果テキスト・招待文       | FlexMessageBuilder                | -                              | -                          |
+| 2.7         | アプリ起動ボタン           | FlexMessageBuilder                | -                              | -                          |
+| 2.8         | 非ログイン時の状態保存     | useShare, PendingShareStorage     | PendingShareStorage.save       | ログイン後シェア継続フロー |
+| 2.9         | ログイン後の状態復元       | useShare, PendingShareStorage     | PendingShareStorage.load/clear | ログイン後シェア継続フロー |
+| 2.10        | 保存状態の有効期限         | PendingShareStorage               | PendingShareStorage.isExpired  | ログイン後シェア継続フロー |
+| 3.1         | Web Share API呼び出し      | ShareService                      | shareViaWebShare               | シェアフロー               |
+| 3.2         | 画像ファイル共有           | ShareService                      | -                              | -                          |
+| 3.3         | シェアテキスト             | ShareService                      | -                              | -                          |
+| 3.4         | ログイン状態非依存         | ShareButtons, useShare            | -                              | -                          |
+| 4.1         | 画像生成開始               | ShareImageGenerator               | generateShareImage             | シェアフロー               |
+| 4.2         | 盤面状態含む               | ShareImagePreview                 | -                              | -                          |
+| 4.3         | スコア表示                 | ShareImagePreview                 | -                              | -                          |
+| 4.4         | 勝敗テキスト               | ShareImagePreview                 | -                              | -                          |
+| 4.5         | ブランディング要素         | ShareImagePreview                 | -                              | -                          |
+| 4.6         | 外部ストレージアップロード | ShareService, ShareImageGenerator | uploadImage                    | シェアフロー               |
+| 5.1-5.4     | シェアテキスト構成         | ShareService                      | buildShareText                 | -                          |
+| 6.1         | シェア完了通知             | useShare                          | useMessageQueue.addMessage     | -                          |
+| 6.2         | エラー通知                 | useShare                          | useMessageQueue.addMessage     | -                          |
+| 6.3         | キャンセル時の挙動         | useShare                          | -                              | -                          |
+| 7.1-7.4     | クロスプラットフォーム     | 全コンポーネント                  | -                              | -                          |
+| 8.1-8.2     | パフォーマンス             | ShareService                      | -                              | シェアフロー               |
 
 ## Components and Interfaces
 
-| Component           | Domain/Layer | Intent                     | Req Coverage                        | Key Dependencies                                      | Contracts |
-| ------------------- | ------------ | -------------------------- | ----------------------------------- | ----------------------------------------------------- | --------- |
-| ShareButtons        | UI           | シェアボタン表示・制御     | 1.1-1.5, 3.4                        | useShare (P0)                                         | -         |
-| ShareImagePreview   | UI           | シェア画像DOM構築          | 4.2-4.5                             | -                                                     | -         |
-| useShare            | Hooks        | シェア状態・操作管理       | 2.1-2.3, 3.1-3.4, 6.1-6.3           | useLiff (P0), useMessageQueue (P0), ShareService (P0) | State     |
-| ShareService        | Lib          | シェア処理ビジネスロジック | 2.4-2.7, 3.1-3.3, 4.1, 4.6, 5.1-5.4 | FlexMessageBuilder (P1), ShareImageGenerator (P1)     | Service   |
-| FlexMessageBuilder  | Lib          | Flex Message構築           | 2.4-2.7                             | -                                                     | Service   |
-| ShareImageGenerator | Lib          | 画像生成・アップロード     | 4.1, 4.6, 8.1-8.2                   | html2canvas (P0, External), R2 API (P0, External)     | Service   |
+| Component           | Domain/Layer | Intent                         | Req Coverage                        | Key Dependencies                                                                | Contracts |
+| ------------------- | ------------ | ------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------- | --------- |
+| ShareButtons        | UI           | シェアボタン表示・制御         | 1.1-1.5, 3.4                        | useShare (P0)                                                                   | -         |
+| ShareImagePreview   | UI           | シェア画像DOM構築              | 4.2-4.5                             | -                                                                               | -         |
+| useShare            | Hooks        | シェア状態・操作管理           | 2.1-2.3, 2.8-2.10, 3.1-3.4, 6.1-6.3 | useLiff (P0), useMessageQueue (P0), ShareService (P0), PendingShareStorage (P0) | State     |
+| ShareService        | Lib          | シェア処理ビジネスロジック     | 2.4-2.7, 3.1-3.3, 4.1, 4.6, 5.1-5.4 | FlexMessageBuilder (P1), ShareImageGenerator (P1)                               | Service   |
+| FlexMessageBuilder  | Lib          | Flex Message構築               | 2.4-2.7                             | -                                                                               | Service   |
+| ShareImageGenerator | Lib          | 画像生成・アップロード         | 4.1, 4.6, 8.1-8.2                   | html2canvas (P0, External), Cloudflare Workers API (P0, External)               | Service   |
+| PendingShareStorage | Lib          | ログインリダイレクト間状態保持 | 2.8, 2.9, 2.10                      | sessionStorage (External)                                                       | Service   |
 
 ### UI Layer
 
@@ -289,15 +355,16 @@ interface ShareImagePreviewProps {
 
 #### useShare
 
-| Field        | Detail                                           |
-| ------------ | ------------------------------------------------ |
-| Intent       | シェア操作の状態管理と実行制御                   |
-| Requirements | 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4, 6.1, 6.2, 6.3 |
+| Field        | Detail                                                           |
+| ------------ | ---------------------------------------------------------------- |
+| Intent       | シェア操作の状態管理と実行制御                                   |
+| Requirements | 2.1, 2.2, 2.3, 2.8, 2.9, 2.10, 3.1, 3.2, 3.3, 3.4, 6.1, 6.2, 6.3 |
 
 **Responsibilities & Constraints**
 
 - シェア画像の準備状態を管理
 - LINEログイン状態に応じたシェアフロー制御
+- ログインリダイレクト間のゲーム状態保持・復元
 - シェア結果のメッセージ通知
 - 複数回シェア操作の排他制御
 
@@ -307,6 +374,7 @@ interface ShareImagePreviewProps {
 - Outbound: useLiff — ログイン状態・ログイン処理 (P0)
 - Outbound: useMessageQueue — 通知表示 (P0)
 - Outbound: ShareService — シェア実行 (P0)
+- Outbound: PendingShareStorage — 状態永続化 (P0)
 
 **Contracts**: State [x]
 
@@ -336,15 +404,16 @@ interface UseShareReturn {
 }
 ```
 
-- State model: `isShareReady`, `isSharing`, `shareImageUrl`
-- Persistence: なし（セッション内のみ）
+- State model: `isShareReady`, `isSharing`, `shareImageUrl`, `hasPendingShare`
+- Persistence: PendingShareStorage経由でsessionStorageに一時保存
 - Concurrency: `isSharing` フラグで排他制御
 
 **Implementation Notes**
 
 - ゲーム終了検出時に `prepareShareImage` を呼び出す
-- LINEシェアは `liff.isLoggedIn()` → 未ログインなら `liff.login()` → `shareTargetPicker()`
+- LINEシェアは `liff.isLoggedIn()` → 未ログインなら状態保存後 `liff.login()` → リダイレクト返却後に状態復元 → `shareTargetPicker()`
 - Web Share は `navigator.canShare()` で事前チェック
+- フック初期化時に `PendingShareStorage.load()` でペンディング状態を確認し、有効なら自動シェアフローを開始
 
 ### Lib Layer
 
@@ -537,7 +606,126 @@ interface ImageGenerationOptions {
 
 - `html2canvas(element, { scale: 2 })` で高解像度生成
 - アップロードは Presigned URL を使用（Cloudflare Workers で生成）
-- アップロードURL生成APIのエンドポイント設計は別途検討
+
+##### Presigned URL API Specification
+
+Cloudflare Workers APIの最小仕様:
+
+| Method | Endpoint              | Request                     | Response                              | Errors        |
+| ------ | --------------------- | --------------------------- | ------------------------------------- | ------------- |
+| POST   | /api/upload/presigned | `{ contentType, fileSize }` | `{ uploadUrl, publicUrl, expiresIn }` | 400, 413, 500 |
+
+**Request Schema**:
+
+```typescript
+interface PresignedUrlRequest {
+  /** MIMEタイプ（image/png のみ許可） */
+  readonly contentType: 'image/png';
+  /** ファイルサイズ（バイト） */
+  readonly fileSize: number;
+}
+```
+
+**Response Schema**:
+
+```typescript
+interface PresignedUrlResponse {
+  /** R2への直接アップロードURL */
+  readonly uploadUrl: string;
+  /** アップロード後の公開URL */
+  readonly publicUrl: string;
+  /** アップロードURL有効期限（秒） */
+  readonly expiresIn: number;
+}
+```
+
+**Constraints**:
+
+- 最大ファイルサイズ: 1MB（413 Payload Too Large）
+- アップロードURL有効期限: 5分（300秒）
+- 公開URL有効期間: 24時間（R2オブジェクトライフサイクル）
+- Content-Type: `image/png` のみ許可
+
+---
+
+#### PendingShareStorage
+
+| Field        | Detail                                                           |
+| ------------ | ---------------------------------------------------------------- |
+| Intent       | ゲーム終了状態をログインリダイレクト間で永続化するストレージ管理 |
+| Requirements | 2.8, 2.9, 2.10                                                   |
+
+**Responsibilities & Constraints**
+
+- sessionStorageを使用した状態永続化
+- 有効期限（1時間）の管理
+- シェア完了または新規ゲーム開始時のクリア
+
+**Dependencies**
+
+- Inbound: useShare — 状態保存・復元の呼び出し (P0)
+- External: sessionStorage — ブラウザストレージAPI (P0)
+
+**Contracts**: Service [x]
+
+##### Service Interface
+
+```typescript
+import type { Cell } from '@/lib/game/types';
+
+interface PendingShareData {
+  /** 最終盤面 */
+  readonly board: Cell[][];
+  /** 黒石数 */
+  readonly blackCount: number;
+  /** 白石数 */
+  readonly whiteCount: number;
+  /** 勝者 */
+  readonly winner: 'black' | 'white' | 'draw';
+  /** 保存時刻（ミリ秒） */
+  readonly timestamp: number;
+}
+
+interface PendingShareStorage {
+  /** Storage Key */
+  readonly STORAGE_KEY: 'pendingShareGame';
+
+  /**
+   * ゲーム終了状態を保存
+   */
+  save(data: Omit<PendingShareData, 'timestamp'>): void;
+
+  /**
+   * 保存済み状態を読み出し
+   * @returns 有効な状態があればPendingShareData、なければnull
+   */
+  load(): PendingShareData | null;
+
+  /**
+   * 保存済み状態をクリア
+   */
+  clear(): void;
+
+  /**
+   * 保存状態が有効期限切れかどうかを判定
+   * @param data 保存データ
+   * @returns 1時間以上経過していればtrue
+   */
+  isExpired(data: PendingShareData): boolean;
+}
+```
+
+- Preconditions: sessionStorageが利用可能であること
+- Postconditions: save後はload可能、clear後はloadがnullを返す
+- Invariants: 有効期限（1時間 = 3600000ms）
+
+**Implementation Notes**
+
+- Storage Key: `pendingShareGame`
+- JSONシリアライズ/デシリアライズでデータ永続化
+- `isExpired` は `Date.now() - data.timestamp > 3600000` で判定
+- sessionStorageはLIFFリダイレクト後も同一オリジンで保持される
+- タブを閉じると自動クリアされるため、プライバシーに配慮
 
 ## Data Models
 
@@ -564,8 +752,31 @@ interface ShareState {
   readonly imageUrl: string | null;
   readonly imageBlob: Blob | null;
   readonly error: ShareError | null;
+  /** ログインリダイレクト後の自動シェア待機状態 */
+  readonly hasPendingShare: boolean;
 }
 ```
+
+#### PendingShareData Value Object
+
+```typescript
+interface PendingShareData {
+  /** 最終盤面（Cell[][] 形式） */
+  readonly board: Cell[][];
+  /** 黒石数 */
+  readonly blackCount: number;
+  /** 白石数 */
+  readonly whiteCount: number;
+  /** 勝者 */
+  readonly winner: 'black' | 'white' | 'draw';
+  /** 保存時刻（Unix timestamp ミリ秒） */
+  readonly timestamp: number;
+}
+```
+
+- ログインリダイレクト間でゲーム終了状態を保持
+- sessionStorageにJSON形式で永続化
+- 有効期限: 1時間（3600000ms）
 
 ### Data Contracts & Integration
 
@@ -666,23 +877,30 @@ interface ShareState {
 - `FlexMessageBuilder.buildShareFlexMessage`: 正しいFlex Message構造を生成
 - `ShareService.buildShareText`: 勝敗・スコアに応じたテキスト生成
 - `useShare`: 状態遷移（idle → preparing → ready → sharing）
+- `PendingShareStorage.save/load/clear`: sessionStorage操作の正確性
+- `PendingShareStorage.isExpired`: 有効期限判定ロジック
 
 ### Integration Tests
 
 - `ShareImageGenerator.generateImageBlob`: html2canvasによる画像生成
 - `ShareService.shareViaLine`: LIFF SDKモックでのshareTargetPicker呼び出し
 - `ShareService.shareViaWebShare`: Web Share APIモックでのシェア実行
+- `useShare` + `PendingShareStorage`: ログインリダイレクト後の状態復元・シェア継続
 
 ### E2E Tests
 
 - ゲーム終了 → シェアボタン表示の確認
 - Web Share非対応環境での「その他でシェア」ボタン非表示確認
+- 非ログイン状態でのLINEシェア → ログイン後のシェアフロー継続（sessionStorage経由）
 
 ## Security Considerations
 
-- **画像URL有効期限**: Presigned URLは15分の有効期限を設定し、長期間の不正利用を防止
+- **画像URL有効期限**: Presigned URLは5分の有効期限を設定し、長期間の不正利用を防止
+- **公開URL有効期間**: R2オブジェクトは24時間のライフサイクルで自動削除
 - **CORS設定**: R2バケットは特定オリジン（アプリドメイン）からのアップロードのみ許可
 - **ユーザー入力なし**: シェアコンテンツはゲーム結果から自動生成されるため、XSSリスクは低い
+- **sessionStorage使用**: ゲーム状態の一時保存はsessionStorageを使用し、タブを閉じると自動クリア。localStorageと異なり永続化しないため、プライバシーリスクを軽減
+- **状態有効期限**: PendingShareDataは1時間で無効化し、古い状態の再利用を防止
 
 ## Performance & Scalability
 

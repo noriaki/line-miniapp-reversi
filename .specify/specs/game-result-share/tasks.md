@@ -162,19 +162,19 @@ Use whichever pattern fits the work breakdown:
   - 型定義が含まれているか確認し、必要であれば@types/html2canvasを追加する
   - _Requirements: 4.1_
 
-- [ ] 10. テストの実装
-- [ ] 10.1 PendingShareStorageのユニットテストを実装する
+- [x] 10. テストの実装
+- [x] 10.1 PendingShareStorageのユニットテストを実装する
   - save/load/clear操作の正確性を検証する
   - isExpired関数の有効期限判定ロジックを検証する
   - sessionStorage非対応環境でのフォールバック動作を検証する
   - _Requirements: 2.8, 2.9, 2.10_
 
-- [ ] 10.2 FlexMessageBuilderのユニットテストを実装する
+- [x] 10.2 FlexMessageBuilderのユニットテストを実装する
   - buildShareFlexMessage関数が正しいFlex Message構造を生成することを検証する
   - 各勝敗パターン（黒勝利、白勝利、引き分け）でのメッセージ内容を検証する
   - _Requirements: 2.4, 2.5, 2.6, 2.7_
 
-- [ ] 10.3 ShareServiceのユニットテストを実装する
+- [x] 10.3 ShareServiceのユニットテストを実装する
   - buildShareText関数が勝敗・スコアに応じたテキストを生成することを検証する
   - 各シェア方法（LINE、Web Share）の呼び出しフローを検証する
   - _Requirements: 3.1, 3.2, 3.3, 5.1, 5.2, 5.3, 5.4_
@@ -184,16 +184,16 @@ Use whichever pattern fits the work breakdown:
   - ログイン状態に応じたシェアフロー分岐を検証する
   - _Requirements: 2.1, 2.2, 2.3, 6.1, 6.2, 6.3_
 
-- [ ] 10.5 ShareImageGeneratorの統合テストを実装する
+- [x] 10.5 ShareImageGeneratorの統合テストを実装する
   - html2canvasによる画像生成が正常に動作することを検証する
   - _Requirements: 4.1, 8.1_
 
-- [ ] 10.6 E2Eテスト状態注入ヘルパーを実装する
+- [x] 10.6 E2Eテスト状態注入ヘルパーを実装する
   - e2e/helpers/game-state-injection.ts を作成し、injectGameEndState() 関数を実装する
   - e2e/helpers/test-fixtures.ts にテスト用ゲーム状態定数（終了盤面、各勝敗パターン）を定義する
   - _Requirements: 8.1_
 
-- [ ] 10.7 ゲーム終了状態E2Eテストを実装する
+- [x] 10.7 ゲーム終了状態E2Eテストを実装する
   - e2e/game-end-state.spec.ts を作成し、状態注入によるシェア機能テストを実装する
   - ゲーム終了（黒勝ち/白勝ち/引き分け）各パターンでシェアボタン表示を検証する
   - Web Share非対応環境で「その他でシェア」ボタンが非表示になることを検証する

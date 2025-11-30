@@ -75,15 +75,15 @@ Use whichever pattern fits the work breakdown:
   - pnpm dev:mockコマンドで起動できるようにする
   - _Requirements: 4.6, 8.2_
 
-- [ ] 4. シェアコンテンツ構築機能の実装
-- [ ] 4.1 シェアテキスト構築機能を実装する
+- [x] 4. シェアコンテンツ構築機能の実装
+- [x] 4.1 シェアテキスト構築機能を実装する
   - 勝敗結果をテキストに含める
   - スコア情報（黒○個 vs 白○個）をテキストに含める
   - 招待文をテキストに含める
   - アプリURL（LIFFエンドポイント）をテキストに含める
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 4.2 FlexMessageBuilderを実装する
+- [x] 4.2 FlexMessageBuilderを実装する
   - Bubble形式のFlex Messageを構築する
   - Hero部分にシェア画像（aspectMode: fit）を配置する
   - Body部分に3カラム構成でスコアと勝者を王冠で表示する

@@ -22,3 +22,20 @@ export {
 
 // Image upload
 export { uploadImage, type UploadResult } from './image-uploader';
+
+// Share text builder
+export { buildShareText } from './share-text-builder';
+
+// Flex Message builder
+export { buildShareFlexMessage } from './flex-message-builder';
+export type {
+  FlexMessage,
+  FlexBubble,
+  FlexBox,
+  FlexImage,
+  FlexText,
+  FlexButton,
+  FlexSeparator,
+  FlexComponent,
+  URIAction,
+} from './flex-message-types';

@@ -26,14 +26,14 @@ Use whichever pattern fits the work breakdown:
 
 ## Tasks
 
-- [ ] 1. 共有型定義とストレージ基盤の構築
-- [ ] 1.1 シェア機能用の型定義を作成する
+- [x] 1. 共有型定義とストレージ基盤の構築
+- [x] 1.1 シェア機能用の型定義を作成する
   - GameResult、ShareState、ShareError型を定義する
   - PendingShareData型（盤面、スコア、勝者、タイムスタンプ）を定義する
   - ImageGenerationOptions型を定義する
   - _Requirements: 2.8, 4.1_
 
-- [ ] 1.2 PendingShareStorageを実装する
+- [x] 1.2 PendingShareStorageを実装する
   - sessionStorageを使用したゲーム終了状態の保存機能を実装する
   - 保存データの読み出し機能を実装する
   - 保存データのクリア機能を実装する

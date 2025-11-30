@@ -55,7 +55,7 @@
 1. When ゲームが終了した, the Game Result Share shall シェア用画像の生成を開始する
 2. The Game Result Share shall 画像にゲーム終了時の盤面状態（8x8グリッド、黒白の石配置）を含める
 3. The Game Result Share shall 画像にスコア表示（黒○個 vs 白○個）を含める
-4. The Game Result Share shall 画像に勝敗結果テキスト（「あなたの勝ち！」「AIの勝ち！」「引き分け」）を含める
+4. The Game Result Share shall 画像に勝敗結果を視覚的に表現する
 5. The Game Result Share shall 画像にアプリロゴまたはタイトル（ブランディング要素）を含める
 6. The Game Result Share shall 生成した画像を外部ストレージにアップロードしてURLを取得する
 

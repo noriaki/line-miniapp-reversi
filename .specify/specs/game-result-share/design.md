@@ -329,6 +329,7 @@ interface GameResultPanelProps {
 - ShareButtonsにはuseShareから取得したprops（isShareReady, onLineShare, onWebShare, canWebShare, isSharing）を渡す
 - 既存の「新しいゲームを開始」ボタンとシェアボタンを横並びで配置
 - 勝敗テキストパターン: `black` → 「あなたの勝ち!」、`white` → 「AIの勝ち!」、`draw` → 「引き分け」
+  - ※アプリ上の表示は「あなた」視点（表示を見る人＝プレイヤー本人）
 
 ---
 
@@ -441,6 +442,7 @@ interface ShareImagePreviewProps {
 - 外部画像（プロフィール画像等）は含めない（CORS制約）
 - インラインスタイルを使用しhtml2canvas互換性を確保
 - winner プロパティから勝敗テキストを導出: `black` → 「プレーヤーの勝ち!」、`white` → 「プレーヤーの負け...」、`draw` → 「引き分け」
+  - ※シェア画像は第三者視点（画像を見る人≠プレイヤー本人）のため、アプリ上の表示とは異なる表現を使用
 
 ### Hooks Layer
 
@@ -578,11 +580,8 @@ interface ShareService {
   buildShareText(result: GameResult): string;
 }
 
-interface GameResult {
-  readonly winner: Player | 'draw';
-  readonly blackCount: number;
-  readonly whiteCount: number;
-}
+// GameResult型はData Models（@/lib/share/types）で定義
+// import type { GameResult } from '@/lib/share/types';
 ```
 
 - Preconditions: containerRefがマウント済み、画像生成可能な状態
@@ -608,9 +607,10 @@ interface GameResult {
 
 - Flex Message（Bubble）形式でメッセージを構築
 - Hero: シェア画像
-- Body: 結果テキスト + 招待文
-- Footer: 「リバーシで遊ぶ」URIアクションボタン
+- Body: 3カラム構成で勝者を王冠で表示 + 招待文（「AIに勝てるかな？」）
+- Footer: 「かんたんリバーシをプレイ」URIアクションボタン
 - アクションは全てURI形式（shareTargetPicker制約）
+- `aspectMode: "fit"` を使用（画像全体を表示）
 
 **Dependencies**
 
@@ -640,6 +640,10 @@ interface FlexMessageBuilder {
 - `@line/liff` の FlexMessage 型を使用
 - 画像URLはHTTPS必須
 - `altText` は「リバーシの結果をシェア」等の代替テキスト
+- `aspectMode: "fit"` を使用（画像全体を表示）
+- Body部分は3カラム構成で勝者を王冠（テキスト）で表示
+- 招待文: 「AIに勝てるかな？」
+- ボタンラベル: 「かんたんリバーシをプレイ」
 
 ---
 
@@ -919,59 +923,158 @@ interface PendingShareData {
 
 #### Flex Message Payload
 
-```typescript
-// LINE Messaging API Flex Message (Bubble)
+```json
 {
-  type: "flex",
-  altText: "リバーシの結果をシェア",
-  contents: {
-    type: "bubble",
-    hero: {
-      type: "image",
-      url: "https://r2.example.com/share-images/xxx.png",
-      size: "full",
-      aspectRatio: "1200:630",
-      aspectMode: "cover"
+  "type": "flex",
+  "altText": "リバーシの結果をシェア",
+  "contents": {
+    "type": "bubble",
+    "hero": {
+      "type": "image",
+      "url": "https://r2.example.com/share-images/xxx.png",
+      "size": "full",
+      "aspectRatio": "1200:630",
+      "aspectMode": "fit"
     },
-    body: {
-      type: "box",
-      layout: "vertical",
-      contents: [
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
         {
-          type: "text",
-          text: "プレーヤーの勝ち!",
-          weight: "bold",
-          size: "xl",
-          align: "center"
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                {
+                  "type": "box",
+                  "layout": "horizontal",
+                  "contents": [
+                    { "type": "text", "text": "👑", "size": "sm", "flex": 0 },
+                    {
+                      "type": "text",
+                      "text": "プレーヤー",
+                      "size": "sm",
+                      "flex": 0,
+                      "margin": "xs"
+                    }
+                  ],
+                  "justifyContent": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "horizontal",
+                  "contents": [
+                    { "type": "text", "text": "●", "size": "md", "flex": 0 },
+                    {
+                      "type": "text",
+                      "text": "36",
+                      "size": "xxl",
+                      "weight": "bold",
+                      "flex": 0,
+                      "margin": "sm"
+                    }
+                  ],
+                  "justifyContent": "center",
+                  "margin": "sm",
+                  "alignItems": "center"
+                }
+              ],
+              "flex": 1,
+              "alignItems": "center"
+            },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "vs",
+                  "size": "xs",
+                  "color": "#888888",
+                  "align": "center"
+                },
+                {
+                  "type": "text",
+                  "text": "-",
+                  "size": "xl",
+                  "color": "#888888",
+                  "align": "center",
+                  "margin": "sm"
+                }
+              ],
+              "flex": 0,
+              "justifyContent": "center",
+              "margin": "lg"
+            },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "AI",
+                  "size": "sm",
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "horizontal",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "28",
+                      "size": "xxl",
+                      "weight": "bold",
+                      "flex": 0
+                    },
+                    {
+                      "type": "text",
+                      "text": "○",
+                      "size": "md",
+                      "flex": 0,
+                      "margin": "sm"
+                    }
+                  ],
+                  "justifyContent": "center",
+                  "margin": "sm",
+                  "alignItems": "center"
+                }
+              ],
+              "flex": 1,
+              "alignItems": "center",
+              "margin": "lg"
+            }
+          ],
+          "alignItems": "center"
         },
+        { "type": "separator", "margin": "xl" },
         {
-          type: "text",
-          text: "黒 32 vs 白 32",
-          size: "md",
-          align: "center"
-        },
-        {
-          type: "text",
-          text: "リバーシで対戦しませんか?",
-          size: "sm",
-          align: "center",
-          color: "#888888"
+          "type": "text",
+          "text": "AIに勝てるかな？",
+          "size": "sm",
+          "align": "center",
+          "color": "#888888",
+          "margin": "lg"
         }
-      ]
+      ],
+      "paddingAll": "lg"
     },
-    footer: {
-      type: "box",
-      layout: "vertical",
-      contents: [
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
         {
-          type: "button",
-          action: {
-            type: "uri",
-            label: "リバーシで遊ぶ",
-            uri: "https://liff.line.me/xxxx"
+          "type": "button",
+          "action": {
+            "type": "uri",
+            "label": "かんたんリバーシをプレイ",
+            "uri": "https://liff.line.me/xxxx"
           },
-          style: "primary",
-          color: "#06C755"
+          "style": "primary",
+          "color": "#06C755"
         }
       ]
     }

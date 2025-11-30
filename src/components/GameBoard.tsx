@@ -7,6 +7,7 @@ import { useGameInconsistencyDetector } from '@/hooks/useGameInconsistencyDetect
 import { useMessageQueue } from '@/hooks/useMessageQueue';
 import { useLiff } from '@/hooks/useLiff';
 import { MessageBox } from '@/components/MessageBox';
+import GameResultPanel from '@/components/GameResultPanel';
 import {
   applyMove,
   validateMove,
@@ -343,9 +344,9 @@ export default function GameBoard(): JSX.Element {
 
       {/* Game Status Display */}
       <div className="game-status">
-        {/* Turn Indicator */}
-        <div className="turn-indicator">
-          {gameStatus.type === 'playing' && (
+        {/* Turn Indicator - Only shown during gameplay */}
+        {gameStatus.type === 'playing' && (
+          <div className="turn-indicator">
             <div className="flex items-center justify-center gap-2">
               <span
                 className={`inline-block w-6 h-6 rounded-full ${
@@ -366,54 +367,46 @@ export default function GameBoard(): JSX.Element {
                 }`}
               />
             </div>
-          )}
-          {gameStatus.type === 'finished' && (
-            <p className="text-xl font-bold game-finished-text">
-              ゲーム終了！
-              {gameStatus.winner === 'draw'
-                ? '引き分け'
-                : gameStatus.winner === 'black'
-                  ? 'あなたの勝ち!'
-                  : 'AI の勝ち!'}
-            </p>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Stone Count */}
-        <div className="stone-count">
-          <div className="stone-count-item">
-            {profile?.pictureUrl && !imageError ? (
-              <img
-                src={profile.pictureUrl}
-                alt={profile.displayName}
-                data-testid="profile-icon"
-                className="w-10 h-10 rounded-full object-cover"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <div
-                className="stone-display stone-display-black"
-                data-testid="default-profile-icon"
-              />
-            )}
-            <span
-              className="text-2xl font-bold"
-              aria-label={`Black score: ${blackCount}`}
-            >
-              {blackCount}
-            </span>
+        {/* Stone Count - Only shown during gameplay (GameResultPanel shows scores during finished state) */}
+        {gameStatus.type === 'playing' && (
+          <div className="stone-count">
+            <div className="stone-count-item">
+              {profile?.pictureUrl && !imageError ? (
+                <img
+                  src={profile.pictureUrl}
+                  alt={profile.displayName}
+                  data-testid="profile-icon"
+                  className="w-10 h-10 rounded-full object-cover"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div
+                  className="stone-display stone-display-black"
+                  data-testid="default-profile-icon"
+                />
+              )}
+              <span
+                className="text-2xl font-bold"
+                aria-label={`Black score: ${blackCount}`}
+              >
+                {blackCount}
+              </span>
+            </div>
+            <div className="stone-count-divider">vs</div>
+            <div className="stone-count-item stone-count-item--reversed">
+              <div className="stone-display stone-display-white" />
+              <span
+                className="text-2xl font-bold"
+                aria-label={`White score: ${whiteCount}`}
+              >
+                {whiteCount}
+              </span>
+            </div>
           </div>
-          <div className="stone-count-divider">vs</div>
-          <div className="stone-count-item stone-count-item--reversed">
-            <div className="stone-display stone-display-white" />
-            <span
-              className="text-2xl font-bold"
-              aria-label={`White score: ${whiteCount}`}
-            >
-              {whiteCount}
-            </span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Board Grid */}
@@ -484,13 +477,15 @@ export default function GameBoard(): JSX.Element {
         </div>
       )}
 
-      {/* Game Over Screen */}
+      {/* Game Over Screen - Using GameResultPanel */}
       {gameStatus.type === 'finished' && (
-        <div className="game-result" data-testid="game-result">
-          <button onClick={resetGame} className="reset-button">
-            新しいゲームを開始
-          </button>
-        </div>
+        <GameResultPanel
+          board={board}
+          blackCount={blackCount}
+          whiteCount={whiteCount}
+          winner={gameStatus.winner}
+          onReset={resetGame}
+        />
       )}
     </div>
   );

@@ -149,8 +149,8 @@ Use whichever pattern fits the work breakdown:
   - ShareButtons、ShareImagePreviewを子コンポーネントとして統合する
   - _Requirements: 1.1, 1.2, 4.2, 4.3, 4.4, 4.5, 6.1, 6.2, 6.3, 8.1_
 
-- [ ] 8. GameBoardへの統合
-- [ ] 8.1 GameBoardにGameResultPanelを統合する
+- [x] 8. GameBoardへの統合
+- [x] 8.1 GameBoardにGameResultPanelを統合する
   - gameStatus.type === 'finished' 条件でGameResultPanelをレンダリングする
   - 既存のゲーム終了画面のUIをGameResultPanelに移行する
   - GameResultPanelに必要なprops（board, blackCount, whiteCount, winner, onReset）を渡す

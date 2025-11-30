@@ -36,6 +36,20 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
+// Mock useShare hook
+jest.mock('@/hooks/useShare', () => ({
+  useShare: () => ({
+    isShareReady: true,
+    isSharing: false,
+    canWebShare: true,
+    shareImageUrl: 'https://example.com/share-image.png',
+    hasPendingShare: false,
+    handleLineShare: jest.fn(),
+    handleWebShare: jest.fn(),
+    prepareShareImage: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 describe('GameBoard - Pass Logic (6.3, 6.4)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -112,10 +126,10 @@ describe('GameBoard - Pass Logic (6.3, 6.4)', () => {
       const passButton = screen.getByRole('button', { name: /パス/i });
       await user.click(passButton);
 
-      // Wait for game to end after consecutive passes
+      // Wait for game to end - GameResultPanel shows winner text
       await waitFor(
         () => {
-          expect(screen.getByText(/ゲーム終了！/i)).toBeInTheDocument();
+          expect(screen.getByTestId('game-result-panel')).toBeInTheDocument();
         },
         { timeout: 5000 }
       );
@@ -177,10 +191,10 @@ describe('GameBoard - Pass Logic (6.3, 6.4)', () => {
         { timeout: 3000 }
       );
 
-      // Game should end after consecutive passes
+      // Game should end after consecutive passes - GameResultPanel displays
       await waitFor(
         () => {
-          expect(screen.getByText(/ゲーム終了！/i)).toBeInTheDocument();
+          expect(screen.getByTestId('game-result-panel')).toBeInTheDocument();
         },
         { timeout: 5000 }
       );
@@ -205,16 +219,17 @@ describe('GameBoard - Pass Logic (6.3, 6.4)', () => {
       const passButton = screen.getByRole('button', { name: /パス/i });
       await user.click(passButton);
 
+      // Wait for GameResultPanel to appear
       await waitFor(
         () => {
-          expect(screen.getByText(/ゲーム終了！/i)).toBeInTheDocument();
+          expect(screen.getByTestId('game-result-panel')).toBeInTheDocument();
         },
         { timeout: 5000 }
       );
 
-      // Should show AI win
+      // Should show AI win in GameResultPanel
       await waitFor(() => {
-        expect(screen.getByText(/AI の勝ち!/i)).toBeInTheDocument();
+        expect(screen.getByText(/AIの勝ち!/i)).toBeInTheDocument();
       });
 
       checkGameEndSpy.mockRestore();

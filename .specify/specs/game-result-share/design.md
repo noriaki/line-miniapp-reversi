@@ -546,6 +546,7 @@ interface ShareServiceResult<T> {
 type ShareError =
   | { type: 'upload_failed'; message: string }
   | { type: 'share_failed'; message: string }
+  | { type: 'image_too_large'; message: string }
   | { type: 'cancelled' }
   | { type: 'not_supported' };
 
@@ -694,13 +695,20 @@ interface ImageGenerationOptions {
   readonly format?: 'image/png' | 'image/jpeg';
   /** JPEG品質（0-1、デフォルト: 0.9） */
   readonly quality?: number;
+  /** 最大ファイルサイズ（バイト、デフォルト: 1MB = 1048576） */
+  readonly maxSizeBytes?: number;
 }
 ```
+
+**Error Conditions**
+
+- 生成画像が `maxSizeBytes`（デフォルト1MB）を超過した場合、`ShareError { type: 'image_too_large', message: '...' }` を返す
 
 **Implementation Notes**
 
 - `html2canvas(element, { scale: 2 })` で高解像度生成
 - アップロードは Presigned URL を使用（Cloudflare Workers で生成）
+- 画像サイズが `maxSizeBytes` を超過した場合は早期にエラーを返し、アップロードを試行しない
 
 ##### Presigned URL API Specification
 
@@ -828,13 +836,21 @@ interface PendingShareStorage {
   readonly STORAGE_KEY: 'pendingShareGame';
 
   /**
+   * sessionStorageが利用可能かどうかを判定
+   * @returns sessionStorageが利用可能ならtrue、不可ならfalse
+   */
+  isAvailable(): boolean;
+
+  /**
    * ゲーム終了状態を保存
+   * isAvailable() が false の場合、何もしない（グレースフルデグレード）
    */
   save(data: Omit<PendingShareData, 'timestamp'>): void;
 
   /**
    * 保存済み状態を読み出し
    * @returns 有効な状態があればPendingShareData、なければnull
+   * isAvailable() が false の場合、常に null を返す
    */
   load(): PendingShareData | null;
 
@@ -852,8 +868,10 @@ interface PendingShareStorage {
 }
 ```
 
-- Preconditions: sessionStorageが利用可能であること
-- Postconditions: save後はload可能、clear後はloadがnullを返す
+- Preconditions: なし（`isAvailable()` で利用可否を確認可能）
+- Postconditions:
+  - `isAvailable()` が true の場合: save後はload可能、clear後はloadがnullを返す
+  - `isAvailable()` が false の場合: save() は何もせず、load() は常に null を返す（グレースフルデグレード）
 - Invariants: 有効期限（1時間 = 3600000ms）
 
 **Implementation Notes**
@@ -867,6 +885,7 @@ interface PendingShareStorage {
   - シェア完了時（成功）
   - ユーザーキャンセル時
   - 注: 新規ゲーム開始時の明示的クリアは不要（sessionStorageはタブクローズで自動クリア、1時間の有効期限あり、`save()`は新規ゲーム終了時に上書き）
+- **グレースフルデグレード**: `isAvailable()` が false の場合（プライベートブラウジング等でsessionStorageが利用不可の場合）、ストレージ操作は静かに失敗し、ログインリダイレクト後のシェア継続機能は無効化されるが、シェア機能自体は引き続き利用可能
 
 ## Data Models
 
@@ -1117,8 +1136,10 @@ interface PendingShareData {
 - `FlexMessageBuilder.buildShareFlexMessage`: 正しいFlex Message構造を生成
 - `ShareService.buildShareText`: 勝敗・スコアに応じたテキスト生成
 - `useShare`: 状態遷移（idle → preparing → ready → sharing）
+- `PendingShareStorage.isAvailable`: sessionStorage利用可否判定
 - `PendingShareStorage.save/load/clear`: sessionStorage操作の正確性
 - `PendingShareStorage.isExpired`: 有効期限判定ロジック
+- `ShareImageGenerator.generateImageBlob`: maxSizeBytes超過時のエラー返却
 
 ### Integration Tests
 
@@ -1132,6 +1153,81 @@ interface PendingShareData {
 - ゲーム終了 → シェアボタン表示の確認
 - Web Share非対応環境での「その他でシェア」ボタン非表示確認
 - 非ログイン状態でのLINEシェア → ログイン後のシェアフロー継続（sessionStorage経由）
+
+## E2E Test State Injection
+
+### Purpose
+
+ゲーム終了直前の状態をE2Eテストに注入し、シェア機能などの終了画面フローを効率的にテストする。完全なゲームプレイを毎回実行することなく、終了画面のテストを高速かつ確実に行う。
+
+### Method: sessionStorage Injection
+
+テスト開始時に `sessionStorage` を使用してゲーム状態を注入する:
+
+```typescript
+// E2Eテストでの状態注入
+sessionStorage.setItem('e2e-game-state', JSON.stringify(state));
+
+// ページリロード後に状態を復元
+```
+
+### GameStateSnapshot Type Definition
+
+```typescript
+interface GameStateSnapshot {
+  /** 8x8盤面の状態 */
+  readonly board: Board;
+  /** 現在の手番プレイヤー */
+  readonly currentPlayer: Player;
+  /** 有効な着手位置リスト */
+  readonly validMoves: Position[];
+  /** ゲームステータス（進行中/終了） */
+  readonly gameStatus: GameStatus;
+  /** 黒石の数 */
+  readonly blackCount: number;
+  /** 白石の数 */
+  readonly whiteCount: number;
+}
+```
+
+### Integration Points
+
+**useGameState Hook Integration**:
+
+- フックのマウント時に `sessionStorage.getItem('e2e-game-state')` を確認
+- 有効な状態が存在すれば、初期状態として使用
+- 状態適用後、sessionStorageから該当キーを削除（テスト後のクリーンアップ）
+
+**Environment Restriction**:
+
+- **開発環境限定**: `process.env.NODE_ENV !== 'production'` でのみ有効化
+- 本番ビルドではこの機能は完全に無効化され、セキュリティリスクを回避
+
+**Usage Example (Playwright)**:
+
+```typescript
+test('ゲーム終了時にシェアボタンが表示される', async ({ page }) => {
+  // ゲーム終了状態を注入
+  await page.addInitScript(() => {
+    const endGameState: GameStateSnapshot = {
+      board: createFinishedBoard(), // 終了盤面
+      currentPlayer: 'black',
+      validMoves: [],
+      gameStatus: { type: 'finished', winner: 'black' },
+      blackCount: 36,
+      whiteCount: 28,
+    };
+    sessionStorage.setItem('e2e-game-state', JSON.stringify(endGameState));
+  });
+
+  await page.goto('/');
+
+  // シェアボタンの表示を確認
+  await expect(
+    page.getByRole('button', { name: 'LINEでシェア' })
+  ).toBeVisible();
+});
+```
 
 ## Security Considerations
 

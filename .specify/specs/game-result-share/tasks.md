@@ -130,8 +130,8 @@ Use whichever pattern fits the work breakdown:
   - キャンセル時は通知を表示せず元の画面に戻る
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 7. UIコンポーネントの実装
-- [ ] 7.1 ShareButtonsコンポーネントを実装する
+- [x] 7. UIコンポーネントの実装
+- [x] 7.1 ShareButtonsコンポーネントを実装する
   - 「LINEでシェア」ボタンをLINEブランドカラー（#06C755）で表示する
   - 「その他でシェア」ボタンを表示する
   - Web Share API非対応時は「その他でシェア」ボタンを非表示にする
@@ -139,7 +139,7 @@ Use whichever pattern fits the work breakdown:
   - isShareReady === false または isSharing === true 時にdisabled状態にする
   - _Requirements: 1.1, 1.3, 1.4, 1.5, 3.4_
 
-- [ ] 7.2 GameResultPanelコンポーネントを実装する
+- [x] 7.2 GameResultPanelコンポーネントを実装する
   - ゲーム終了時（gameStatus.type === 'finished'）のみレンダリングする
   - 勝敗表示とスコア表示のUIを提供する
   - 勝敗テキストはユーザー視点（「あなたの勝ち!」「AIの勝ち!」「引き分け」）を使用する

@@ -156,8 +156,8 @@ Use whichever pattern fits the work breakdown:
   - GameResultPanelに必要なprops（board, blackCount, whiteCount, winner, onReset）を渡す
   - _Requirements: 1.1, 1.2, 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 9. html2canvas依存関係の追加
-- [ ] 9.1 html2canvasパッケージをインストールする
+- [x] 9. html2canvas依存関係の追加
+- [x] 9.1 html2canvasパッケージをインストールする
   - pnpm add html2canvas でパッケージを追加する
   - 型定義が含まれているか確認し、必要であれば@types/html2canvasを追加する
   - _Requirements: 4.1_

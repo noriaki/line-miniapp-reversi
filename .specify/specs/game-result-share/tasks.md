@@ -66,8 +66,8 @@ Use whichever pattern fits the work breakdown:
   - アップロードエラー時のエラーハンドリングを実装する
   - _Requirements: 4.6, 8.2_
 
-- [ ] 3. モックAPIサーバーの構築
-- [ ] 3.1 ローカル開発用モックサーバーを実装する
+- [x] 3. モックAPIサーバーの構築
+- [x] 3.1 ローカル開発用モックサーバーを実装する
   - packages/mock-share-api/にExpressまたはHonoで軽量サーバーを構築する
   - POST /api/upload/presignedエンドポイントでモックレスポンスを返却する
   - PUT /mock-upload/:idエンドポイントで画像データを受け取る

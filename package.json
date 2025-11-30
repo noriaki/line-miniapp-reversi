@@ -6,6 +6,7 @@
     "dev": "next dev",
     "dev:debug": "dev3000 -p 3030 --command 'next dev -p 3030'",
     "dev:serve:debug": "ngrok http 3030 --domain=$NGROK_DOMAIN",
+    "dev:mock": "pnpm --filter @line-miniapp-reversi/mock-share-api dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

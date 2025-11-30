@@ -1,0 +1,22 @@
+{
+  "type": "bubble",
+  "hero": {
+    "type": "image",
+    "url": "https://i.ibb.co/gLLQ1N2k/ogp-sample.png",
+    "size": "full",
+    "aspectRatio": "120:63",
+    "aspectMode": "fit"
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "text",
+        "text": "OGP Test",
+        "weight": "bold",
+        "size": "xl"
+      }
+    ]
+  }
+}

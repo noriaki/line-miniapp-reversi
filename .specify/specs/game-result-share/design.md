@@ -43,6 +43,7 @@
 graph TB
     subgraph UI Layer
         GameBoard[GameBoard]
+        GameResultPanel[GameResultPanel]
         ShareButtons[ShareButtons]
         ShareImagePreview[ShareImagePreview]
     end
@@ -69,8 +70,10 @@ graph TB
         SessionStorage[sessionStorage]
     end
 
-    GameBoard --> ShareButtons
-    GameBoard --> ShareImagePreview
+    GameBoard --> GameResultPanel
+    GameResultPanel --> ShareButtons
+    GameResultPanel --> ShareImagePreview
+    GameResultPanel --> useShare
     ShareButtons --> useShare
     useShare --> useLiff
     useShare --> useMessageQueue
@@ -90,9 +93,24 @@ graph TB
 - **Selected pattern**: Hooks + Pure Functions（既存パターンに準拠）
 - **Domain boundaries**: UI（Components）→ State Management（Hooks）→ Business Logic（Lib）の単方向依存
 - **Existing patterns preserved**: useLiff, useMessageQueue, GameBoard構造を維持
-- **New components rationale**: シェア固有のロジックを分離し、テスタビリティと再利用性を確保
+- **New components rationale**: GameResultPanelがシェア関連UIを統合し、GameBoardの責務を軽減。シェア固有のロジックをuseShareに分離しテスタビリティと再利用性を確保
 - **State persistence**: PendingShareStorageでログインリダイレクト間の状態を保持
 - **Steering compliance**: Pure Logic vs Stateful Hooks の分離原則に準拠
+
+**Component Hierarchy**:
+
+```
+GameBoard
+├── useGameState (ゲーム状態管理)
+├── 盤面表示、ユーザー入力処理
+└── {gameStatus.type === 'finished' && <GameResultPanel />}
+
+GameResultPanel (NEW)
+├── useShare (シェア状態をカプセル化)
+├── ShareButtons
+├── ShareImagePreview
+└── 勝敗表示、スコア表示
+```
 
 ### Technology Stack
 
@@ -214,45 +232,46 @@ sequenceDiagram
 
 ## Requirements Traceability
 
-| Requirement | Summary                    | Components                        | Interfaces                     | Flows                      |
-| ----------- | -------------------------- | --------------------------------- | ------------------------------ | -------------------------- |
-| 1.1         | シェアボタン表示           | ShareButtons                      | -                              | -                          |
-| 1.2         | ボタン配置                 | ShareButtons                      | -                              | -                          |
-| 1.3         | LINEブランドカラー         | ShareButtons                      | -                              | -                          |
-| 1.4         | ボタンサイズ               | ShareButtons                      | -                              | -                          |
-| 1.5         | Web Share非対応時の非表示  | ShareButtons                      | useShare.canWebShare           | -                          |
-| 2.1         | ログイン済みでのシェア     | useShare                          | ShareService.shareViaLine      | シェアフロー               |
-| 2.2         | 非ログイン時のログイン処理 | useShare                          | useLiff.login                  | シェアフロー               |
-| 2.3         | ログイン後のシェア継続     | useShare                          | -                              | シェアフロー               |
-| 2.4         | Flex Message形式           | FlexMessageBuilder                | buildShareFlexMessage          | -                          |
-| 2.5         | Flex Messageに画像含む     | FlexMessageBuilder                | -                              | -                          |
-| 2.6         | 結果テキスト・招待文       | FlexMessageBuilder                | -                              | -                          |
-| 2.7         | アプリ起動ボタン           | FlexMessageBuilder                | -                              | -                          |
-| 2.8         | 非ログイン時の状態保存     | useShare, PendingShareStorage     | PendingShareStorage.save       | ログイン後シェア継続フロー |
-| 2.9         | ログイン後の状態復元       | useShare, PendingShareStorage     | PendingShareStorage.load/clear | ログイン後シェア継続フロー |
-| 2.10        | 保存状態の有効期限         | PendingShareStorage               | PendingShareStorage.isExpired  | ログイン後シェア継続フロー |
-| 3.1         | Web Share API呼び出し      | ShareService                      | shareViaWebShare               | シェアフロー               |
-| 3.2         | 画像ファイル共有           | ShareService                      | -                              | -                          |
-| 3.3         | シェアテキスト             | ShareService                      | -                              | -                          |
-| 3.4         | ログイン状態非依存         | ShareButtons, useShare            | -                              | -                          |
-| 4.1         | 画像生成開始               | ShareImageGenerator               | generateShareImage             | シェアフロー               |
-| 4.2         | 盤面状態含む               | ShareImagePreview                 | -                              | -                          |
-| 4.3         | スコア表示                 | ShareImagePreview                 | -                              | -                          |
-| 4.4         | 勝敗テキスト               | ShareImagePreview                 | -                              | -                          |
-| 4.5         | ブランディング要素         | ShareImagePreview                 | -                              | -                          |
-| 4.6         | 外部ストレージアップロード | ShareService, ShareImageGenerator | uploadImage                    | シェアフロー               |
-| 5.1-5.4     | シェアテキスト構成         | ShareService                      | buildShareText                 | -                          |
-| 6.1         | シェア完了通知             | useShare                          | useMessageQueue.addMessage     | -                          |
-| 6.2         | エラー通知                 | useShare                          | useMessageQueue.addMessage     | -                          |
-| 6.3         | キャンセル時の挙動         | useShare                          | -                              | -                          |
-| 7.1-7.4     | クロスプラットフォーム     | 全コンポーネント                  | -                              | -                          |
-| 8.1-8.2     | パフォーマンス             | ShareService                      | -                              | シェアフロー               |
+| Requirement | Summary                    | Components                              | Interfaces                     | Flows                      |
+| ----------- | -------------------------- | --------------------------------------- | ------------------------------ | -------------------------- |
+| 1.1         | シェアボタン表示           | GameResultPanel, ShareButtons           | -                              | -                          |
+| 1.2         | ボタン配置                 | GameResultPanel, ShareButtons           | -                              | -                          |
+| 1.3         | LINEブランドカラー         | ShareButtons                            | -                              | -                          |
+| 1.4         | ボタンサイズ               | ShareButtons                            | -                              | -                          |
+| 1.5         | Web Share非対応時の非表示  | GameResultPanel, ShareButtons           | useShare.canWebShare           | -                          |
+| 2.1         | ログイン済みでのシェア     | useShare                                | ShareService.shareViaLine      | シェアフロー               |
+| 2.2         | 非ログイン時のログイン処理 | useShare                                | useLiff.login                  | シェアフロー               |
+| 2.3         | ログイン後のシェア継続     | useShare                                | -                              | シェアフロー               |
+| 2.4         | Flex Message形式           | FlexMessageBuilder                      | buildShareFlexMessage          | -                          |
+| 2.5         | Flex Messageに画像含む     | FlexMessageBuilder                      | -                              | -                          |
+| 2.6         | 結果テキスト・招待文       | FlexMessageBuilder                      | -                              | -                          |
+| 2.7         | アプリ起動ボタン           | FlexMessageBuilder                      | -                              | -                          |
+| 2.8         | 非ログイン時の状態保存     | useShare, PendingShareStorage           | PendingShareStorage.save       | ログイン後シェア継続フロー |
+| 2.9         | ログイン後の状態復元       | useShare, PendingShareStorage           | PendingShareStorage.load/clear | ログイン後シェア継続フロー |
+| 2.10        | 保存状態の有効期限         | PendingShareStorage                     | PendingShareStorage.isExpired  | ログイン後シェア継続フロー |
+| 3.1         | Web Share API呼び出し      | ShareService                            | shareViaWebShare               | シェアフロー               |
+| 3.2         | 画像ファイル共有           | ShareService                            | -                              | -                          |
+| 3.3         | シェアテキスト             | ShareService                            | -                              | -                          |
+| 3.4         | ログイン状態非依存         | GameResultPanel, ShareButtons, useShare | -                              | -                          |
+| 4.1         | 画像生成開始               | GameResultPanel, ShareImageGenerator    | generateShareImage             | シェアフロー               |
+| 4.2         | 盤面状態含む               | GameResultPanel, ShareImagePreview      | -                              | -                          |
+| 4.3         | スコア表示                 | GameResultPanel, ShareImagePreview      | -                              | -                          |
+| 4.4         | 勝敗テキスト               | GameResultPanel, ShareImagePreview      | -                              | -                          |
+| 4.5         | ブランディング要素         | ShareImagePreview                       | -                              | -                          |
+| 4.6         | 外部ストレージアップロード | ShareService, ShareImageGenerator       | uploadImage                    | シェアフロー               |
+| 5.1-5.4     | シェアテキスト構成         | ShareService                            | buildShareText                 | -                          |
+| 6.1         | シェア完了通知             | GameResultPanel, useShare               | useMessageQueue.addMessage     | -                          |
+| 6.2         | エラー通知                 | GameResultPanel, useShare               | useMessageQueue.addMessage     | -                          |
+| 6.3         | キャンセル時の挙動         | GameResultPanel, useShare               | -                              | -                          |
+| 7.1-7.4     | クロスプラットフォーム     | 全コンポーネント                        | -                              | -                          |
+| 8.1-8.2     | パフォーマンス             | GameResultPanel, ShareService           | -                              | シェアフロー               |
 
 ## Components and Interfaces
 
 | Component           | Domain/Layer | Intent                         | Req Coverage                        | Key Dependencies                                                                | Contracts |
 | ------------------- | ------------ | ------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------- | --------- |
-| ShareButtons        | UI           | シェアボタン表示・制御         | 1.1-1.5, 3.4                        | useShare (P0)                                                                   | -         |
+| GameResultPanel     | UI           | ゲーム結果画面の統合管理       | 1.1-1.5, 4.2-4.5, 6.1-6.3           | useShare (P0), ShareButtons (P0), ShareImagePreview (P0)                        | -         |
+| ShareButtons        | UI           | シェアボタン表示・制御         | 1.1-1.5, 3.4                        | -                                                                               | -         |
 | ShareImagePreview   | UI           | シェア画像DOM構築              | 4.2-4.5                             | -                                                                               | -         |
 | useShare            | Hooks        | シェア状態・操作管理           | 2.1-2.3, 2.8-2.10, 3.1-3.4, 6.1-6.3 | useLiff (P0), useMessageQueue (P0), ShareService (P0), PendingShareStorage (P0) | State     |
 | ShareService        | Lib          | シェア処理ビジネスロジック     | 2.4-2.7, 3.1-3.3, 4.1, 4.6, 5.1-5.4 | FlexMessageBuilder (P1), ShareImageGenerator (P1)                               | Service   |
@@ -261,6 +280,57 @@ sequenceDiagram
 | PendingShareStorage | Lib          | ログインリダイレクト間状態保持 | 2.8, 2.9, 2.10                      | sessionStorage (External)                                                       | Service   |
 
 ### UI Layer
+
+#### GameResultPanel
+
+| Field        | Detail                                                     |
+| ------------ | ---------------------------------------------------------- |
+| Intent       | ゲーム終了時の結果表示とシェア機能を統合管理するパネル     |
+| Requirements | 1.1, 1.2, 1.3, 1.4, 1.5, 4.2, 4.3, 4.4, 4.5, 6.1, 6.2, 6.3 |
+
+**Responsibilities & Constraints**
+
+- ゲーム終了状態（`gameStatus.type === 'finished'`）でのみレンダリング
+- useShareフックを使用しシェア状態をカプセル化
+- ShareButtons、ShareImagePreviewを子コンポーネントとして統合
+- 勝敗表示、スコア表示のUI提供
+- コンポーネントマウント時にprepareShareImageを自動呼び出し
+
+**Dependencies**
+
+- Inbound: GameBoard — ゲーム終了時のUI統合 (P0)
+- Outbound: useShare — シェア状態・操作管理 (P0)
+- Outbound: ShareButtons — シェアボタン表示 (P0)
+- Outbound: ShareImagePreview — シェア画像DOM (P0)
+
+**Contracts**: -
+
+**Props Interface**
+
+```typescript
+interface GameResultPanelProps {
+  /** 盤面状態 */
+  readonly board: Board;
+  /** 黒石の数 */
+  readonly blackCount: number;
+  /** 白石の数 */
+  readonly whiteCount: number;
+  /** 勝者（'black' | 'white' | 'draw'） */
+  readonly winner: Player | 'draw';
+  /** ゲームリセットハンドラ */
+  readonly onReset: () => void;
+}
+```
+
+**Implementation Notes**
+
+- useShareフックを内部で使用し、シェア関連の状態と操作をカプセル化
+- useEffectでコンポーネントマウント時にprepareShareImageを自動呼び出し
+- ShareButtonsにはuseShareから取得したprops（isShareReady, onLineShare, onWebShare, canWebShare, isSharing）を渡す
+- 既存の「新しいゲームを開始」ボタンとシェアボタンを横並びで配置
+- 勝敗テキストパターン: `black` → 「あなたの勝ち!」、`white` → 「AIの勝ち!」、`draw` → 「引き分け」
+
+---
 
 #### ShareButtons
 
@@ -278,8 +348,7 @@ sequenceDiagram
 
 **Dependencies**
 
-- Inbound: GameBoard — ゲーム終了時のUI統合 (P0)
-- Outbound: useShare — シェア操作の委譲 (P0)
+- Inbound: GameResultPanel — ゲーム終了時のUI統合 (P0)
 
 **Contracts**: State [ ]
 
@@ -392,7 +461,7 @@ interface ShareImagePreviewProps {
 
 **Dependencies**
 
-- Inbound: GameBoard / ShareButtons — シェア操作の呼び出し (P0)
+- Inbound: GameResultPanel — シェア操作の呼び出し (P0)
 - Outbound: useLiff — ログイン状態・ログイン処理 (P0)
 - Outbound: useMessageQueue — 通知表示 (P0)
 - Outbound: ShareService — シェア実行 (P0)
@@ -432,7 +501,7 @@ interface UseShareReturn {
 
 **Implementation Notes**
 
-- ゲーム終了検出時に `prepareShareImage` を呼び出す
+- `prepareShareImage`はGameResultPanelがマウントされた時点で自動的に呼び出される（GameResultPanelのuseEffect内で実行）
 - LINEシェアは `liff.isLoggedIn()` → 未ログインなら状態保存後 `liff.login()` → リダイレクト返却後に状態復元 → `shareTargetPicker()`
 - Web Share は `navigator.canShare()` で事前チェック
 - フック初期化時に `PendingShareStorage.load()` でペンディング状態を確認し、有効なら自動シェアフローを開始
@@ -668,6 +737,48 @@ interface PresignedUrlResponse {
 - 公開URL有効期間: 24時間（R2オブジェクトライフサイクル）
 - Content-Type: `image/png` のみ許可
 
+##### ローカル開発用モックAPI仕様
+
+Cloudflare Workers/R2の初回セットアップが必要なため、フロントエンド開発を並行して進めるためのモックAPIを提供する。
+
+**モックサーバー仕様**:
+
+| Method | Endpoint              | Request                     | Response                              | Notes                    |
+| ------ | --------------------- | --------------------------- | ------------------------------------- | ------------------------ |
+| POST   | /api/upload/presigned | `{ contentType, fileSize }` | `{ uploadUrl, publicUrl, expiresIn }` | モックレスポンスを返却   |
+| PUT    | /mock-upload/:id      | Binary (image data)         | 204 No Content                        | 画像データを受け取るのみ |
+
+**モックレスポンス例**:
+
+```typescript
+// POST /api/upload/presigned のレスポンス
+{
+  uploadUrl: 'http://localhost:3001/mock-upload/test-image-id',
+  publicUrl: 'http://localhost:3001/mock-images/test-image-id.png',
+  expiresIn: 300
+}
+```
+
+**環境変数による切り替え**:
+
+```typescript
+// 環境変数
+NEXT_PUBLIC_SHARE_API_URL=http://localhost:3001  // 開発時（モック）
+NEXT_PUBLIC_SHARE_API_URL=https://share-api.example.com  // 本番時（Cloudflare Workers）
+
+// 使用例
+const apiUrl = process.env.NEXT_PUBLIC_SHARE_API_URL || 'http://localhost:3001';
+const response = await fetch(`${apiUrl}/api/upload/presigned`, { ... });
+```
+
+**モックサーバー実装方針**:
+
+- `packages/mock-share-api/` に独立したパッケージとして配置
+- Express.js または Hono で軽量に実装
+- 開発時は `pnpm dev:mock` で並行起動
+- 実際のファイル保存は不要（レスポンスを返すのみ）
+- 画像プレビュー用に静的ファイルサーバー機能を含む
+
 ---
 
 #### PendingShareStorage
@@ -681,7 +792,7 @@ interface PresignedUrlResponse {
 
 - sessionStorageを使用した状態永続化
 - 有効期限（1時間）の管理
-- シェア完了または新規ゲーム開始時のクリア
+- シェア完了またはユーザーキャンセル時のクリア
 
 **Dependencies**
 
@@ -748,6 +859,10 @@ interface PendingShareStorage {
 - `isExpired` は `Date.now() - data.timestamp > 3600000` で判定
 - sessionStorageはLIFFリダイレクト後も同一オリジンで保持される
 - タブを閉じると自動クリアされるため、プライバシーに配慮
+- クリアタイミング:
+  - シェア完了時（成功）
+  - ユーザーキャンセル時
+  - 注: 新規ゲーム開始時の明示的クリアは不要（sessionStorageはタブクローズで自動クリア、1時間の有効期限あり、`save()`は新規ゲーム終了時に上書き）
 
 ## Data Models
 

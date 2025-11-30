@@ -92,8 +92,8 @@ Use whichever pattern fits the work breakdown:
   - altTextを「リバーシの結果をシェア」に設定する
   - _Requirements: 2.4, 2.5, 2.6, 2.7_
 
-- [ ] 5. ShareServiceの実装
-- [ ] 5.1 ShareServiceコア機能を実装する
+- [x] 5. ShareServiceの実装
+- [x] 5.1 ShareServiceコア機能を実装する
   - prepareShareImage関数で画像生成とアップロードを調整する
   - shareViaLine関数でFlex Message構築とshareTargetPicker呼び出しを実装する
   - shareViaWebShare関数でWeb Share API呼び出しを実装する

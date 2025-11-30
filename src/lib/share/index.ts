@@ -39,3 +39,12 @@ export type {
   FlexComponent,
   URIAction,
 } from './flex-message-types';
+
+// Share service
+export {
+  prepareShareImage,
+  shareViaLine,
+  shareViaWebShare,
+  type ShareServiceResult,
+  type PreparedShareImage,
+} from './share-service';

@@ -13,3 +13,12 @@ export type {
 
 // Storage
 export { pendingShareStorage, STORAGE_KEY } from './pending-share-storage';
+
+// Image generation
+export {
+  generateImageBlob,
+  type ImageGenerationResult,
+} from './share-image-generator';
+
+// Image upload
+export { uploadImage, type UploadResult } from './image-uploader';

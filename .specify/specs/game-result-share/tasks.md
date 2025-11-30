@@ -42,8 +42,8 @@ Use whichever pattern fits the work breakdown:
   - isAvailable()メソッドでsessionStorageの利用可否を判定する機能を実装する
   - _Requirements: 2.8, 2.9, 2.10_
 
-- [ ] 2. 画像生成とアップロード機能の構築
-- [ ] 2.1 ShareImagePreviewコンポーネントを実装する
+- [x] 2. 画像生成とアップロード機能の構築
+- [x] 2.1 ShareImagePreviewコンポーネントを実装する
   - 固定サイズ（1200x630px）のOGP比率レイアウトを構築する
   - 左側に盤面（560x560px、8x8グリッド）を配置する
   - 右側に勝敗テキスト、スコア、ブランド名を配置する
@@ -52,14 +52,14 @@ Use whichever pattern fits the work breakdown:
   - 勝敗テキストは第三者視点（「プレーヤーの勝ち!」「プレーヤーの負け...」「引き分け」）を使用する
   - _Requirements: 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 2.2 ShareImageGeneratorを実装する
+- [x] 2.2 ShareImageGeneratorを実装する
   - html2canvasでDOM要素からCanvas画像を生成する機能を実装する
   - CanvasをBlob（PNG形式）に変換する機能を実装する
   - 解像度スケール（デフォルト: 2）のオプションをサポートする
   - maxSizeBytesオプションで画像サイズ上限を指定し、超過時はエラーを返却する
   - _Requirements: 4.1, 8.1_
 
-- [ ] 2.3 画像アップロード機能を実装する
+- [x] 2.3 画像アップロード機能を実装する
   - Presigned URL取得APIの呼び出しを実装する
   - 取得したURLへの画像PUTアップロードを実装する
   - 環境変数（NEXT_PUBLIC_SHARE_API_URL）による本番/開発切り替えをサポートする

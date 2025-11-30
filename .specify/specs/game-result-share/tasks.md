@@ -102,28 +102,28 @@ Use whichever pattern fits the work breakdown:
   - navigator.canShare({ files })で事前チェックする
   - _Requirements: 2.1, 2.4, 3.1, 3.2, 3.3, 4.1, 4.6_
 
-- [ ] 6. useShareフックの実装
-- [ ] 6.1 シェア状態管理フックを実装する
+- [x] 6. useShareフックの実装
+- [x] 6.1 シェア状態管理フックを実装する
   - isShareReady、isSharing、canWebShare、shareImageUrl状態を管理する
   - hasPendingShare状態でログインリダイレクト後の自動シェア待機を管理する
   - isSharingフラグで複数回シェア操作の排他制御を行う
   - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.4_
 
-- [ ] 6.2 シェア操作ハンドラを実装する
+- [x] 6.2 シェア操作ハンドラを実装する
   - handleLineShare関数でLINEシェアフローを制御する
   - 未ログイン時は状態保存後にliff.login()を呼び出す
   - handleWebShare関数でWeb Share APIシェアを実行する
   - prepareShareImage関数でゲーム終了時の画像生成を開始する
   - _Requirements: 2.1, 2.2, 2.3, 3.1_
 
-- [ ] 6.3 ログイン後シェア継続機能を実装する
+- [x] 6.3 ログイン後シェア継続機能を実装する
   - フック初期化時にPendingShareStorage.load()でペンディング状態を確認する
   - 有効な保存状態があれば自動でシェアフローを開始する
   - 有効期限切れの場合はクリアしてシェアフローを継続しない
   - シェア完了またはキャンセル時にPendingShareStorage.clear()を呼び出す
   - _Requirements: 2.3, 2.8, 2.9, 2.10_
 
-- [ ] 6.4 シェア結果通知機能を実装する
+- [x] 6.4 シェア結果通知機能を実装する
   - useMessageQueueを使用してトースト通知を表示する
   - シェア成功時は「シェアしました！」を表示する
   - エラー時はエラーメッセージを表示する
@@ -179,7 +179,7 @@ Use whichever pattern fits the work breakdown:
   - 各シェア方法（LINE、Web Share）の呼び出しフローを検証する
   - _Requirements: 3.1, 3.2, 3.3, 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 10.4 useShareフックのユニットテストを実装する
+- [x] 10.4 useShareフックのユニットテストを実装する
   - 状態遷移（idle → preparing → ready → sharing）を検証する
   - ログイン状態に応じたシェアフロー分岐を検証する
   - _Requirements: 2.1, 2.2, 2.3, 6.1, 6.2, 6.3_

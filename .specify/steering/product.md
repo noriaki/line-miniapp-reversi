@@ -7,7 +7,7 @@ LINE Mini App Reversi is a high-performance Reversi (Othello) game that runs nat
 - **AI-Powered Gameplay**: Leverages Egaroucid WebAssembly engine for intelligent AI opponents with configurable difficulty
 - **LINE Platform Integration**: Seamless integration with LINE ecosystem via LIFF SDK, supporting user profiles and LINE-specific UI patterns
 - **Touch-First Mobile Experience**: Optimized for smartphone interaction with intuitive tap-to-play mechanics and responsive visual feedback
-- **Instant Loading**: Static Site Generation (SSG) approach delivers sub-2-second initial load times
+- **Fast Loading**: Optimized for Vercel Edge deployment with efficient initial load times
 
 ## Target Use Cases
 

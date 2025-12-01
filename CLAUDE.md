@@ -44,6 +44,32 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 - Keep steering current and verify alignment with `/kiro:spec-status`
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.
 
+### Specification Update Rules
+
+Specification documents MUST be updated via Slash Commands (direct file editing prohibited):
+
+| Document          | Update Command            |
+| ----------------- | ------------------------- |
+| `requirements.md` | `/kiro:spec-requirements` |
+| `design.md`       | `/kiro:spec-design`       |
+| `tasks.md`        | `/kiro:spec-tasks`        |
+
+### Documentation Quality Rules
+
+When creating/updating/validating specifications (`/kiro:spec-*`, `/kiro:validate-*`):
+
+- **No Duplication**: Each definition appears in exactly one location; use cross-references
+- **No Contradiction**: Resolve conflicts immediately before proceeding
+- **YAGNI Principle**: Exclude future considerations, change history, speculative features
+
+### Implementation Quality Rules
+
+When implementing/validating code (`/kiro:spec-impl`, `/kiro:validate-impl`):
+
+- **No Spec References in Code**: Prohibit Task/Requirement IDs in comments, test names, JSDoc
+- **No Test Duplication**: Each scenario exists at one level only (unit/integration/E2E)
+- **BDD Test Format**: Use `describe('[Feature]')` and `it('should [behavior]')` naming
+
 ## Steering Configuration
 
 - Load entire `.specify/steering/` as project memory

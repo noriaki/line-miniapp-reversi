@@ -3,8 +3,6 @@
  *
  * Handles uploading images to cloud storage via presigned URLs.
  * Supports environment-based configuration for dev/prod switching.
- *
- * Requirements: 4.6, 8.2
  */
 
 import type { ShareError } from './types';
@@ -30,9 +28,10 @@ interface PresignedUrlResponse {
 
 /**
  * Get the API base URL from environment or default
+ * Default is empty string (relative path) to use same-domain API Routes
  */
 function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_SHARE_API_URL || 'http://localhost:3001';
+  return process.env.NEXT_PUBLIC_SHARE_API_URL || '';
 }
 
 /**

@@ -1,8 +1,5 @@
 /**
  * Image Uploader Tests
- *
- * TDD: RED phase - Tests written before implementation
- * Requirements: 4.6, 8.2
  */
 
 import { uploadImage, type UploadResult } from '../image-uploader';
@@ -154,7 +151,7 @@ describe('Image Uploader', () => {
         );
       });
 
-      it('should use default localhost URL when NEXT_PUBLIC_SHARE_API_URL is not set', async () => {
+      it('should use relative path when NEXT_PUBLIC_SHARE_API_URL is not set', async () => {
         delete process.env.NEXT_PUBLIC_SHARE_API_URL;
 
         const mockPresignedResponse = {
@@ -177,7 +174,7 @@ describe('Image Uploader', () => {
 
         expect(global.fetch).toHaveBeenNthCalledWith(
           1,
-          'http://localhost:3001/api/upload/presigned',
+          '/api/upload/presigned',
           expect.any(Object)
         );
       });

@@ -1,7 +1,5 @@
 /**
  * FlexMessageBuilder for LINE share target picker
- *
- * Requirements: 2.4, 2.5, 2.6, 2.7
  */
 
 import type { GameResult } from './types';

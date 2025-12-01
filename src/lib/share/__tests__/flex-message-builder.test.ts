@@ -1,7 +1,5 @@
 /**
  * Unit tests for FlexMessageBuilder
- *
- * Requirements: 2.4, 2.5, 2.6, 2.7
  */
 
 import { buildShareFlexMessage } from '../flex-message-builder';
@@ -11,7 +9,7 @@ describe('buildShareFlexMessage', () => {
   const mockImageUrl = 'https://r2.example.com/share-images/test.png';
   const mockAppUrl = 'https://liff.line.me/1234567890-abcdefgh';
 
-  describe('Requirements 2.4: Flex Message format', () => {
+  describe('Flex Message format', () => {
     it('should return a Flex Message with type "flex"', () => {
       const result: GameResult = {
         winner: 'black',
@@ -49,7 +47,7 @@ describe('buildShareFlexMessage', () => {
     });
   });
 
-  describe('Requirements 2.5: Hero section with share image', () => {
+  describe('Hero section', () => {
     it('should have a hero section with image type', () => {
       const result: GameResult = {
         winner: 'black',
@@ -112,7 +110,7 @@ describe('buildShareFlexMessage', () => {
     });
   });
 
-  describe('Requirements 2.6: Body section with score and invitation', () => {
+  describe('Body section', () => {
     it('should have a body section', () => {
       const result: GameResult = {
         winner: 'black',
@@ -227,7 +225,7 @@ describe('buildShareFlexMessage', () => {
     });
   });
 
-  describe('Requirements 2.7: Footer with URI action button', () => {
+  describe('Footer section', () => {
     it('should have a footer section', () => {
       const result: GameResult = {
         winner: 'black',

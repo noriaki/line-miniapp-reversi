@@ -1,8 +1,5 @@
 /**
  * GameResultPanel Component Tests
- *
- * TDD: RED phase - Tests written before implementation
- * Requirements: 1.1, 1.2, 4.2, 4.3, 4.4, 4.5, 6.1, 6.2, 6.3, 8.1
  */
 
 import React from 'react';

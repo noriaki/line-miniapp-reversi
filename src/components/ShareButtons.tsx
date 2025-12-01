@@ -3,8 +3,6 @@
  *
  * Renders LINE share and Web Share buttons for game result sharing.
  * Uses inline styles to ensure consistent rendering and testing.
- *
- * Requirements: 1.1, 1.3, 1.4, 1.5, 3.4
  */
 
 import React from 'react';

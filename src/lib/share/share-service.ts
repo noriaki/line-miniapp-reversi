@@ -3,8 +3,6 @@
  *
  * Provides share processing business logic for game results.
  * Coordinates image generation, upload, and sharing via LINE and Web Share API.
- *
- * Requirements: 2.1, 2.4, 3.1, 3.2, 3.3, 4.1, 4.6
  */
 
 import liff from '@line/liff';

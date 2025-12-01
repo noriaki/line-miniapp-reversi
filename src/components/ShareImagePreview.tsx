@@ -3,8 +3,6 @@
  *
  * Renders a hidden DOM structure for html2canvas to capture as a share image.
  * Uses inline styles for html2canvas compatibility.
- *
- * Requirements: 4.2, 4.3, 4.4, 4.5
  */
 
 import React from 'react';

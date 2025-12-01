@@ -1,7 +1,5 @@
 /**
  * Share text builder for game results
- *
- * Requirements: 5.1, 5.2, 5.3, 5.4
  */
 
 import type { GameResult } from './types';

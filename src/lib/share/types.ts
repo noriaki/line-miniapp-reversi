@@ -1,7 +1,5 @@
 /**
  * Type definitions for share functionality
- *
- * Requirements: 2.8, 4.1
  */
 
 import type { Cell, Player } from '@/lib/game/types';

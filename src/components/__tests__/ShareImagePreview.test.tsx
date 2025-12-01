@@ -1,8 +1,5 @@
 /**
  * ShareImagePreview Component Tests
- *
- * TDD: RED phase - Tests written before implementation
- * Requirements: 4.2, 4.3, 4.4, 4.5
  */
 
 import React from 'react';

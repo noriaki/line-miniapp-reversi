@@ -3,8 +3,6 @@
  *
  * Renders game result display with winner, scores, reset button, and share functionality.
  * Integrates ShareButtons and ShareImagePreview components.
- *
- * Requirements: 1.1, 1.2, 4.2, 4.3, 4.4, 4.5, 6.1, 6.2, 6.3, 8.1
  */
 
 'use client';

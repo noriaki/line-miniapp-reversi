@@ -3,8 +3,6 @@
  *
  * Tests for ShareImageGenerator with actual html2canvas library.
  *
- * Requirements: 4.1, 8.1
- *
  * NOTE: html2canvas has limited support in jsdom due to missing getComputedStyle
  * implementation. These tests verify error handling when html2canvas fails.
  * For actual visual testing of image generation, use E2E tests with real browsers.

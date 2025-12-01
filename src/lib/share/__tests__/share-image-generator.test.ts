@@ -1,10 +1,7 @@
 /**
  * ShareImageGenerator Tests
  *
- * TDD: RED phase - Tests written before implementation
- * Requirements: 4.1, 8.1
- *
- * Note: html2canvas is mocked since it will be installed in Task 9.
+ * Note: html2canvas is mocked for unit testing.
  * Tests focus on the generator logic rather than html2canvas internals.
  */
 

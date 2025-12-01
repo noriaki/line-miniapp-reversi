@@ -2,7 +2,6 @@
  * useShare Hook Tests
  *
  * Tests for share functionality state management and operations.
- * Requirements: 2.1, 2.2, 2.3, 2.8, 2.9, 2.10, 3.1, 3.4, 6.1, 6.2, 6.3
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
@@ -98,7 +97,7 @@ describe('useShare', () => {
     });
   });
 
-  describe('Task 6.1: State Management', () => {
+  describe('State Management', () => {
     it('should initialize with correct default state', () => {
       const { result } = renderHook(() => useShare());
 
@@ -182,7 +181,7 @@ describe('useShare', () => {
     });
   });
 
-  describe('Task 6.2: Share Operation Handlers', () => {
+  describe('Share Operation Handlers', () => {
     it('should call prepareShareImage and update state on success', async () => {
       mockedShareService.prepareShareImage.mockResolvedValue({
         success: true,
@@ -318,7 +317,7 @@ describe('useShare', () => {
     });
   });
 
-  describe('Task 6.3: Login Redirect Share Continuation', () => {
+  describe('Login Redirect Share Continuation', () => {
     it('should load pending share data on initialization', () => {
       const pendingData = createMockPendingShareData();
       mockedPendingShareStorage.load.mockReturnValue(pendingData);
@@ -419,7 +418,7 @@ describe('useShare', () => {
     });
   });
 
-  describe('Task 6.4: Share Result Notifications', () => {
+  describe('Share Result Notifications', () => {
     it('should show success toast on successful share', async () => {
       mockedShareService.prepareShareImage.mockResolvedValue({
         success: true,

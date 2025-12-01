@@ -1,7 +1,5 @@
 /**
  * Unit tests for buildShareText function
- *
- * Requirements: 5.1, 5.2, 5.3, 5.4
  */
 
 import { buildShareText } from '../share-text-builder';
@@ -10,7 +8,7 @@ import type { GameResult } from '../types';
 describe('buildShareText', () => {
   const mockAppUrl = 'https://liff.line.me/1234567890-abcdefgh';
 
-  describe('Requirements 5.1: includes game result (win/loss)', () => {
+  describe('game result text', () => {
     it('should include player win text when black wins', () => {
       const result: GameResult = {
         winner: 'black',
@@ -48,7 +46,7 @@ describe('buildShareText', () => {
     });
   });
 
-  describe('Requirements 5.2: includes score information', () => {
+  describe('score information', () => {
     it('should include black stone count', () => {
       const result: GameResult = {
         winner: 'black',
@@ -87,7 +85,7 @@ describe('buildShareText', () => {
     });
   });
 
-  describe('Requirements 5.3: includes invitation text', () => {
+  describe('invitation text', () => {
     it('should include invitation message', () => {
       const result: GameResult = {
         winner: 'black',
@@ -102,7 +100,7 @@ describe('buildShareText', () => {
     });
   });
 
-  describe('Requirements 5.4: includes app URL', () => {
+  describe('app URL', () => {
     it('should include the app URL', () => {
       const result: GameResult = {
         winner: 'black',

@@ -1,8 +1,5 @@
 /**
  * ShareButtons Component Tests
- *
- * TDD: RED phase - Tests written before implementation
- * Requirements: 1.1, 1.3, 1.4, 1.5, 3.4
  */
 
 import React from 'react';

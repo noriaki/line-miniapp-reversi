@@ -3,8 +3,6 @@
  *
  * Persists game end state across LIFF login redirects to enable
  * share flow continuation after authentication.
- *
- * Requirements: 2.8, 2.9, 2.10
  */
 
 import type { PendingShareData } from './types';

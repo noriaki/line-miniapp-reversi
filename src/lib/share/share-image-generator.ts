@@ -3,8 +3,6 @@
  *
  * Generates share images from DOM elements using html2canvas
  * and handles image upload to storage.
- *
- * Requirements: 4.1, 8.1
  */
 
 import type { ShareError, ImageGenerationOptions } from './types';

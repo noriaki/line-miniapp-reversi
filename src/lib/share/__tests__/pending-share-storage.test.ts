@@ -2,7 +2,6 @@
  * PendingShareStorage tests
  *
  * Tests for sessionStorage-based game state persistence across login redirects.
- * Requirements: 2.8, 2.9, 2.10
  */
 
 import { pendingShareStorage, STORAGE_KEY } from '../pending-share-storage';

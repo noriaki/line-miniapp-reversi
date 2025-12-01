@@ -3,8 +3,6 @@
  *
  * Manages share functionality state and operations for game result sharing.
  * Handles LINE share via LIFF SDK and Web Share API.
- *
- * Requirements: 2.1, 2.2, 2.3, 2.8, 2.9, 2.10, 3.1, 3.4, 6.1, 6.2, 6.3
  */
 
 'use client';

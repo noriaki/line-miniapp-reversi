@@ -160,6 +160,57 @@ describe('PendingShareStorage', () => {
       const result = pendingShareStorage.load();
       expect(result).toBeNull();
     });
+
+    it('should return null when stored value is JSON null', () => {
+      sessionStorage.setItem(STORAGE_KEY, 'null');
+      const result = pendingShareStorage.load();
+      expect(result).toBeNull();
+    });
+
+    it('should return null when blackCount is not a number', () => {
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          board: createSampleBoard(),
+          blackCount: 'not-a-number',
+          whiteCount: 28,
+          winner: 'black',
+          timestamp: Date.now(),
+        })
+      );
+      const result = pendingShareStorage.load();
+      expect(result).toBeNull();
+    });
+
+    it('should return null when winner is invalid', () => {
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          board: createSampleBoard(),
+          blackCount: 36,
+          whiteCount: 28,
+          winner: 'invalid-winner',
+          timestamp: Date.now(),
+        })
+      );
+      const result = pendingShareStorage.load();
+      expect(result).toBeNull();
+    });
+
+    it('should return null when timestamp is not a number', () => {
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          board: createSampleBoard(),
+          blackCount: 36,
+          whiteCount: 28,
+          winner: 'black',
+          timestamp: 'not-a-number',
+        })
+      );
+      const result = pendingShareStorage.load();
+      expect(result).toBeNull();
+    });
   });
 
   describe('clear', () => {

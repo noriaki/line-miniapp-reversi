@@ -210,6 +210,20 @@ describe('Image Uploader', () => {
         }
       });
 
+      it('should return error when presigned URL response is null', async () => {
+        global.fetch = jest.fn().mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(null),
+        } as Response);
+
+        const result = await uploadImage(mockBlob);
+
+        expect(result.success).toBe(false);
+        if (!result.success && result.error.type === 'upload_failed') {
+          expect(result.error.message).toBe('Invalid presigned URL response');
+        }
+      });
+
       it('should return error when upload to presigned URL fails', async () => {
         const mockPresignedResponse = {
           uploadUrl: 'https://r2.example.com/upload/test-id',
@@ -237,7 +251,7 @@ describe('Image Uploader', () => {
         }
       });
 
-      it('should return error when fetch throws network error', async () => {
+      it('should return error when fetch throws network error during presigned URL request', async () => {
         global.fetch = jest
           .fn()
           .mockRejectedValueOnce(new Error('Network error'));
@@ -247,6 +261,31 @@ describe('Image Uploader', () => {
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.type).toBe('upload_failed');
+        }
+      });
+
+      it('should return error when fetch throws network error during upload', async () => {
+        const mockPresignedResponse = {
+          uploadUrl: 'https://r2.example.com/upload/test-id',
+          publicUrl: 'https://r2.example.com/images/test-id.png',
+          expiresIn: 300,
+        };
+
+        global.fetch = jest
+          .fn()
+          // First call succeeds (presigned URL)
+          .mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve(mockPresignedResponse),
+          } as Response)
+          // Second call throws (upload)
+          .mockRejectedValueOnce(new Error('Upload network error'));
+
+        const result = await uploadImage(mockBlob);
+
+        expect(result.success).toBe(false);
+        if (!result.success && result.error.type === 'upload_failed') {
+          expect(result.error.message).toBe('Upload network error');
         }
       });
 

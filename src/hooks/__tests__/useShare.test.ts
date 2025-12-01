@@ -126,6 +126,29 @@ describe('useShare', () => {
       expect(result.current.canWebShare).toBe(false);
     });
 
+    it('should set canWebShare to false when navigator is undefined', () => {
+      // Save original navigator
+      const originalNavigator = global.navigator;
+
+      // Make navigator undefined
+      Object.defineProperty(global, 'navigator', {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
+
+      const { result } = renderHook(() => useShare());
+
+      expect(result.current.canWebShare).toBe(false);
+
+      // Restore navigator
+      Object.defineProperty(global, 'navigator', {
+        value: originalNavigator,
+        writable: true,
+        configurable: true,
+      });
+    });
+
     it('should provide hasPendingShare as false when no pending data', () => {
       mockedPendingShareStorage.load.mockReturnValue(null);
 
@@ -563,7 +586,7 @@ describe('useShare', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should not share when image is not ready', async () => {
+    it('should not share via Web Share when image is not ready', async () => {
       const { result } = renderHook(() => useShare());
 
       await act(async () => {
@@ -571,6 +594,123 @@ describe('useShare', () => {
       });
 
       expect(mockedShareService.shareViaWebShare).not.toHaveBeenCalled();
+    });
+
+    it('should not share via LINE when image is not ready', async () => {
+      mockIsLoggedIn = true;
+
+      const { result } = renderHook(() => useShare());
+
+      await act(async () => {
+        await result.current.handleLineShare();
+      });
+
+      expect(mockedShareService.shareViaLine).not.toHaveBeenCalled();
+    });
+
+    it('should not allow multiple concurrent LINE share operations', async () => {
+      mockIsLoggedIn = true;
+
+      mockedShareService.prepareShareImage.mockResolvedValue({
+        success: true,
+        data: {
+          imageUrl: 'https://example.com/image.png',
+          imageBlob: new Blob(['test'], { type: 'image/png' }),
+        },
+      });
+
+      // Create a promise that we control
+      let resolveShare: () => void;
+      const sharePromise = new Promise<void>((resolve) => {
+        resolveShare = resolve;
+      });
+
+      mockedShareService.shareViaLine.mockImplementation(async () => {
+        await sharePromise;
+        return { success: true, data: undefined };
+      });
+
+      const { result } = renderHook(() => useShare());
+
+      // Prepare image
+      const mockRef = { current: document.createElement('div') };
+      await act(async () => {
+        await result.current.prepareShareImage(
+          mockRef,
+          createTestBoard(),
+          36,
+          28,
+          'black'
+        );
+      });
+
+      // Start first share
+      act(() => {
+        result.current.handleLineShare();
+      });
+
+      // Try to start second share while first is in progress
+      await act(async () => {
+        await result.current.handleLineShare();
+      });
+
+      // Should only have called share once
+      expect(mockedShareService.shareViaLine).toHaveBeenCalledTimes(1);
+
+      // Resolve the first share
+      act(() => {
+        resolveShare!();
+      });
+
+      // Wait for the share to complete
+      await waitFor(() => {
+        expect(result.current.isSharing).toBe(false);
+      });
+    });
+
+    it('should clear pending share and not show toast on LINE share cancel', async () => {
+      mockIsLoggedIn = true;
+
+      const pendingData = createMockPendingShareData();
+      mockedPendingShareStorage.load.mockReturnValue(pendingData);
+      mockedPendingShareStorage.isExpired.mockReturnValue(false);
+
+      mockedShareService.prepareShareImage.mockResolvedValue({
+        success: true,
+        data: {
+          imageUrl: 'https://example.com/image.png',
+          imageBlob: new Blob(['test'], { type: 'image/png' }),
+        },
+      });
+
+      mockedShareService.shareViaLine.mockResolvedValue({
+        success: false,
+        error: { type: 'cancelled' },
+      });
+
+      const { result } = renderHook(() => useShare());
+
+      // Prepare image
+      const mockRef = { current: document.createElement('div') };
+      await act(async () => {
+        await result.current.prepareShareImage(
+          mockRef,
+          createTestBoard(),
+          36,
+          28,
+          'black'
+        );
+      });
+
+      mockAddMessage.mockClear();
+
+      await act(async () => {
+        await result.current.handleLineShare();
+      });
+
+      // Should clear pending share but not show toast
+      expect(mockedPendingShareStorage.clear).toHaveBeenCalled();
+      expect(mockAddMessage).not.toHaveBeenCalled();
     });
 
     it('should not allow multiple concurrent share operations', async () => {

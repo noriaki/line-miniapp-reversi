@@ -6,7 +6,7 @@
 
 **Users**: リバーシをプレイしたユーザーが、ゲーム結果を友人やグループに共有し、ゲームへの招待を行う。
 
-**Impact**: 既存のGameBoardコンポーネントのゲーム終了画面を拡張し、シェアボタンとシェア機能を追加する。新規インフラとしてCloudflare R2/Workersを導入。
+**Impact**: 既存のGameBoardコンポーネントのゲーム終了画面を拡張し、シェアボタンとシェア機能を追加する。画像ストレージとしてCloudflare R2を導入し、Presigned URL生成はNext.js API Routesで実装。
 
 ### Goals
 
@@ -18,11 +18,12 @@
 
 ### Non-Goals
 
-- シェアテキストのカスタマイズ機能（将来検討）
+- シェアテキストのカスタマイズ機能
 - シェア履歴の保存
 - シェア回数のトラッキング/分析
 - 対人戦時の対戦相手情報表示
 - サーバーサイドでの画像生成
+- ローカルダウンロードへのフォールバック
 
 ## Architecture
 
@@ -30,7 +31,7 @@
 
 現在のアーキテクチャは以下の特徴を持つ：
 
-- **静的エクスポート**: `output: 'export'` によりサーバーサイド処理なし
+- **サーバーモード**: Vercelにデプロイし、API Routesでサーバーサイド処理を実行
 - **LIFF統合**: LiffProvider → LiffContext → useLiff パターン
 - **メッセージ通知**: useMessageQueue + MessageBox による統一通知
 - **ゲーム状態**: useGameState でゲーム状態・終了判定を管理
@@ -62,11 +63,14 @@ graph TB
         PendingShareStorage[pending-share-storage]
     end
 
+    subgraph API Layer
+        PresignedAPI[/api/upload/presigned]
+    end
+
     subgraph External
         LiffSDK[LIFF SDK]
         WebShareAPI[Web Share API]
         CloudflareR2[Cloudflare R2]
-        CloudflareWorkers[Cloudflare Workers]
         SessionStorage[sessionStorage]
     end
 
@@ -83,8 +87,8 @@ graph TB
     ShareService --> FlexMessageBuilder
     ShareService --> LiffSDK
     ShareService --> WebShareAPI
-    ShareImageGenerator --> CloudflareWorkers
-    CloudflareWorkers --> CloudflareR2
+    ShareImageGenerator --> PresignedAPI
+    PresignedAPI --> CloudflareR2
     PendingShareStorage --> SessionStorage
 ```
 
@@ -114,17 +118,17 @@ GameResultPanel (NEW)
 
 ### Technology Stack
 
-| Layer            | Choice / Version      | Role in Feature                  | Notes                    |
-| ---------------- | --------------------- | -------------------------------- | ------------------------ |
-| Frontend         | React 19.2.0          | UIコンポーネント、フック         | 既存                     |
-| Image Generation | html2canvas ^1.4.1    | Canvas画像生成                   | 新規依存                 |
-| LINE Integration | @line/liff 2.x        | shareTargetPicker, Flex Message  | 既存                     |
-| Web Share        | Navigator.share() API | OS標準シェア                     | ブラウザAPI              |
-| State Persist    | sessionStorage        | ログインリダイレクト間の状態保持 | ブラウザAPI              |
-| Storage          | Cloudflare R2         | 画像ホスティング                 | 新規インフラ（許容済み） |
-| Storage API      | Cloudflare Workers    | Presigned URL生成                | 新規インフラ（許容済み） |
+| Layer            | Choice / Version      | Role in Feature                  | Notes                            |
+| ---------------- | --------------------- | -------------------------------- | -------------------------------- |
+| Frontend         | React 19.2.0          | UIコンポーネント、フック         | 既存                             |
+| Image Generation | html2canvas ^1.4.1    | Canvas画像生成                   | 新規依存                         |
+| LINE Integration | @line/liff 2.x        | shareTargetPicker, Flex Message  | 既存                             |
+| Web Share        | Navigator.share() API | OS標準シェア                     | ブラウザAPI                      |
+| State Persist    | sessionStorage        | ログインリダイレクト間の状態保持 | ブラウザAPI                      |
+| Storage          | Cloudflare R2         | 画像ホスティング                 | 新規インフラ（許容済み）         |
+| Storage API      | Next.js API Routes    | Presigned URL生成                | 内部API（/api/upload/presigned） |
 
-**インフラ方針**: 静的エクスポート（`output: 'export'`）の方針を維持しつつ、画像ストレージ用に新規Cloudflare R2/Workersインフラの構築を許容。フロントエンドとストレージAPIは独立してデプロイ可能。
+**インフラ方針**: Next.jsサーバーモードでVercelにデプロイ。Presigned URL生成は内部API Routes（`/api/upload/presigned`）で実装し、Cloudflare R2への接続はサーバーサイドで行う。同一ドメインでのAPI呼び出しによりCORS設定が簡素化される。
 
 ## System Flows
 
@@ -136,6 +140,7 @@ sequenceDiagram
     participant GameBoard
     participant useShare
     participant ShareService
+    participant APIRoutes as /api/upload/presigned
     participant R2
     participant LIFF
     participant WebShare
@@ -143,8 +148,10 @@ sequenceDiagram
     User->>GameBoard: ゲーム終了を確認
     GameBoard->>ShareService: 画像生成開始
     ShareService->>ShareService: html2canvas で Canvas 生成
-    ShareService->>R2: Presigned URL 取得
-    R2-->>ShareService: Upload URL
+    ShareService->>APIRoutes: Presigned URL 取得
+    APIRoutes->>R2: Presigned URL 生成
+    R2-->>APIRoutes: Upload URL
+    APIRoutes-->>ShareService: Upload URL + Public URL
     ShareService->>R2: 画像アップロード
     R2-->>ShareService: Public URL
 
@@ -276,7 +283,7 @@ sequenceDiagram
 | useShare            | Hooks        | シェア状態・操作管理           | 2.1-2.3, 2.8-2.10, 3.1-3.4, 6.1-6.3 | useLiff (P0), useMessageQueue (P0), ShareService (P0), PendingShareStorage (P0) | State     |
 | ShareService        | Lib          | シェア処理ビジネスロジック     | 2.4-2.7, 3.1-3.3, 4.1, 4.6, 5.1-5.4 | FlexMessageBuilder (P1), ShareImageGenerator (P1)                               | Service   |
 | FlexMessageBuilder  | Lib          | Flex Message構築               | 2.4-2.7                             | -                                                                               | Service   |
-| ShareImageGenerator | Lib          | 画像生成・アップロード         | 4.1, 4.6, 8.1-8.2                   | html2canvas (P0, External), Cloudflare Workers API (P0, External)               | Service   |
+| ShareImageGenerator | Lib          | 画像生成・アップロード         | 4.1, 4.6, 8.1-8.2                   | html2canvas (P0, External), /api/upload/presigned (P0, Internal)                | Service   |
 | PendingShareStorage | Lib          | ログインリダイレクト間状態保持 | 2.8, 2.9, 2.10                      | sessionStorage (External)                                                       | Service   |
 
 ### UI Layer
@@ -593,7 +600,6 @@ interface ShareService {
 
 - `shareViaLine` は `liff.isApiAvailable("shareTargetPicker")` で事前チェック
 - `shareViaWebShare` は `navigator.canShare({ files })` で事前チェック
-- アップロードエラー時はローカルダウンロードへのフォールバックを検討
 
 ---
 
@@ -666,7 +672,8 @@ interface FlexMessageBuilder {
 
 - Inbound: ShareService — 画像生成の実行 (P0)
 - External: html2canvas — Canvas生成 (P0)
-- External: Cloudflare R2 API — 画像アップロード (P0)
+- Internal: /api/upload/presigned — Presigned URL取得 (P0)
+- External: Cloudflare R2 — 画像アップロード（Presigned URL経由） (P0)
 
 **Contracts**: Service [x]
 
@@ -707,12 +714,13 @@ interface ImageGenerationOptions {
 **Implementation Notes**
 
 - `html2canvas(element, { scale: 2 })` で高解像度生成
-- アップロードは Presigned URL を使用（Cloudflare Workers で生成）
+- アップロードは Presigned URL を使用（内部API Route `/api/upload/presigned` で生成）
 - 画像サイズが `maxSizeBytes` を超過した場合は早期にエラーを返し、アップロードを試行しない
+- 同一ドメインへのAPI呼び出しのため、CORS設定は不要
 
 ##### Presigned URL API Specification
 
-Cloudflare Workers APIの最小仕様:
+Next.js API Routes（内部API）の仕様:
 
 | Method | Endpoint              | Request                     | Response                              | Errors        |
 | ------ | --------------------- | --------------------------- | ------------------------------------- | ------------- |
@@ -748,48 +756,14 @@ interface PresignedUrlResponse {
 - アップロードURL有効期限: 5分（300秒）
 - 公開URL有効期間: 24時間（R2オブジェクトライフサイクル）
 - Content-Type: `image/png` のみ許可
+- 同一ドメイン: CORS設定不要（同一オリジンからのリクエスト）
 
-##### ローカル開発用モックAPI仕様
+**API Route Implementation Notes**:
 
-Cloudflare Workers/R2の初回セットアップが必要なため、フロントエンド開発を並行して進めるためのモックAPIを提供する。
-
-**モックサーバー仕様**:
-
-| Method | Endpoint              | Request                     | Response                              | Notes                    |
-| ------ | --------------------- | --------------------------- | ------------------------------------- | ------------------------ |
-| POST   | /api/upload/presigned | `{ contentType, fileSize }` | `{ uploadUrl, publicUrl, expiresIn }` | モックレスポンスを返却   |
-| PUT    | /mock-upload/:id      | Binary (image data)         | 204 No Content                        | 画像データを受け取るのみ |
-
-**モックレスポンス例**:
-
-```typescript
-// POST /api/upload/presigned のレスポンス
-{
-  uploadUrl: 'http://localhost:3001/mock-upload/test-image-id',
-  publicUrl: 'http://localhost:3001/mock-images/test-image-id.png',
-  expiresIn: 300
-}
-```
-
-**環境変数による切り替え**:
-
-```typescript
-// 環境変数
-NEXT_PUBLIC_SHARE_API_URL=http://localhost:3001  // 開発時（モック）
-NEXT_PUBLIC_SHARE_API_URL=https://share-api.example.com  // 本番時（Cloudflare Workers）
-
-// 使用例
-const apiUrl = process.env.NEXT_PUBLIC_SHARE_API_URL || 'http://localhost:3001';
-const response = await fetch(`${apiUrl}/api/upload/presigned`, { ... });
-```
-
-**モックサーバー実装方針**:
-
-- `packages/mock-share-api/` に独立したパッケージとして配置
-- Express.js または Hono で軽量に実装
-- 開発時は `pnpm dev:mock` で並行起動
-- 実際のファイル保存は不要（レスポンスを返すのみ）
-- 画像プレビュー用に静的ファイルサーバー機能を含む
+- ファイルパス: `/app/api/upload/presigned/route.ts`
+- Cloudflare R2 SDKを使用してPresigned URLを生成
+- 環境変数: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`
+- サーバーサイドでのみR2認証情報にアクセス（クライアントに公開されない）
 
 ---
 
@@ -816,20 +790,7 @@ const response = await fetch(`${apiUrl}/api/upload/presigned`, { ... });
 ##### Service Interface
 
 ```typescript
-import type { Cell } from '@/lib/game/types';
-
-interface PendingShareData {
-  /** 最終盤面 */
-  readonly board: Cell[][];
-  /** 黒石数 */
-  readonly blackCount: number;
-  /** 白石数 */
-  readonly whiteCount: number;
-  /** 勝者 */
-  readonly winner: 'black' | 'white' | 'draw';
-  /** 保存時刻（ミリ秒） */
-  readonly timestamp: number;
-}
+// PendingShareData型定義は Data Models セクションを参照
 
 interface PendingShareStorage {
   /** Storage Key */
@@ -1127,7 +1088,6 @@ interface PendingShareData {
 ### Monitoring
 
 - `console.error` によるエラーログ出力
-- 将来的には分析用イベント送信を検討
 
 ## Testing Strategy
 
@@ -1233,9 +1193,10 @@ test('ゲーム終了時にシェアボタンが表示される', async ({ page 
 
 - **画像URL有効期限**: Presigned URLは5分の有効期限を設定し、長期間の不正利用を防止
 - **公開URL有効期間**: R2オブジェクトは24時間のライフサイクルで自動削除
-- **CORS設定**: R2バケットは特定オリジン（アプリドメイン）からのアップロードのみ許可
+- **サーバーサイド認証**: R2認証情報はAPI Routesのサーバーサイドでのみ使用され、クライアントに公開されない
+- **同一オリジン**: API Routesは同一ドメインで提供されるため、CORS設定は不要
 - **ユーザー入力なし**: シェアコンテンツはゲーム結果から自動生成されるため、XSSリスクは低い
-- **sessionStorage使用**: ゲーム状態の一時保存はsessionStorageを使用し、タブを閉じると自動クリア。localStorageと異なり永続化しないため、プライバシーリスクを軽減
+- **sessionStorage使用**: ゲーム状態の一時保存はsessionStorageを使用（選択理由の詳細は「System Flows > State Persistence選択理由」を参照）
 - **状態有効期限**: PendingShareDataは1時間で無効化し、古い状態の再利用を防止
 
 ## Performance & Scalability

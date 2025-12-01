@@ -3,8 +3,6 @@
  *
  * Test game state constants for various game end scenarios.
  * These fixtures are used with game state injection for E2E testing.
- *
- * Requirements: 8.1
  */
 
 import type {

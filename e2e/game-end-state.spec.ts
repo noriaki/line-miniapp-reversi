@@ -3,8 +3,6 @@
  *
  * Tests for game end screen, share buttons, and related functionality
  * using state injection to bypass gameplay.
- *
- * Requirements: 1.1, 1.5, 2.1, 2.2, 2.3, 7.1, 7.2, 7.3, 7.4
  */
 
 import { test, expect } from '@playwright/test';
@@ -64,7 +62,7 @@ test.describe('Game End State Display', () => {
       await expect(page.getByText('あなたの勝ち')).toBeVisible();
     });
 
-    test('should display share buttons (Requirement 1.1)', async ({ page }) => {
+    test('should display share buttons when game ends', async ({ page }) => {
       await expect(page.locator(SELECTORS.gameResultPanel)).toBeVisible();
 
       // Check share buttons container exists
@@ -187,7 +185,7 @@ test.describe('Web Share API Conditional Display', () => {
     ).toBeVisible();
   });
 
-  test('should hide "Other Share" button when Web Share API is unavailable (Requirement 1.5)', async ({
+  test('should hide "Other Share" button when Web Share API is unavailable', async ({
     page,
   }) => {
     // Mock Web Share API as unavailable

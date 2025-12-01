@@ -3,8 +3,6 @@
  *
  * Provides utilities for injecting game state into E2E tests via sessionStorage.
  * Enables testing of game end scenarios without playing through entire games.
- *
- * Requirements: 8.1
  */
 
 import type { Page } from '@playwright/test';

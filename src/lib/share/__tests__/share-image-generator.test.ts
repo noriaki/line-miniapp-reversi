@@ -10,15 +10,11 @@ import type { ImageGenerationOptions } from '../types';
 // Create mock for html2canvas before importing the module
 const mockHtml2canvas = jest.fn();
 
-// Use virtual mock for html2canvas since it's not installed yet
-jest.mock(
-  'html2canvas',
-  () => ({
-    __esModule: true,
-    default: (...args: unknown[]) => mockHtml2canvas(...args),
-  }),
-  { virtual: true }
-);
+// Mock html2canvas module for dynamic import
+jest.mock('html2canvas', () => ({
+  __esModule: true,
+  default: (...args: unknown[]) => mockHtml2canvas(...args),
+}));
 
 // Import after mock setup
 import {

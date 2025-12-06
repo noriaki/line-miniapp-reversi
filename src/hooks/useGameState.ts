@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Board, Player, Position, GameStatus } from '@/lib/game/types';
 import { createInitialBoard, countStones } from '@/lib/game/board';
 import { calculateValidMoves } from '@/lib/game/game-logic';
@@ -34,50 +34,22 @@ interface E2EGameStateSnapshot {
 }
 
 /**
- * Initial game state interface for lazy initialization
- */
-interface InitialGameState {
-  board: Board;
-  currentPlayer: Player;
-  gameStatus: GameStatus;
-}
-
-/**
- * Cached E2E injected state (loaded once)
- */
-let cachedE2EState: E2EGameStateSnapshot | null | undefined = undefined;
-let e2eStateApplied = false;
-
-/**
  * Load E2E injected game state from sessionStorage
  * Returns null if no valid state is found or if in production
+ * This function is designed to be called once per component mount
  */
 function loadE2EInjectedState(): E2EGameStateSnapshot | null {
-  // Only load once
-  if (e2eStateApplied) {
-    return null;
-  }
-
-  // Return cached result if already loaded
-  if (cachedE2EState !== undefined) {
-    e2eStateApplied = true;
-    return cachedE2EState;
-  }
-
   if (!isE2EStateInjectionEnabled()) {
-    cachedE2EState = null;
     return null;
   }
 
   if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
-    cachedE2EState = null;
     return null;
   }
 
   try {
     const stored = sessionStorage.getItem(E2E_GAME_STATE_KEY);
     if (!stored) {
-      cachedE2EState = null;
       return null;
     }
 
@@ -90,7 +62,6 @@ function loadE2EInjectedState(): E2EGameStateSnapshot | null {
       typeof parsed.blackCount !== 'number' ||
       typeof parsed.whiteCount !== 'number'
     ) {
-      cachedE2EState = null;
       return null;
     }
 
@@ -101,37 +72,10 @@ function loadE2EInjectedState(): E2EGameStateSnapshot | null {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).__E2E_STATE_INJECTION_ENABLED__ = true;
 
-    // Cache the loaded state
-    cachedE2EState = parsed;
-    e2eStateApplied = true;
     return parsed;
   } catch {
-    cachedE2EState = null;
     return null;
   }
-}
-
-/**
- * Get initial game state, checking for E2E injection
- * This is called once during lazy initialization of useState
- */
-function getInitialGameState(): InitialGameState {
-  if (typeof window !== 'undefined') {
-    const injectedState = loadE2EInjectedState();
-    if (injectedState) {
-      return {
-        board: injectedState.board,
-        currentPlayer: injectedState.currentPlayer,
-        gameStatus: injectedState.gameStatus,
-      };
-    }
-  }
-
-  return {
-    board: createInitialBoard(),
-    currentPlayer: 'black',
-    gameStatus: { type: 'playing' },
-  };
 }
 
 export interface GameState {
@@ -151,19 +95,36 @@ export interface GameState {
 }
 
 export function useGameState() {
-  // Use lazy initialization to apply E2E state once
-  const [initialState] = useState<InitialGameState>(getInitialGameState);
-  const [board, setBoard] = useState<Board>(initialState.board);
-  const [currentPlayer, setCurrentPlayer] = useState<Player>(
-    initialState.currentPlayer
-  );
-  const [gameStatus, setGameStatus] = useState<GameStatus>(
-    initialState.gameStatus
-  );
+  const [board, setBoard] = useState<Board>(createInitialBoard);
+  const [currentPlayer, setCurrentPlayer] = useState<Player>('black');
+  const [gameStatus, setGameStatus] = useState<GameStatus>({ type: 'playing' });
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [consecutivePassCount, setConsecutivePassCount] = useState(0);
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [lastMove, setLastMove] = useState<Position | null>(null);
+
+  // Track if E2E state has been applied for this component instance
+  const e2eStateAppliedRef = useRef(false);
+
+  // Load E2E injected state after mount (client-side only)
+  // This is intentionally setting state from an external source (sessionStorage)
+  // after hydration, which is a valid use case for E2E testing.
+  // The cascading render is acceptable here as it only happens once on mount.
+  useEffect(() => {
+    if (e2eStateAppliedRef.current) {
+      return;
+    }
+
+    const injectedState = loadE2EInjectedState();
+    if (injectedState) {
+      e2eStateAppliedRef.current = true;
+      // E2E testing: intentionally sync external state (sessionStorage) after hydration
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBoard(injectedState.board);
+      setCurrentPlayer(injectedState.currentPlayer);
+      setGameStatus(injectedState.gameStatus);
+    }
+  }, []);
 
   const validMoves = calculateValidMoves(board, currentPlayer);
   const { black: blackCount, white: whiteCount } = countStones(board);

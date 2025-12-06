@@ -146,8 +146,10 @@ test.describe('Game End State Display', () => {
     test('should display draw message', async ({ page }) => {
       await expect(page.locator(SELECTORS.gameResultPanel)).toBeVisible();
 
-      // Check for draw text
-      await expect(page.getByText('引き分け')).toBeVisible();
+      // Check for draw text in the result panel (not the share image section)
+      await expect(
+        page.locator(SELECTORS.gameResultPanel).getByRole('paragraph')
+      ).toContainText('引き分け');
     });
 
     test('should display share buttons', async ({ page }) => {

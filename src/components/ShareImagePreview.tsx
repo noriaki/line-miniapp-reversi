@@ -52,13 +52,14 @@ export default function ShareImagePreview({
   containerRef,
 }: ShareImagePreviewProps): React.JSX.Element {
   // Container styles - OGP ratio 1200x630px
+  // Note: Using off-screen positioning instead of visibility:hidden
+  // because html2canvas doesn't render hidden elements
   const containerStyle: React.CSSProperties = {
     width: '1200px',
     height: '630px',
     backgroundColor: '#1a2f14',
     display: 'flex',
     flexDirection: 'row',
-    visibility: 'hidden',
     position: 'absolute',
     left: '-9999px',
     top: '-9999px',

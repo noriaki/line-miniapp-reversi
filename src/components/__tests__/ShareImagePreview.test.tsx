@@ -60,7 +60,7 @@ describe('ShareImagePreview', () => {
       });
     });
 
-    it('should be hidden with visibility: hidden', () => {
+    it('should be positioned off-screen for html2canvas capture', () => {
       const board = createTestBoard(36, 28);
 
       render(
@@ -74,7 +74,13 @@ describe('ShareImagePreview', () => {
       );
 
       const container = screen.getByTestId('share-image-preview');
-      expect(container).toHaveStyle({ visibility: 'hidden' });
+      // Using off-screen positioning instead of visibility:hidden
+      // because html2canvas doesn't render hidden elements
+      expect(container).toHaveStyle({
+        position: 'absolute',
+        left: '-9999px',
+        top: '-9999px',
+      });
     });
 
     it('should have dark green background color (#1a2f14)', () => {

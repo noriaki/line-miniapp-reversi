@@ -39,9 +39,9 @@
 
 ### Testing
 
-- **Unit Tests**: Jest + React Testing Library (90%+ coverage target)
+- **Unit Tests**: Jest 30.x + React Testing Library (90%+ coverage target)
 - **Integration Tests**: WASM bridge, AI engine, LIFF integration
-- **E2E Tests**: Playwright (mobile-only: Pixel 5 for Chrome, iPhone 12 for Safari)
+- **E2E Tests**: Playwright 1.56.x (mobile-only: Pixel 5 for Chrome, iPhone 12 for Safari)
 - **LIFF Mocking**: `@line/liff-mock` for LINE-specific scenarios
 
 **E2E Strategy**: Mobile-first testing aligned with LINE Mini App target platform. Desktop browsers excluded intentionally. Parallel execution in CI with artifact archiving.

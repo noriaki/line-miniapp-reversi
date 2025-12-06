@@ -1,0 +1,103 @@
+# Requirements Document
+
+## Introduction
+
+本ドキュメントは、リバーシゲーム終了時にプレイ結果をLINEやその他のプラットフォームにシェアする機能「ゲーム結果シェア機能（OG画像生成方式）」の要件を定義する。ゲーム終了時に自動的に結果ページへ遷移し、盤面状態をURLエンコードしたシェア専用URLを生成する。サーバーサイドでOG画像をオンデマンド生成することで、外部ストレージ不要でリッチなシェア体験を提供する。
+
+## Requirements
+
+### Requirement 1: ゲーム終了時の自動遷移
+
+**Objective:** As a プレイヤー, I want ゲーム終了時に自動的に結果ページへ遷移すること, so that ゲームページはプレイに集中でき、結果確認とシェアは専用ページで行える
+
+#### Acceptance Criteria (white-space-sensitive, 4-space indent)
+
+1. When ゲームが終了状態（勝利/敗北/引き分け）になった, the ゲームページ shall 自動的に結果ページ `/r/[encodedState]` へ遷移する
+2. When 結果ページへ遷移する, the システム shall 現在の盤面状態をエンコードしてURLに含める
+3. The 遷移 shall ゲーム終了から500ミリ秒以内に開始される
+4. The ゲームページ shall ゲームプレイのみに集中し、結果表示やシェア機能を含まない
+
+### Requirement 2: 盤面状態のエンコーディング
+
+**Objective:** As a システム, I want 盤面状態を効率的にURLエンコードすること, so that シェアURLが短く管理しやすい形式になる
+
+#### Acceptance Criteria (Req2)
+
+1. When 結果ページへの遷移が開始される, the エンコーダー shall 盤面状態をビットボード方式（16バイト）でエンコードする
+2. When ビットボードがエンコードされる, the エンコーダー shall Base64URL形式の22文字に変換する
+3. The エンコード結果 shall URL-safeな文字のみ（A-Z, a-z, 0-9, -, \_）で構成される
+4. When エンコードされたURLがデコードされる, the デコーダー shall 元の盤面状態を完全に復元する
+
+### Requirement 3: 結果ページの表示
+
+**Objective:** As a プレイヤーまたはシェア受信者, I want 結果ページで盤面状態とスコアを確認できること, so that 対戦結果を理解しシェアやゲーム開始の行動を取れる
+
+#### Acceptance Criteria (Req3)
+
+1. When ユーザーが `/r/[encodedState]` にアクセスする, the 結果ページ shall エンコードされた盤面状態をデコードして表示する
+2. The 結果ページ shall 最終盤面、スコア（黒/白の石数）、勝敗結果を表示する
+3. The 結果ページ shall 「LINEでシェア」ボタン（LINE緑色）と「その他でシェア」ボタンを表示する
+4. If Web Share API が利用不可能な環境, then the 結果ページ shall 「その他でシェア」ボタンを非表示にする
+5. The 結果ページ shall 「もう一度遊ぶ」ボタン（ゲーム開始へのCTA）を表示する
+6. When ユーザーが「もう一度遊ぶ」ボタンをタップする, the 結果ページ shall ゲームページに遷移する
+7. If 不正なエンコード文字列でアクセスされた, then the 結果ページ shall エラーメッセージと共にゲームページへの導線を表示する
+
+### Requirement 4: LINEシェアフロー
+
+**Objective:** As a LINEユーザー, I want LINEの友だちやグループに結果をシェアすること, so that LINE上で直接シェアを完了できる
+
+#### Acceptance Criteria (Req4)
+
+1. When ユーザーが「LINEでシェア」ボタンをタップする, the Share Service shall `liff.shareTargetPicker()` を呼び出す
+2. When `liff.shareTargetPicker()` が呼び出される, the Share Service shall Flex Message形式でシェアコンテンツを送信する
+3. The Flex Message shall 結果ページURL、結果テキスト（「黒の勝ち」「白の勝ち」「引き分け」）、スコア、プレイを促すCTAを含む
+4. When シェアが正常に完了した, the Share Service shall 成功トーストを表示する
+5. If ユーザーがシェアをキャンセルした, then the Share Service shall 元の結果ページに戻る（エラー表示なし）
+6. If `liff.shareTargetPicker()` がエラーを返した, then the Share Service shall エラートーストを表示する
+
+### Requirement 5: Web Shareフロー
+
+**Objective:** As a プレイヤー, I want LINE以外のアプリにもシェアできること, so that Twitter、Facebook等のプラットフォームにも共有できる
+
+#### Acceptance Criteria (Req5)
+
+1. When ユーザーが「その他でシェア」ボタンをタップする, the Share Service shall `navigator.share()` を呼び出す
+2. When `navigator.share()` が呼び出される, the Share Service shall URLとテキストのみを渡す（画像Blobは使用しない）
+3. The シェアテキスト shall ゲーム結果とスコアを含む
+4. When シェアが正常に完了した, the Share Service shall 成功トーストを表示する
+5. If ユーザーがシェアをキャンセルした, then the Share Service shall 元の結果ページに戻る（エラー表示なし）
+6. If `navigator.share()` がエラーを返した, then the Share Service shall エラートーストを表示する
+
+### Requirement 6: OGP画像のサーバーサイド生成
+
+**Objective:** As a システム, I want OG画像をサーバーサイドでオンデマンド生成すること, so that 外部ストレージ不要でリッチなプレビューを提供できる
+
+#### Acceptance Criteria (Req6)
+
+1. When クローラーまたはクライアントが `/r/[encodedState]` のOG画像にアクセスする, the Image Generator shall Next.js `ImageResponse` を使用して画像を生成する
+2. The OG画像 shall 1200x630ピクセル（OGP標準）のサイズで生成される
+3. The OG画像 shall 最終盤面のビジュアル、スコア、勝敗結果、アプリブランドを含む
+4. The OG画像生成 shall 3秒以内に完了する
+5. The 結果ページ shall 適切なOGPメタタグ（og:image, og:title, og:description）を含む
+
+### Requirement 7: クロスプラットフォーム互換性
+
+**Objective:** As a プレイヤー, I want 様々な環境でシェア機能を利用できること, so that デバイスやブラウザに関係なく機能を使える
+
+#### Acceptance Criteria (Req7)
+
+1. The シェア機能 shall LINEアプリ内ブラウザ（iOS/Android）で正常に動作する
+2. The 結果ページ shall 外部ブラウザ（Safari、Chrome）で正常に表示される
+3. The 結果ページ shall iOS/Android両方で正常に動作する
+4. While LINEアプリ内で結果ページが表示される, the 結果ページ shall LINEの戻るボタンに対応する
+
+## Non-Goals (Scope Exclusions)
+
+以下は本機能のスコープ外とする:
+
+- シェアテキストのユーザーカスタマイズ機能
+- シェア履歴の保存・表示機能
+- シェア回数のトラッキング・分析機能
+- 対人戦時の対戦相手情報表示
+- ローカルへの画像ダウンロード機能
+- ログインリダイレクト後のシェア自動継続（PendingShareStorage）

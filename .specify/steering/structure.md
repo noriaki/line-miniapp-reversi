@@ -139,9 +139,29 @@ test.describe('Stone Placement and Flipping', () => {
 
 ### Next.js App Router (`/app/`)
 
-**Purpose**: Server Components, layouts, page routes
-**Pattern**: Minimal logic - layout wraps client components
+**Purpose**: Server Components, layouts, page routes, API routes
+**Pattern**: Minimal logic - layout wraps client components, API routes handle server-side operations
 **Example**: `layout.tsx` (wraps app with `<LiffProvider>`), `page.tsx` (renders `<GameBoard>`)
+
+### API Routes (`/app/api/`)
+
+**Purpose**: Server-side operations (presigned URLs, external service integration)
+**Pattern**: Route handlers using Next.js App Router conventions, RESTful endpoints
+**Example**:
+
+```typescript
+// /app/api/upload/presigned/route.ts - Presigned URL generation for R2
+export async function POST(request: Request) {
+  // Validate request, generate presigned URL, return response
+}
+```
+
+**API Route Conventions**:
+
+- Use `route.ts` files with HTTP method exports (GET, POST, etc.)
+- Keep business logic minimal - delegate to `/lib` functions
+- Handle authentication/authorization at route level
+- Return JSON responses with appropriate status codes
 
 ## Naming Conventions
 
@@ -192,6 +212,6 @@ import type { Board, Position } from './types';
 
 ---
 
-_Updated: 2025-11-29 (Added /e2e/ E2E testing domain with mobile-only patterns)_
+_Updated: 2025-12-01 (Added /app/api/ API Routes domain for server-side operations)_
 
 _Document patterns, not file trees. New files following patterns shouldn't require updates_

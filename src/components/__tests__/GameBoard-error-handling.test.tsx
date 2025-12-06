@@ -33,6 +33,20 @@ jest.mock('@/hooks/useLiff', () => ({
   }),
 }));
 
+// Mock useShare hook
+jest.mock('@/hooks/useShare', () => ({
+  useShare: () => ({
+    isShareReady: true,
+    isSharing: false,
+    canWebShare: true,
+    shareImageUrl: 'https://example.com/share-image.png',
+    hasPendingShare: false,
+    handleLineShare: jest.fn(),
+    handleWebShare: jest.fn(),
+    prepareShareImage: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 describe('GameBoard Error Handling', () => {
   // Spy on console methods
   let consoleWarnSpy: jest.SpyInstance;
@@ -110,8 +124,8 @@ describe('GameBoard Error Handling', () => {
       // Second pass - simulate game ending (both players passed)
       // This should trigger game end and change gameStatus to 'finished'
       await waitFor(() => {
-        const gameResult = screen.queryByTestId('game-result');
-        if (gameResult) {
+        const gameResultPanel = screen.queryByTestId('game-result-panel');
+        if (gameResultPanel) {
           // Game is now finished
           // Pass button should not be visible anymore
           expect(
@@ -175,8 +189,8 @@ describe('GameBoard Error Handling', () => {
       // This triggers consecutivePassCount = 2 and game end
       await waitFor(
         () => {
-          const gameResult = screen.queryByTestId('game-result');
-          expect(gameResult).toBeInTheDocument();
+          const gameResultPanel = screen.queryByTestId('game-result-panel');
+          expect(gameResultPanel).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -214,7 +228,7 @@ describe('GameBoard Error Handling', () => {
       // Game should end
       await waitFor(
         () => {
-          expect(screen.queryByTestId('game-result')).toBeInTheDocument();
+          expect(screen.queryByTestId('game-result-panel')).toBeInTheDocument();
         },
         { timeout: 3000 }
       );

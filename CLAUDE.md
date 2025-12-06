@@ -94,7 +94,7 @@ When implementing/validating code (`/kiro:spec-impl`, `/kiro:validate-impl`):
 | Integration Test | `pnpm test:integration --silent` | After WASM/external integration changes |
 | All Tests        | `pnpm test:all --silent`         | Before push (auto via hook)             |
 | Coverage         | `pnpm test:coverage`             | To verify test coverage                 |
-| E2E Test         | `pnpm test:e2e`                  | After UI/UX changes (AI judgment)       |
+| E2E Test         | `pnpm test:e2e --reporter line`  | After UI/UX changes (AI judgment)       |
 | Build            | `pnpm build`                     | To verify production build              |
 
 ### Completion Checkpoint

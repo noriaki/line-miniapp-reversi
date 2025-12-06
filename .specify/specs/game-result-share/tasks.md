@@ -200,7 +200,7 @@ Use whichever pattern fits the work breakdown:
   - シェアボタンのクリック動作を検証する
   - _Requirements: 1.1, 1.5, 2.1, 2.2, 2.3, 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 11. アーキテクチャ移行（Static Export → Server Mode）
+- [x] 11. アーキテクチャ移行（Static Export → Server Mode）
 - [x] 11.1 (P) Next.js設定からStatic Export設定を削除する
   - next.config.tsから`output: 'export'`を削除する
   - `images.unoptimized: true`も不要であれば削除する

@@ -31,9 +31,14 @@
 
 現在のシステムは以下の構成（`tech.md` 参照）:
 
-- `/app/` ディレクトリに App Router を配置
+- `/src/app/` ディレクトリに App Router を配置
 - Hybrid Static/ISR アーキテクチャ（静的ページ + 動的 ISR ページ）
 - ゲームページ（`/`）に GameBoard コンポーネントを配置し、ゲーム終了後はその場で結果表示
+
+**現在の設定からの移行が必要な項目**:
+
+- `next.config.ts`: 現在 `output: 'export'`（Static Export）が設定されているが、ISR と `ImageResponse` による動的 OG 画像生成には削除が必要
+- `tsconfig.json`: 現在 `target: "ES2017"` だが、BigInt サポートには `ES2020` 以上が必要
 
 本機能では以下の追加が必要:
 
@@ -299,7 +304,7 @@ sequenceDiagram
 ##### Service Interface
 
 ```typescript
-// /src/lib/share/board-encoder.ts
+// 場所: /src/lib/share/board-encoder.ts
 
 import type { Board, Player } from '@/lib/game/types';
 
@@ -366,7 +371,7 @@ function determineWinner(
 ##### Service Interface
 
 ```typescript
-// /src/lib/share/flex-message-builder.ts
+// 場所: /src/lib/share/flex-message-builder.ts
 
 import type { FlexMessage } from '@liff/send-message';
 
@@ -418,7 +423,7 @@ function buildFlexMessage(result: ShareResult, baseUrl: string): FlexMessage;
 ##### Service Interface
 
 ```typescript
-// /src/lib/share/share-service.ts
+// 場所: /src/lib/share/share-service.ts
 
 import type { ShareResult } from './flex-message-builder';
 
@@ -481,7 +486,7 @@ function shareToWeb(
 ##### State Management
 
 ```typescript
-// /src/hooks/useShare.ts
+// 場所: /src/hooks/useShare.ts
 
 import type { ShareResult } from '@/lib/share/flex-message-builder';
 
@@ -542,7 +547,7 @@ function useShare(): UseShareReturn;
 **Implementation Notes**
 
 ```typescript
-// /app/r/[side]/[encodedState]/page.tsx
+// 場所: /src/app/r/[side]/[encodedState]/page.tsx
 
 import { Metadata } from 'next';
 
@@ -602,7 +607,7 @@ export default async function ResultPage({
 **Implementation Notes**
 
 ```typescript
-// /app/r/[side]/[encodedState]/opengraph-image.tsx
+// 場所: /src/app/r/[side]/[encodedState]/opengraph-image.tsx
 
 import { ImageResponse } from 'next/og';
 
@@ -996,12 +1001,22 @@ interface EncodedBoardState {
 
 ## Migration Strategy
 
-### Phase 1: Core Components
+### Phase 1: 設定変更 + Core Components
 
-1. `tsconfig.json` の `target` を `ES2020` に更新（BigInt サポート）
-2. `BoardEncoder` 実装 + テスト
-3. 結果ページ（`/app/r/[side]/[encodedState]/page.tsx`）実装
-4. `opengraph-image.tsx` 実装
+**設定変更（ISR サポートと BigInt 互換性のため必須）**:
+
+1. `next.config.ts` から `output: 'export'` 設定を削除
+   - **理由**: Static Export モードでは ISR と `ImageResponse` による動的 OG 画像生成が使用不可
+   - **影響**: ビルド出力が `/out` ディレクトリから `.next` に変更、Vercel での ISR サポートが有効化
+2. `tsconfig.json` の `target` を `ES2017` から `ES2020` に変更
+   - **理由**: BigInt 演算（盤面のビットボードエンコード）に ES2020 以上が必要
+   - **影響**: 生成される JavaScript が ES2020 構文を使用
+
+**Core Components 実装**:
+
+3. `BoardEncoder` 実装 + テスト
+4. 結果ページ（`/src/app/r/[side]/[encodedState]/page.tsx`）実装
+5. `opengraph-image.tsx` 実装
 
 ### Phase 2: Share Functionality
 
@@ -1032,7 +1047,9 @@ sample-flex-message.json を参照。実装時は以下の点を調整:
 - スコアを動的表示
 - CTA ボタン URL を動的生成
 
-### TypeScript Configuration Changes
+### Configuration Changes
+
+#### tsconfig.json
 
 BigInt サポートのため `target` を `ES2020` に更新:
 
@@ -1046,4 +1063,22 @@ BigInt サポートのため `target` を `ES2020` に更新:
 }
 ```
 
-**Note**: Next.js の ISR 設定は既に `tech.md` で定義済み（Hybrid Static/ISR アーキテクチャ）。実装に必要な `next.config.ts` の変更も本機能のスコープに含める。
+#### next.config.ts
+
+ISR と動的 OG 画像生成のため `output: 'export'` を削除:
+
+```diff
+// next.config.ts
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+- output: 'export',
+  images: {
+    unoptimized: true,
+  },
+};
+
+export default nextConfig;
+```
+
+**Note**: これらの設定変更により、プロジェクトは Static Export から Hybrid Static/ISR アーキテクチャ（`tech.md` 参照）に移行する。Vercel では ISR が自動的にサポートされ、追加設定は不要。

@@ -50,6 +50,16 @@
 - **E2E Tests**: Playwright 1.56.x (mobile-only: Pixel 5 for Chrome, iPhone 12 for Safari)
 - **LIFF Mocking**: `@line/liff-mock` for LINE-specific scenarios
 
+**Test Quality Standards**:
+
+- **BDD Naming**: `describe('[Feature/Module]')` + `it('should [expected behavior]')`
+- **No Spec References**: Prohibit `describe('Task X.Y')` or `it('Requirement N.M: ...')`
+- **Single Location**: Each test scenario at one level only (unit < integration < E2E)
+- **Appropriate Level**:
+  - Unit: Isolated logic with mocks
+  - Integration: Component interactions, external dependencies
+  - E2E: User-facing workflows
+
 **E2E Strategy**: Mobile-first testing aligned with LINE Mini App target platform. Desktop browsers excluded intentionally. Parallel execution in CI with artifact archiving.
 
 ## Development Environment

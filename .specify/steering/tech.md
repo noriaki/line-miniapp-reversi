@@ -2,14 +2,20 @@
 
 ## Architecture
 
-**Static-First Mini App**: Next.js with static export (`output: 'export'`) for CDN-optimized delivery. Game logic isolated as pure functions, AI execution offloaded to Web Workers for non-blocking UI.
+**Hybrid Static/ISR Mini App**: Next.js with hybrid rendering strategy - static generation for core game pages, ISR (Incremental Static Regeneration) for dynamic content like game result sharing. Game logic isolated as pure functions, AI execution offloaded to Web Workers for non-blocking UI.
+
+**Rendering Strategy**:
+
+- **Static Pages**: Core game UI and components (pre-built at deploy time)
+- **ISR Pages**: Game result pages with dynamic OG image generation (on-demand with indefinite caching)
+- **CDN Optimization**: Both strategies leverage edge caching for sub-2-second load times
 
 **Domain-Driven Organization**: Clear separation between game logic (`/lib/game`), AI engine (`/lib/ai`), LINE integration (`/lib/liff`), and UI components. Immutable state patterns throughout.
 
 ## Core Technologies
 
 - **Language**: TypeScript 5.x (strict mode enabled)
-- **Framework**: Next.js 16.0.10 (App Router, Static Export mode)
+- **Framework**: Next.js 16.0.10 (App Router, Hybrid Static/ISR mode)
 - **Runtime**: Node.js 24.9.0 (development), Static HTML/JS (production)
 - **UI Library**: React 19.2.3 (client components for interactivity)
 - **Package Manager**: pnpm 10.23.0
@@ -59,7 +65,7 @@
 ```bash
 # Dev: pnpm dev (http://localhost:3000)
 # Dev w/ Debug: pnpm dev:debug (http://localhost:3030 + dev3000 timeline)
-# Build: pnpm build (static export to /out)
+# Build: pnpm build (production build to /.next)
 # Test: pnpm test (unit + integration)
 # E2E: pnpm test:e2e (Playwright)
 # Quality: pnpm lint && pnpm type-check
@@ -67,7 +73,7 @@
 
 ## Key Technical Decisions
 
-**Static Export over SSR**: Mini apps benefit from CDN caching and predictable performance. No server-side rendering needed for game logic.
+**Hybrid Rendering over Pure Static**: Core game pages use static generation for predictable CDN performance. Dynamic features (game result sharing with OG images) use ISR with indefinite caching - pages are generated on first request and cached permanently. This enables `ImageResponse` for dynamic OG image generation while maintaining fast load times.
 
 **Web Workers for AI**: WASM execution in dedicated worker prevents UI blocking during AI computation (critical for mobile responsiveness).
 
@@ -77,8 +83,10 @@
 
 **Pure Function Game Logic**: Game rules (`/lib/game`) are stateless pure functions. React hooks (`/hooks`) manage state, components handle UI. Clear separation of concerns.
 
+**Vercel Deployment**: ISR is fully supported on Vercel with zero additional configuration. Edge caching and on-demand regeneration work out of the box.
+
 ---
 
-_Updated: 2025-12-13 (Security update: Next.js 16.0.10, React 19.2.3)_
+_Updated: 2025-12-13 (Security update: Next.js 16.0.10, React 19.2.3; Hybrid Static/ISR architecture)_
 
 _Document standards and patterns, not every dependency_

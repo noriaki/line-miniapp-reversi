@@ -137,7 +137,7 @@ test.describe('Stone Placement and Flipping', () => {
 - Console monitoring for WASM fallback detection
 - Async helpers: `waitForAITurn`, `waitForPlayerTurn` for turn-based interactions
 
-### Next.js App Router (`/app/`)
+### Next.js App Router (`/src/app/`)
 
 **Purpose**: Server Components, layouts, page routes
 **Pattern**: Minimal logic - layout wraps client components
@@ -192,6 +192,6 @@ import type { Board, Position } from './types';
 
 ---
 
-_Updated: 2025-11-29 (Added /e2e/ E2E testing domain with mobile-only patterns)_
+_Updated: 2025-12-07 (Updated /app/ to /src/app/ path after directory migration)_
 
 _Document patterns, not file trees. New files following patterns shouldn't require updates_

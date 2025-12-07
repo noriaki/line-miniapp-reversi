@@ -129,8 +129,8 @@ pnpm dev:debug
 ## Project Structure
 
 ```
-/app/               # Next.js App Router (Server Components)
 /src/
+  /app/             # Next.js App Router (Server Components)
   /lib/
     /game/          # Game domain logic (Pure Functions)
     /ai/            # AI Engine, WASM integration

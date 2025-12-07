@@ -2,7 +2,7 @@
 
 ## Introduction
 
-本ドキュメントは、リバーシゲーム終了時にプレイ結果をLINEやその他のプラットフォームにシェアする機能「ゲーム結果シェア機能（OG画像生成方式）」の要件を定義する。ゲーム終了時に自動的に結果ページへ遷移し、盤面状態をURLエンコードしたシェア専用URLを生成する。サーバーサイドでOG画像をオンデマンド生成することで、外部ストレージ不要でリッチなシェア体験を提供する。
+本ドキュメントは、リバーシゲーム終了時にプレイ結果をLINEやその他のプラットフォームにシェアする機能「ゲーム結果シェア機能（OG画像生成方式）」の要件を定義する。ゲーム終了時に自動的に結果ページへ遷移し、盤面状態とプレイヤーの手番情報をURLエンコードしたシェア専用URLを生成する。サーバーサイドでOG画像をオンデマンド生成することで、外部ストレージ不要でリッチなシェア体験を提供する。
 
 ## Requirements
 
@@ -10,12 +10,13 @@
 
 **Objective:** As a プレイヤー, I want ゲーム終了時に自動的に結果ページへ遷移すること, so that ゲームページはプレイに集中でき、結果確認とシェアは専用ページで行える
 
-#### Acceptance Criteria (white-space-sensitive, 4-space indent)
+#### Acceptance Criteria (Req1)
 
-1. When ゲームが終了状態（勝利/敗北/引き分け）になった, the ゲームページ shall 自動的に結果ページ `/r/[encodedState]` へ遷移する
+1. When ゲームが終了状態（勝利/敗北/引き分け）になった, the ゲームページ shall 自動的に結果ページ `/r/[side]/[encodedState]` へ遷移する（side: player's side b=先攻/黒, w=後攻/白）
 2. When 結果ページへ遷移する, the システム shall 現在の盤面状態をエンコードしてURLに含める
-3. The 遷移 shall ゲーム終了から500ミリ秒以内に開始される
-4. The ゲームページ shall ゲームプレイのみに集中し、結果表示やシェア機能を含まない
+3. When 結果ページへ遷移する, the システム shall プレイヤーの手番情報（先攻/後攻）をURLのsideパラメータに含める
+4. The 遷移 shall ゲーム終了から500ミリ秒以内に開始される
+5. The ゲームページ shall ゲームプレイのみに集中し、結果表示やシェア機能を含まない
 
 ### Requirement 2: 盤面状態のエンコーディング
 
@@ -34,13 +35,15 @@
 
 #### Acceptance Criteria (Req3)
 
-1. When ユーザーが `/r/[encodedState]` にアクセスする, the 結果ページ shall エンコードされた盤面状態をデコードして表示する
+1. When ユーザーが `/r/[side]/[encodedState]` にアクセスする, the 結果ページ shall エンコードされた盤面状態をデコードして表示する
 2. The 結果ページ shall 最終盤面、スコア（黒/白の石数）、勝敗結果を表示する
-3. The 結果ページ shall 「LINEでシェア」ボタン（LINE緑色）と「その他でシェア」ボタンを表示する
-4. If Web Share API が利用不可能な環境, then the 結果ページ shall 「その他でシェア」ボタンを非表示にする
-5. The 結果ページ shall 「もう一度遊ぶ」ボタン（ゲーム開始へのCTA）を表示する
-6. When ユーザーが「もう一度遊ぶ」ボタンをタップする, the 結果ページ shall ゲームページに遷移する
-7. If 不正なエンコード文字列でアクセスされた, then the 結果ページ shall エラーメッセージと共にゲームページへの導線を表示する
+3. When sideパラメータが `b`（先攻/黒）の場合, the 結果ページ shall プレイヤーを上部（黒側）、AIを下部（白側）に表示する
+4. When sideパラメータが `w`（後攻/白）の場合, the 結果ページ shall プレイヤーを下部（白側）、AIを上部（黒側）に表示する
+5. The 結果ページ shall 「LINEでシェア」ボタン（LINE緑色）と「その他でシェア」ボタンを表示する
+6. If Web Share API が利用不可能な環境, then the 結果ページ shall 「その他でシェア」ボタンを非表示にする
+7. The 結果ページ shall 「もう一度遊ぶ」ボタン（ゲーム開始へのCTA）を表示する
+8. When ユーザーが「もう一度遊ぶ」ボタンをタップする, the 結果ページ shall ゲームページに遷移する
+9. If 不正なエンコード文字列またはsideパラメータでアクセスされた, then the 結果ページ shall エラーメッセージと共にゲームページへの導線を表示する
 
 ### Requirement 4: LINEシェアフロー
 
@@ -74,11 +77,12 @@
 
 #### Acceptance Criteria (Req6)
 
-1. When クローラーまたはクライアントが `/r/[encodedState]` のOG画像にアクセスする, the Image Generator shall Next.js `ImageResponse` を使用して画像を生成する
+1. When クローラーまたはクライアントが `/r/[side]/[encodedState]` のOG画像にアクセスする, the Image Generator shall Next.js `ImageResponse` を使用して画像を生成する
 2. The OG画像 shall 1200x630ピクセル（OGP標準）のサイズで生成される
 3. The OG画像 shall 最終盤面のビジュアル、スコア、勝敗結果、アプリブランドを含む
-4. The OG画像生成 shall 3秒以内に完了する
-5. The 結果ページ shall 適切なOGPメタタグ（og:image, og:title, og:description）を含む
+4. The OG画像 shall プレイヤー情報（side）を含まない（盤面とスコアのみで構成される汎用画像とする）
+5. The OG画像生成 shall 3秒以内に完了する
+6. The 結果ページ shall 適切なOGPメタタグ（og:image, og:title, og:description）を含む
 
 ### Requirement 7: クロスプラットフォーム互換性
 
@@ -101,3 +105,4 @@
 - 対人戦時の対戦相手情報表示
 - ローカルへの画像ダウンロード機能
 - ログインリダイレクト後のシェア自動継続（PendingShareStorage）
+- LINEプロフィールアイコンの表示（戦歴機能で実装予定）

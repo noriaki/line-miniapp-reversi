@@ -2,7 +2,7 @@
 
 ## Tasks
 
-- [ ] 1. 設定変更: ISR サポートのための Next.js 設定更新
+- [x] 1. 設定変更: ISR サポートのための Next.js 設定更新
   - `next.config.ts` から `output: 'export'` を削除し、Hybrid Static/ISR アーキテクチャへ移行
   - この変更により `ImageResponse` による動的 OG 画像生成が利用可能になる
   - ビルドが正常に完了することを確認

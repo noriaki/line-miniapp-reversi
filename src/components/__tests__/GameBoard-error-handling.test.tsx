@@ -13,6 +13,18 @@ import '@testing-library/jest-dom';
 import GameBoard from '../GameBoard';
 import * as gameLogic from '@/lib/game/game-logic';
 
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
+
+// Mock move-encoder
+jest.mock('@/lib/share/move-encoder', () => ({
+  encodeMoves: jest.fn().mockReturnValue('testEncodedMoves'),
+}));
+
 // Mock useAIPlayer hook
 jest.mock('@/hooks/useAIPlayer', () => ({
   useAIPlayer: () => ({
@@ -110,8 +122,8 @@ describe('GameBoard Error Handling', () => {
       // Second pass - simulate game ending (both players passed)
       // This should trigger game end and change gameStatus to 'finished'
       await waitFor(() => {
-        const gameResult = screen.queryByTestId('game-result');
-        if (gameResult) {
+        const gameEndText = screen.queryByText(/ゲーム終了/);
+        if (gameEndText) {
           // Game is now finished
           // Pass button should not be visible anymore
           expect(
@@ -175,8 +187,8 @@ describe('GameBoard Error Handling', () => {
       // This triggers consecutivePassCount = 2 and game end
       await waitFor(
         () => {
-          const gameResult = screen.queryByTestId('game-result');
-          expect(gameResult).toBeInTheDocument();
+          // Game should end with "ゲーム終了" text displayed
+          expect(screen.getByText(/ゲーム終了/)).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -214,7 +226,8 @@ describe('GameBoard Error Handling', () => {
       // Game should end
       await waitFor(
         () => {
-          expect(screen.queryByTestId('game-result')).toBeInTheDocument();
+          // Game should end with "ゲーム終了" text displayed
+          expect(screen.getByText(/ゲーム終了/)).toBeInTheDocument();
         },
         { timeout: 3000 }
       );

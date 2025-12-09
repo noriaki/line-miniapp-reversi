@@ -2,7 +2,7 @@
 
 ## Introduction
 
-本ドキュメントは、リバーシゲーム終了時にプレイ結果をLINEやその他のプラットフォームにシェアする機能「ゲーム結果シェア機能（OG画像生成方式）」の要件を定義する。ゲーム終了時に自動的に結果ページへ遷移し、盤面状態とプレイヤーの手番情報をURLエンコードしたシェア専用URLを生成する。サーバーサイドでOG画像をオンデマンド生成することで、外部ストレージ不要でリッチなシェア体験を提供する。
+本ドキュメントは、リバーシゲーム終了時にプレイ結果をLINEやその他のプラットフォームにシェアする機能「ゲーム結果シェア機能（OG画像生成方式）」の要件を定義する。ゲーム終了時に自動的に結果ページへ遷移し、手順履歴をWTHOR形式でエンコードしたシェア専用URLを生成する。サーバーサイドでOG画像をオンデマンド生成することで、外部ストレージ不要でリッチなシェア体験を提供する。手順ベースのエンコードにより、将来の棋譜機能拡張への対応も容易となる。
 
 ## Requirements
 
@@ -12,30 +12,42 @@
 
 #### Acceptance Criteria (Req1)
 
-1. When ゲームが終了状態（勝利/敗北/引き分け）になった, the ゲームページ shall 自動的に結果ページ `/r/[side]/[encodedState]` へ遷移する（side: player's side b=先攻/黒, w=後攻/白）
-2. When 結果ページへ遷移する, the システム shall 現在の盤面状態をエンコードしてURLに含める
+1. When ゲームが終了状態（勝利/敗北/引き分け）になった, the ゲームページ shall 自動的に結果ページ `/r/[side]/[encodedMoves]` へ遷移する（side: player's side b=先攻/黒, w=後攻/白）
+2. When 結果ページへ遷移する, the システム shall 現在のmoveHistoryをWTHOR形式でエンコードしてURLに含める
 3. When 結果ページへ遷移する, the システム shall プレイヤーの手番情報（先攻/後攻）をURLのsideパラメータに含める
 4. The 遷移 shall ゲーム終了から500ミリ秒以内に開始される
 5. The ゲームページ shall ゲームプレイのみに集中し、結果表示やシェア機能を含まない
 
-### Requirement 2: 盤面状態のエンコーディング
+### Requirement 2: 手順履歴のエンコーディング
 
-**Objective:** As a システム, I want 盤面状態を効率的にURLエンコードすること, so that シェアURLが短く管理しやすい形式になる
+**Objective:** As a システム, I want 手順履歴をWTHOR形式でエンコードすること, so that シェアURLが適切な長さで将来の棋譜機能拡張にも対応できる
 
 #### Acceptance Criteria (Req2)
 
-1. When 結果ページへの遷移が開始される, the エンコーダー shall 盤面状態をビットボード方式（16バイト）でエンコードする
-2. When ビットボードがエンコードされる, the エンコーダー shall Base64URL形式の22文字に変換する
-3. The エンコード結果 shall URL-safeな文字のみ（A-Z, a-z, 0-9, -, \_）で構成される
-4. When エンコードされたURLがデコードされる, the デコーダー shall 元の盤面状態を完全に復元する
+1. When 結果ページへの遷移が開始される, the MoveHistoryEncoder shall moveHistoryをWTHOR形式でエンコードする
+2. When 各手をエンコードする, the MoveHistoryEncoder shall Position(row, col)を2桁の10進数に変換する（十の位: row + 1、一の位: col + 1）
+3. The エンコード結果 shall 1手あたり2文字の数字列で構成される（例: 手順"d3,c4,..."は"34,43,..."）
+4. The エンコードされたURL shall 最大60手の手順を含むことができる（最大URL長約80文字程度）
+5. When エンコードされたURLがデコードされる, the MoveHistoryDecoder shall 元の手順履歴を完全に復元する
 
-### Requirement 3: 結果ページの表示
+### Requirement 3: 手順からの盤面復元
 
-**Objective:** As a プレイヤーまたはシェア受信者, I want 結果ページで盤面状態とスコアを確認できること, so that 対戦結果を理解しシェアやゲーム開始の行動を取れる
+**Objective:** As a システム, I want 手順履歴から最終盤面を復元すること, so that URLから正確な対戦結果を再現できる
 
 #### Acceptance Criteria (Req3)
 
-1. When ユーザーが `/r/[side]/[encodedState]` にアクセスする, the 結果ページ shall エンコードされた盤面状態をデコードして表示する
+1. When 結果ページがencodedMovesを受け取る, the 盤面復元ロジック shall 初期盤面から手順を順番に適用して最終盤面を計算する
+2. When 手順を適用する, the 盤面復元ロジック shall 既存のゲームロジック（makeMove関数等）を再利用する
+3. When パス（手番スキップ）が発生した手順, the 盤面復元ロジック shall パスを正しく処理して次の手に進む
+4. If 手順の途中で不正な手（無効な位置への配置）が検出された, then the 盤面復元ロジック shall エラーを返す
+
+### Requirement 4: 結果ページの表示
+
+**Objective:** As a プレイヤーまたはシェア受信者, I want 結果ページで盤面状態とスコアを確認できること, so that 対戦結果を理解しシェアやゲーム開始の行動を取れる
+
+#### Acceptance Criteria (Req4)
+
+1. When ユーザーが `/r/[side]/[encodedMoves]` にアクセスする, the 結果ページ shall エンコードされた手順から盤面を復元して表示する
 2. The 結果ページ shall 最終盤面、スコア（黒/白の石数）、勝敗結果を表示する
 3. When sideパラメータが `b`（先攻/黒）の場合, the 結果ページ shall プレイヤーを上部（黒側）、AIを下部（白側）に表示する
 4. When sideパラメータが `w`（後攻/白）の場合, the 結果ページ shall プレイヤーを下部（白側）、AIを上部（黒側）に表示する
@@ -45,11 +57,11 @@
 8. When ユーザーが「もう一度遊ぶ」ボタンをタップする, the 結果ページ shall ゲームページに遷移する
 9. If 不正なエンコード文字列またはsideパラメータでアクセスされた, then the 結果ページ shall エラーメッセージと共にゲームページへの導線を表示する
 
-### Requirement 4: LINEシェアフロー
+### Requirement 5: LINEシェアフロー
 
 **Objective:** As a LINEユーザー, I want LINEの友だちやグループに結果をシェアすること, so that LINE上で直接シェアを完了できる
 
-#### Acceptance Criteria (Req4)
+#### Acceptance Criteria (Req5)
 
 1. When ユーザーが「LINEでシェア」ボタンをタップする, the Share Service shall `liff.shareTargetPicker()` を呼び出す
 2. When `liff.shareTargetPicker()` が呼び出される, the Share Service shall Flex Message形式でシェアコンテンツを送信する
@@ -58,11 +70,11 @@
 5. If ユーザーがシェアをキャンセルした, then the Share Service shall 元の結果ページに戻る（エラー表示なし）
 6. If `liff.shareTargetPicker()` がエラーを返した, then the Share Service shall エラートーストを表示する
 
-### Requirement 5: Web Shareフロー
+### Requirement 6: Web Shareフロー
 
 **Objective:** As a プレイヤー, I want LINE以外のアプリにもシェアできること, so that Twitter、Facebook等のプラットフォームにも共有できる
 
-#### Acceptance Criteria (Req5)
+#### Acceptance Criteria (Req6)
 
 1. When ユーザーが「その他でシェア」ボタンをタップする, the Share Service shall `navigator.share()` を呼び出す
 2. When `navigator.share()` が呼び出される, the Share Service shall URLとテキストのみを渡す（画像Blobは使用しない）
@@ -71,24 +83,24 @@
 5. If ユーザーがシェアをキャンセルした, then the Share Service shall 元の結果ページに戻る（エラー表示なし）
 6. If `navigator.share()` がエラーを返した, then the Share Service shall エラートーストを表示する
 
-### Requirement 6: OGP画像のサーバーサイド生成
+### Requirement 7: OGP画像のサーバーサイド生成
 
 **Objective:** As a システム, I want OG画像をサーバーサイドでオンデマンド生成すること, so that 外部ストレージ不要でリッチなプレビューを提供できる
 
-#### Acceptance Criteria (Req6)
+#### Acceptance Criteria (Req7)
 
-1. When クローラーまたはクライアントが `/r/[side]/[encodedState]` のOG画像にアクセスする, the Image Generator shall Next.js `ImageResponse` を使用して画像を生成する
+1. When クローラーまたはクライアントが `/r/[side]/[encodedMoves]` のOG画像にアクセスする, the Image Generator shall 手順から盤面を復元し、Next.js `ImageResponse` を使用して画像を生成する
 2. The OG画像 shall 1200x630ピクセル（OGP標準）のサイズで生成される
 3. The OG画像 shall 最終盤面のビジュアル、スコア、勝敗結果、アプリブランドを含む
 4. The OG画像 shall プレイヤー情報（side）を含まない（盤面とスコアのみで構成される汎用画像とする）
 5. The OG画像生成 shall 3秒以内に完了する
 6. The 結果ページ shall 適切なOGPメタタグ（og:image, og:title, og:description）を含む
 
-### Requirement 7: クロスプラットフォーム互換性
+### Requirement 8: クロスプラットフォーム互換性
 
 **Objective:** As a プレイヤー, I want 様々な環境でシェア機能を利用できること, so that デバイスやブラウザに関係なく機能を使える
 
-#### Acceptance Criteria (Req7)
+#### Acceptance Criteria (Req8)
 
 1. The シェア機能 shall LINEアプリ内ブラウザ（iOS/Android）で正常に動作する
 2. The 結果ページ shall 外部ブラウザ（Safari、Chrome）で正常に表示される
@@ -106,3 +118,4 @@
 - ローカルへの画像ダウンロード機能
 - ログインリダイレクト後のシェア自動継続（PendingShareStorage）
 - LINEプロフィールアイコンの表示（戦歴機能で実装予定）
+- 棋譜の再生機能（手順データを保持するが、本機能では最終盤面のみ表示）

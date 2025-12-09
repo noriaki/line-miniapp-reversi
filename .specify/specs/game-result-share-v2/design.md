@@ -6,24 +6,18 @@
 
 **Users**: リバーシゲームをプレイしたユーザーが対戦結果を友人やフォロワーにシェアする。シェアを受け取ったユーザーは結果ページで盤面を確認し、ゲームを開始できる。
 
-**Impact**: 現在のゲームページ（`/`）はプレイに集中させ、新規の結果ページ（`/r/[side]/[encodedState]`）でシェア機能を提供。プロジェクトの Hybrid Static/ISR アーキテクチャ（`tech.md` 参照）に準拠し、動的 OG 画像生成を ISR で実現する。
+**Impact**: 現在のゲームページ（`/`）はプレイに集中させ、新規の結果ページ（`/r/[side]/[encodedMoves]`）でシェア機能を提供。プロジェクトの Hybrid Static/ISR アーキテクチャ（`tech.md` 参照）に準拠し、動的 OG 画像生成を ISR で実現する。
 
 ### Goals
 
 - ゲーム終了時に自動的に結果ページへ遷移し、シームレスなシェア体験を提供
 - サーバーサイドで OG 画像をオンデマンド生成し、外部ストレージ不要でリッチなプレビューを実現
 - LINE と Web Share API の両方をサポートし、幅広いプラットフォームへのシェアを可能に
-- 盤面状態を URL エンコードすることで、短く管理しやすいシェア URL を生成
+- 手順履歴を WTHOR 形式でエンコードすることで、短く管理しやすいシェア URL を生成し、将来の棋譜機能拡張にも対応
 
 ### Non-Goals
 
-- シェアテキストのユーザーカスタマイズ機能
-- シェア履歴の保存・表示機能
-- シェア回数のトラッキング・分析機能
-- 対人戦時の対戦相手情報表示
-- ローカルへの画像ダウンロード機能
-- ログインリダイレクト後のシェア自動継続（PendingShareStorage）
-- LINE プロフィールアイコンの表示（戦歴機能で実装予定）
+スコープ外事項は requirements.md の Non-Goals セクションを参照。
 
 ## Architecture
 
@@ -34,17 +28,18 @@
 - `/src/app/` ディレクトリに App Router を配置
 - Hybrid Static/ISR アーキテクチャ（静的ページ + 動的 ISR ページ）
 - ゲームページ（`/`）に GameBoard コンポーネントを配置し、ゲーム終了後はその場で結果表示
+- `useGameState` フックで `moveHistory`（チェス記法の文字列配列）を管理
 
 **現在の設定からの移行が必要な項目**:
 
 - `next.config.ts`: 現在 `output: 'export'`（Static Export）が設定されているが、ISR と `ImageResponse` による動的 OG 画像生成には削除が必要
-- `tsconfig.json`: 現在 `target: "ES2017"` だが、BigInt サポートには `ES2020` 以上が必要
 
 本機能では以下の追加が必要:
 
-- ゲームページからシェア機能を分離し、専用の結果ページ（`/r/[side]/[encodedState]`）を追加
+- ゲームページからシェア機能を分離し、専用の結果ページ（`/r/[side]/[encodedMoves]`）を追加
 - ISR による動的 OG 画像生成（`opengraph-image.tsx`）
 - ゲーム終了時の自動遷移（フォールバック付き）
+- 手順履歴から盤面を復元する機能
 
 ### Architecture Pattern & Boundary Map
 
@@ -55,14 +50,14 @@ graph TB
         NF[NavigationFallback]
     end
 
-    subgraph ResultPage["Result Page /r/side/encodedState"]
+    subgraph ResultPage["Result Page /r/side/encodedMoves"]
         RP[ResultPage]
         SB[ShareButtons]
         OG[opengraph-image.tsx]
     end
 
     subgraph Lib["Lib Layer"]
-        BE[board-encoder]
+        ME[move-encoder]
         SS[share-service]
         FM[flex-message-builder]
     end
@@ -76,10 +71,10 @@ graph TB
         WSA[Web Share API]
     end
 
-    GB -->|game end| BE
+    GB -->|game end| ME
     GB -->|auto-nav timeout| NF
     NF -->|manual nav| ResultPage
-    BE -->|encoded URL| ResultPage
+    ME -->|encoded URL| ResultPage
     RP --> SB
     SB --> US
     US --> SS
@@ -87,7 +82,7 @@ graph TB
     SS --> WSA
     SS --> FM
     FM --> LIFF
-    OG --> BE
+    OG --> ME
 ```
 
 **Architecture Integration**:
@@ -116,40 +111,43 @@ graph TB
 sequenceDiagram
     participant User
     participant GameBoard
-    participant BoardEncoder
+    participant MoveEncoder
     participant Router
     participant NavigationFallback
     participant ResultPage
 
     User->>GameBoard: ゲーム終了（最後の手）
     GameBoard->>GameBoard: gameStatus = finished
-    GameBoard->>BoardEncoder: encodeBoard(board, side)
-    BoardEncoder-->>GameBoard: encodedState (22 chars)
+    GameBoard->>MoveEncoder: encodeMoves(moveHistory)
+    MoveEncoder-->>GameBoard: encodedMoves (max 80 chars)
     GameBoard->>GameBoard: 500ms delay start
 
-    alt 自動遷移成功（3秒以内）
-        GameBoard->>Router: navigate to /r/[side]/[encodedState]
+    alt 自動遷移成功（2秒以内）
+        GameBoard->>Router: navigate to /r/[side]/[encodedMoves]
         Router->>ResultPage: render
-    else 自動遷移タイムアウト（3秒経過）
+    else 自動遷移タイムアウト（2秒経過）
         GameBoard->>NavigationFallback: show fallback button
         NavigationFallback-->>User: 「結果を確認する」ボタン表示
         User->>NavigationFallback: ボタンタップ
-        NavigationFallback->>Router: navigate to /r/[side]/[encodedState]
+        NavigationFallback->>Router: navigate to /r/[side]/[encodedMoves]
         Router->>ResultPage: render
     end
 
-    ResultPage->>BoardEncoder: decodeBoard(encodedState)
-    BoardEncoder-->>ResultPage: board
+    ResultPage->>MoveEncoder: decodeMoves(encodedMoves)
+    MoveEncoder-->>ResultPage: moves[]
+    ResultPage->>ResultPage: replayMoves(moves) で盤面復元
     ResultPage-->>User: 結果表示 + シェアボタン
 ```
 
 **Key Decisions**:
 
 - ゲーム終了から 500ms 後に自動遷移開始
-- 自動遷移が 3 秒以内に完了しない場合、フォールバックボタン「結果を確認する」を表示
+- 自動遷移が 2 秒以内に完了しない場合、フォールバックボタン「結果を確認する」を表示
+  - **Rationale**: LTE 環境の typical RTT（50-100ms）に対して十分なマージンを確保しつつ、ユーザーの待ち時間ストレスを最小化。3G 環境（200-500ms RTT）でも複数リトライを許容できる時間。LINE WebView の初期化オーバーヘッドを考慮しても 2 秒で十分に余裕がある。
 - フォールバックにより、JS 無効化やネットワーク問題など edge case でもユーザーが結果ページへ到達可能
 - side パラメータ（b/w）でプレイヤー視点を保持
 - 遷移後は結果ページが完全に独立してレンダリング
+- 既存の `moveHistory`（チェス記法配列）を WTHOR 形式にエンコード
 
 ### LINE Share Flow
 
@@ -211,7 +209,7 @@ sequenceDiagram
     participant Crawler
     participant NextJS
     participant OGImage
-    participant BoardEncoder
+    participant MoveEncoder
     participant Cache
 
     Crawler->>NextJS: GET /r/b/ABC123
@@ -220,8 +218,9 @@ sequenceDiagram
         Cache-->>NextJS: cached response
     else not cached
         NextJS->>OGImage: generate image
-        OGImage->>BoardEncoder: decodeBoard(encodedState)
-        BoardEncoder-->>OGImage: board
+        OGImage->>MoveEncoder: decodeMoves(encodedMoves)
+        MoveEncoder-->>OGImage: moves[]
+        OGImage->>OGImage: replayMoves で盤面復元
         OGImage->>OGImage: render ImageResponse
         OGImage-->>NextJS: PNG image
         NextJS->>Cache: store in Full Route Cache
@@ -234,69 +233,96 @@ sequenceDiagram
 | Requirement        | Summary                            | Components                    | Interfaces       | Flows           |
 | ------------------ | ---------------------------------- | ----------------------------- | ---------------- | --------------- |
 | 1.1                | ゲーム終了時に結果ページへ自動遷移 | GameBoard, NavigationFallback | -                | Game End Flow   |
-| 1.2, 1.3           | 盤面状態とsideをURLに含める        | BoardEncoder                  | encodeBoardState | Game End Flow   |
+| 1.2, 1.3           | 手順とsideをURLに含める            | MoveHistoryEncoder            | encodeMoves      | Game End Flow   |
 | 1.4                | 500ms以内に遷移開始                | GameBoard, NavigationFallback | -                | Game End Flow   |
 | 1.5                | ゲームページはプレイに集中         | GameBoard                     | -                | -               |
-| 2.1                | ビットボード方式でエンコード       | BoardEncoder                  | encodeBitboard   | -               |
-| 2.2, 2.3           | Base64URL形式22文字                | BoardEncoder                  | toBase64Url      | -               |
-| 2.4                | デコードで完全復元                 | BoardEncoder                  | decodeBoard      | -               |
-| 3.1                | 結果ページで盤面表示               | ResultPage, BoardDisplay      | -                | -               |
-| 3.2                | スコア・勝敗表示                   | ResultPage                    | -                | -               |
-| 3.3, 3.4           | side基づくレイアウト切替           | ResultPage                    | -                | -               |
-| 3.5, 3.6           | シェアボタン表示・非表示           | ShareButtons                  | -                | -               |
-| 3.7, 3.8           | もう一度遊ぶボタン                 | ResultPage                    | -                | -               |
-| 3.9                | 不正URL時エラー表示                | ResultPage                    | -                | -               |
-| 4.1                | shareTargetPicker呼び出し          | ShareService                  | shareToLine      | LINE Share Flow |
-| 4.2                | Flex Message形式送信               | FlexMessageBuilder            | buildFlexMessage | LINE Share Flow |
-| 4.3                | Flex Message内容                   | FlexMessageBuilder            | -                | -               |
-| 4.4, 4.5, 4.6      | シェア結果ハンドリング             | useShare, ShareService        | -                | LINE Share Flow |
-| 5.1                | navigator.share呼び出し            | ShareService                  | shareToWeb       | Web Share Flow  |
-| 5.2, 5.3           | URL+テキストのみ                   | ShareService                  | -                | Web Share Flow  |
-| 5.4, 5.5, 5.6      | シェア結果ハンドリング             | useShare, ShareService        | -                | Web Share Flow  |
-| 6.1                | ImageResponseでOG画像生成          | opengraph-image.tsx           | -                | OG Image Flow   |
-| 6.2                | 1200x630pxサイズ                   | opengraph-image.tsx           | -                | -               |
-| 6.3                | OG画像内容                         | opengraph-image.tsx           | -                | -               |
-| 6.4                | OG画像にside含めない               | opengraph-image.tsx           | -                | -               |
-| 6.5                | 3秒以内に生成完了                  | opengraph-image.tsx           | -                | -               |
-| 6.6                | OGPメタタグ                        | ResultPage (generateMetadata) | -                | -               |
-| 7.1, 7.2, 7.3, 7.4 | クロスプラットフォーム             | 全コンポーネント              | -                | -               |
+| 2.1                | WTHOR形式でエンコード              | MoveHistoryEncoder            | encodeMoves      | -               |
+| 2.2, 2.3           | Position→2桁10進数変換             | MoveHistoryEncoder            | positionToWthor  | -               |
+| 2.4                | 最大60手のURL対応                  | MoveHistoryEncoder            | -                | -               |
+| 2.5                | デコードで完全復元                 | MoveHistoryEncoder            | decodeMoves      | -               |
+| 3.1                | 手順から盤面復元                   | MoveHistoryEncoder            | replayMoves      | -               |
+| 3.2                | 既存ゲームロジック再利用           | MoveHistoryEncoder            | -                | -               |
+| 3.3                | パス処理                           | MoveHistoryEncoder            | replayMoves      | -               |
+| 3.4                | 不正手検出                         | MoveHistoryEncoder            | replayMoves      | -               |
+| 4.1                | 結果ページで盤面表示               | ResultPage, BoardDisplay      | -                | -               |
+| 4.2                | スコア・勝敗表示                   | ResultPage                    | -                | -               |
+| 4.3, 4.4           | side基づくレイアウト切替           | ResultPage                    | -                | -               |
+| 4.5, 4.6           | シェアボタン表示・非表示           | ShareButtons                  | -                | -               |
+| 4.7, 4.8           | もう一度遊ぶボタン                 | ResultPage                    | -                | -               |
+| 4.9                | 不正URL時エラー表示                | ResultPage                    | -                | -               |
+| 5.1                | shareTargetPicker呼び出し          | ShareService                  | shareToLine      | LINE Share Flow |
+| 5.2                | Flex Message形式送信               | FlexMessageBuilder            | buildFlexMessage | LINE Share Flow |
+| 5.3                | Flex Message内容                   | FlexMessageBuilder            | -                | -               |
+| 5.4, 5.5, 5.6      | シェア結果ハンドリング             | useShare, ShareService        | -                | LINE Share Flow |
+| 6.1                | navigator.share呼び出し            | ShareService                  | shareToWeb       | Web Share Flow  |
+| 6.2, 6.3           | URL+テキストのみ                   | ShareService                  | -                | Web Share Flow  |
+| 6.4, 6.5, 6.6      | シェア結果ハンドリング             | useShare, ShareService        | -                | Web Share Flow  |
+| 7.1                | ImageResponseでOG画像生成          | opengraph-image.tsx           | -                | OG Image Flow   |
+| 7.2                | 1200x630pxサイズ                   | opengraph-image.tsx           | -                | -               |
+| 7.3                | OG画像内容                         | opengraph-image.tsx           | -                | -               |
+| 7.4                | OG画像にside含めない               | opengraph-image.tsx           | -                | -               |
+| 7.5                | 3秒以内に生成完了                  | opengraph-image.tsx           | -                | -               |
+| 7.6                | OGPメタタグ                        | ResultPage (generateMetadata) | -                | -               |
+| 8.1, 8.2, 8.3, 8.4 | クロスプラットフォーム             | 全コンポーネント              | -                | -               |
 
 ## Components and Interfaces
 
 ### Component Summary
 
-| Component           | Domain/Layer | Intent                    | Req Coverage     | Key Dependencies                                        | Contracts |
-| ------------------- | ------------ | ------------------------- | ---------------- | ------------------------------------------------------- | --------- |
-| BoardEncoder        | Lib/Share    | 盤面のエンコード/デコード | 2.1-2.4          | -                                                       | Service   |
-| FlexMessageBuilder  | Lib/Share    | Flex Message構築          | 4.2, 4.3         | BoardEncoder (P0)                                       | Service   |
-| ShareService        | Lib/Share    | シェアロジック実行        | 4.1, 5.1         | LIFF (P0), WebShareAPI (P0)                             | Service   |
-| useShare            | Hooks        | シェア状態管理            | 4.4-4.6, 5.4-5.6 | ShareService (P0), useMessageQueue (P1)                 | State     |
-| ResultPage          | App/Routes   | 結果ページ表示            | 3.1-3.9          | BoardEncoder (P0), useShare (P1)                        | -         |
-| ShareButtons        | Components   | シェアボタンUI            | 3.5, 3.6         | useShare (P0)                                           | -         |
-| BoardDisplay        | Components   | 盤面表示                  | 3.1              | -                                                       | -         |
-| NavigationFallback  | Components   | 自動遷移フォールバック    | 1.1, 1.4         | Router (P0)                                             | -         |
-| opengraph-image.tsx | App/Routes   | OG画像生成                | 6.1-6.5          | BoardEncoder (P0)                                       | -         |
-| GameBoard (修正)    | Components   | ゲーム終了時遷移          | 1.1-1.5          | BoardEncoder (P0), Router (P0), NavigationFallback (P1) | -         |
+| Component           | Domain/Layer | Intent                    | Req Coverage     | Key Dependencies                                              | Contracts |
+| ------------------- | ------------ | ------------------------- | ---------------- | ------------------------------------------------------------- | --------- |
+| MoveHistoryEncoder  | Lib/Share    | 手順のエンコード/デコード | 2.1-2.5, 3.1-3.4 | game-logic (P0)                                               | Service   |
+| FlexMessageBuilder  | Lib/Share    | Flex Message構築          | 5.2, 5.3         | MoveHistoryEncoder (P0)                                       | Service   |
+| ShareService        | Lib/Share    | シェアロジック実行        | 5.1, 6.1         | LIFF (P0), WebShareAPI (P0)                                   | Service   |
+| useShare            | Hooks        | シェア状態管理            | 5.4-5.6, 6.4-6.6 | ShareService (P0), useMessageQueue (P1)                       | State     |
+| ResultPage          | App/Routes   | 結果ページ表示            | 4.1-4.9          | MoveHistoryEncoder (P0), useShare (P1)                        | -         |
+| ShareButtons        | Components   | シェアボタンUI            | 4.5, 4.6         | useShare (P0)                                                 | -         |
+| BoardDisplay        | Components   | 盤面表示                  | 4.1              | -                                                             | -         |
+| NavigationFallback  | Components   | 自動遷移フォールバック    | 1.1, 1.4         | Router (P0)                                                   | -         |
+| opengraph-image.tsx | App/Routes   | OG画像生成                | 7.1-7.5          | MoveHistoryEncoder (P0)                                       | -         |
+| GameBoard (修正)    | Components   | ゲーム終了時遷移          | 1.1-1.5          | MoveHistoryEncoder (P0), Router (P0), NavigationFallback (P1) | -         |
 
 ### Lib Layer
 
-#### BoardEncoder
+#### MoveHistoryEncoder
 
-| Field        | Detail                                              |
-| ------------ | --------------------------------------------------- |
-| Intent       | 盤面状態をビットボード形式でエンコード/デコードする |
-| Requirements | 2.1, 2.2, 2.3, 2.4                                  |
+| Field        | Detail                                                     |
+| ------------ | ---------------------------------------------------------- |
+| Intent       | 手順履歴を WTHOR 形式でエンコード/デコードし盤面を復元する |
+| Requirements | 2.1, 2.2, 2.3, 2.4, 2.5, 3.1, 3.2, 3.3, 3.4                |
 
 **Responsibilities & Constraints**
 
-- 盤面状態（8x8 の Cell 配列）をビットボード形式（2つの64-bit BigInt）に変換
-- Base64URL 形式でエンコード（22文字、パディングなし、URL-safe）
+- 手順履歴（Position 配列）を WTHOR 形式（2桁10進数列）に変換
+- Base64URL 形式でエンコード（最大 80 文字、パディングなし、URL-safe）
 - エンコード/デコードの完全な可逆性を保証
+- デコードした手順から既存の `applyMove` 関数を使用して盤面を復元
 - 不正なエンコード文字列の検出とエラー返却
+- パス（手番スキップ）が含まれる手順の正しい処理
+
+**WTHOR 形式仕様**
+
+WTHOR は Reversi 棋譜の標準フォーマットで、各手を 1 バイトで表現:
+
+```
+Position(row, col) -> 1バイト（10進数表記）
+  十の位: row + 1 (1-8)
+  一の位: col + 1 (1-8)
+
+例:
+  (0, 0) -> 11  // a1
+  (3, 3) -> 44  // d4
+  (4, 5) -> 56  // f5
+  (7, 7) -> 88  // h8
+```
+
+- 1 手 = 2 文字（10進数表記）
+- 60 手 = 120 文字 -> Base64URL で約 80 文字
 
 **Dependencies**
 
-- Inbound: GameBoard, ResultPage, opengraph-image.tsx - 盤面エンコード/デコード (P0)
+- Inbound: GameBoard, ResultPage, opengraph-image.tsx - 手順エンコード/デコード (P0)
+- Outbound: game-logic - applyMove, calculateValidMoves (P0)
 - External: なし
 
 **Contracts**: Service [x]
@@ -304,31 +330,47 @@ sequenceDiagram
 ##### Service Interface
 
 ```typescript
-// 場所: /src/lib/share/board-encoder.ts
+// 場所: /src/lib/share/move-encoder.ts
 
-import type { Board, Player } from '@/lib/game/types';
-
-/** エンコード結果 */
-interface EncodedBoardState {
-  readonly encodedState: string; // Base64URL 22文字
-  readonly side: 'b' | 'w'; // プレイヤーのside
-}
+import type { Board, Player, Position } from '@/lib/game/types';
 
 /** デコード結果 */
-type DecodeResult =
-  | { success: true; board: Board }
+type DecodeResult<T> =
+  | { success: true; value: T }
   | {
       success: false;
-      error: 'invalid_length' | 'invalid_characters' | 'invalid_bitboard';
+      error:
+        | 'invalid_length'
+        | 'invalid_characters'
+        | 'invalid_base64'
+        | 'invalid_position';
     };
 
-/** 盤面を URL パラメータ用にエンコード */
-function encodeBoardState(board: Board, playerSide: Player): EncodedBoardState;
+/** 盤面復元結果 */
+type ReplayResult =
+  | { success: true; board: Board; blackCount: number; whiteCount: number }
+  | {
+      success: false;
+      error: 'invalid_move' | 'decode_error';
+      moveIndex?: number;
+    };
 
-/** Base64URL 文字列から盤面を復元 */
-function decodeBoardState(encodedState: string): DecodeResult;
+/** 手順配列を WTHOR 形式 + Base64URL でエンコード */
+function encodeMoves(moves: readonly Position[]): string;
 
-/** 盤面からスコアを計算 */
+/** Base64URL 文字列から手順配列を復元 */
+function decodeMoves(encoded: string): DecodeResult<Position[]>;
+
+/** 手順配列から盤面を復元（既存の applyMove を使用） */
+function replayMoves(moves: readonly Position[]): ReplayResult;
+
+/** Position を WTHOR 形式の 2 桁数字に変換 */
+function positionToWthor(position: Position): string;
+
+/** WTHOR 形式の 2 桁数字を Position に変換 */
+function wthorToPosition(wthor: string): DecodeResult<Position>;
+
+/** 盤面からスコアを計算（既存の countStones を再エクスポート） */
 function countStones(board: Board): { black: number; white: number };
 
 /** 勝者を判定 */
@@ -338,22 +380,23 @@ function determineWinner(
 ): 'black' | 'white' | 'draw';
 ```
 
-- Preconditions: `board` は 8x8 の Cell 配列、`encodedState` は文字列
-- Postconditions: エンコード結果は常に 22 文字の Base64URL 文字列
-- Invariants: `decode(encode(board)) === board`（可逆性）
+- Preconditions: `moves` は有効な Position 配列、`encoded` は文字列
+- Postconditions: エンコード結果は URL-safe な Base64URL 文字列（最大 80 文字程度）
+- Invariants: `decodeMoves(encodeMoves(moves)) === moves`（可逆性）
 
 **Implementation Notes**
 
-- BigInt 演算を使用（ES2020+ 必要、`tsconfig.json` 更新）
-- リトルエンディアンでバイト配列に変換
-- 黒石と白石で別々の 64-bit 値を使用（計 128 ビット = 16 バイト）
+- チェス記法から Position への変換は既存の `move-history.ts` を参照
+- `applyMove` の Result 型を活用したエラーハンドリング
+- パス処理: 有効手がない場合は自動的に手番を切り替え
+- エンコードは軽量なバイト配列操作で実現（BigInt 不要）
 
 #### FlexMessageBuilder
 
 | Field        | Detail                                         |
 | ------------ | ---------------------------------------------- |
 | Intent       | LINE Flex Message 形式のシェアコンテンツを構築 |
-| Requirements | 4.2, 4.3                                       |
+| Requirements | 5.2, 5.3                                       |
 
 **Responsibilities & Constraints**
 
@@ -377,7 +420,7 @@ import type { FlexMessage } from '@liff/send-message';
 
 /** シェア結果データ */
 interface ShareResult {
-  readonly encodedState: string;
+  readonly encodedMoves: string;
   readonly side: 'b' | 'w';
   readonly blackCount: number;
   readonly whiteCount: number;
@@ -393,8 +436,8 @@ function buildFlexMessage(result: ShareResult, baseUrl: string): FlexMessage;
 
 **Implementation Notes**
 
-- Hero 画像 URL: `${baseUrl}/r/${side}/${encodedState}/opengraph-image`
-- CTA ボタン URL: `${baseUrl}/r/${side}/${encodedState}`
+- Hero 画像 URL: `${baseUrl}/r/${side}/${encodedMoves}/opengraph-image`
+- CTA ボタン URL: `${baseUrl}/r/${side}/${encodedMoves}`
 - altText: 「リバーシ対戦結果: 黒 XX - 白 YY」
 
 #### ShareService
@@ -402,7 +445,7 @@ function buildFlexMessage(result: ShareResult, baseUrl: string): FlexMessage;
 | Field        | Detail                                       |
 | ------------ | -------------------------------------------- |
 | Intent       | LINE シェアと Web Share の実行ロジックを提供 |
-| Requirements | 4.1, 5.1, 5.2, 5.3                           |
+| Requirements | 5.1, 6.1, 6.2, 6.3                           |
 
 **Responsibilities & Constraints**
 
@@ -468,7 +511,7 @@ function shareToWeb(
 | Field        | Detail                             |
 | ------------ | ---------------------------------- |
 | Intent       | シェア操作の状態管理とトースト表示 |
-| Requirements | 4.4, 4.5, 4.6, 5.4, 5.5, 5.6       |
+| Requirements | 5.4, 5.5, 5.6, 6.4, 6.5, 6.6       |
 
 **Responsibilities & Constraints**
 
@@ -527,11 +570,11 @@ function useShare(): UseShareReturn;
 | Field        | Detail                                           |
 | ------------ | ------------------------------------------------ |
 | Intent       | 結果ページの表示と OGP メタデータ生成            |
-| Requirements | 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 6.6 |
+| Requirements | 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 7.6 |
 
 **Responsibilities & Constraints**
 
-- URL パラメータから盤面をデコードして表示
+- URL パラメータから手順をデコードして盤面を復元・表示
 - side パラメータに基づくレイアウト切り替え
 - シェアボタンと「もう一度遊ぶ」ボタンの表示
 - 不正パラメータ時のエラー表示
@@ -539,7 +582,7 @@ function useShare(): UseShareReturn;
 **Dependencies**
 
 - Inbound: Next.js Router - ページレンダリング (P0)
-- Outbound: BoardEncoder - 盤面デコード (P0)
+- Outbound: MoveHistoryEncoder - 手順デコード・盤面復元 (P0)
 - Outbound: useShare - シェア操作 (P1)
 
 **Contracts**: -
@@ -547,7 +590,7 @@ function useShare(): UseShareReturn;
 **Implementation Notes**
 
 ```typescript
-// 場所: /src/app/r/[side]/[encodedState]/page.tsx
+// 場所: /src/app/r/[side]/[encodedMoves]/page.tsx
 
 import { Metadata } from 'next';
 
@@ -562,18 +605,18 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ side: string; encodedState: string }>;
+  params: Promise<{ side: string; encodedMoves: string }>;
 }): Promise<Metadata> {
-  const { side, encodedState } = await params;
+  const { side, encodedMoves } = await params;
   // メタデータ生成ロジック
 }
 
 export default async function ResultPage({
   params,
 }: {
-  params: Promise<{ side: string; encodedState: string }>;
+  params: Promise<{ side: string; encodedMoves: string }>;
 }) {
-  const { side, encodedState } = await params;
+  const { side, encodedMoves } = await params;
   // ページレンダリングロジック
 }
 ```
@@ -587,7 +630,7 @@ export default async function ResultPage({
 | Field        | Detail                      |
 | ------------ | --------------------------- |
 | Intent       | OG 画像のサーバーサイド生成 |
-| Requirements | 6.1, 6.2, 6.3, 6.4, 6.5     |
+| Requirements | 7.1, 7.2, 7.3, 7.4, 7.5     |
 
 **Responsibilities & Constraints**
 
@@ -599,7 +642,7 @@ export default async function ResultPage({
 **Dependencies**
 
 - Inbound: Next.js / クローラー - 画像リクエスト (P0)
-- Outbound: BoardEncoder - 盤面デコード (P0)
+- Outbound: MoveHistoryEncoder - 手順デコード・盤面復元 (P0)
 - External: next/og ImageResponse - 画像生成 (P0)
 
 **Contracts**: -
@@ -607,7 +650,7 @@ export default async function ResultPage({
 **Implementation Notes**
 
 ```typescript
-// 場所: /src/app/r/[side]/[encodedState]/opengraph-image.tsx
+// 場所: /src/app/r/[side]/[encodedMoves]/opengraph-image.tsx
 
 import { ImageResponse } from 'next/og';
 
@@ -618,24 +661,31 @@ export const contentType = 'image/png';
 export async function generateImageMetadata({
   params,
 }: {
-  params: Promise<{ side: string; encodedState: string }>;
+  params: Promise<{ side: string; encodedMoves: string }>;
 }) {
-  const { encodedState } = await params;
-  const result = decodeBoardState(encodedState);
-  if (!result.success) {
+  const { encodedMoves } = await params;
+  const decodeResult = decodeMoves(encodedMoves);
+  if (!decodeResult.success) {
     return [{ alt: 'リバーシ対戦結果' }];
   }
-  const { black, white } = countStones(result.board);
-  return [{ alt: `リバーシ対戦結果: 黒 ${black} - 白 ${white}` }];
+  const replayResult = replayMoves(decodeResult.value);
+  if (!replayResult.success) {
+    return [{ alt: 'リバーシ対戦結果' }];
+  }
+  return [
+    {
+      alt: `リバーシ対戦結果: 黒 ${replayResult.blackCount} - 白 ${replayResult.whiteCount}`,
+    },
+  ];
 }
 
 export default async function Image({
   params,
 }: {
-  params: Promise<{ side: string; encodedState: string }>;
+  params: Promise<{ side: string; encodedMoves: string }>;
 }) {
-  const { encodedState } = await params;
-  // 盤面デコード + ImageResponse 生成
+  const { encodedMoves } = await params;
+  // 手順デコード + 盤面復元 + ImageResponse 生成
 }
 ```
 
@@ -650,7 +700,7 @@ export default async function Image({
 | Field        | Detail                               |
 | ------------ | ------------------------------------ |
 | Intent       | LINE シェアと Web Share のボタン表示 |
-| Requirements | 3.5, 3.6                             |
+| Requirements | 4.5, 4.6                             |
 
 **Responsibilities & Constraints**
 
@@ -676,7 +726,7 @@ export default async function Image({
 | Field        | Detail                               |
 | ------------ | ------------------------------------ |
 | Intent       | 結果ページ用の盤面表示コンポーネント |
-| Requirements | 3.1                                  |
+| Requirements | 4.1                                  |
 
 **Responsibilities & Constraints**
 
@@ -705,7 +755,7 @@ export default async function Image({
 
 **Responsibilities & Constraints**
 
-- 自動遷移開始から 3 秒経過後に「結果を確認する」ボタンを表示
+- 自動遷移開始から 2 秒経過後に「結果を確認する」ボタンを表示
 - ボタンタップで結果ページへ手動遷移
 - 自動遷移成功時は表示されない（タイムアウト前に遷移完了）
 - JS 無効化、ネットワーク問題などの edge case に対応
@@ -724,10 +774,10 @@ export default async function Image({
 
 interface NavigationFallbackProps {
   readonly targetUrl: string;
-  readonly timeoutMs?: number; // default: 3000
+  readonly timeoutMs?: number; // default: 2000
 }
 
-// 3秒後にボタン表示
+// 2秒後にボタン表示
 // ボタンテキスト: 「結果を確認する」
 // スタイル: 既存ボタンスタイルを踏襲
 ```
@@ -751,6 +801,7 @@ interface NavigationFallbackProps {
 - 既存の結果表示 UI（lines 488-493 相当）を削除（結果ページへ移行）
 - NavigationFallback コンポーネントを追加（3秒タイムアウト後に手動遷移ボタン表示）
 - `next/navigation` の `useRouter` を使用
+- `moveHistory` をチェス記法から Position 配列に変換してエンコード
 
 **Implementation Notes**
 
@@ -759,13 +810,23 @@ interface NavigationFallbackProps {
 
 import { useRouter } from 'next/navigation';
 import { NavigationFallback } from './NavigationFallback';
+import { encodeMoves } from '@/lib/share/move-encoder';
+
+// チェス記法を Position に変換するヘルパー
+function notationToPosition(notation: string): Position {
+  const col = notation.charCodeAt(0) - 'a'.charCodeAt(0);
+  const row = parseInt(notation[1], 10) - 1;
+  return { row, col };
+}
 
 // ゲーム終了時の処理
 useEffect(() => {
   if (gameStatus.type === 'finished') {
-    const encodedState = encodeBoardState(board, playerSide);
+    // moveHistory（チェス記法配列）を Position 配列に変換
+    const positions = moveHistory.map(notationToPosition);
+    const encodedMoves = encodeMoves(positions);
     const side = playerSide === 'black' ? 'b' : 'w';
-    const targetUrl = `/r/${side}/${encodedState.encodedState}`;
+    const targetUrl = `/r/${side}/${encodedMoves}`;
 
     // 500ms 後に自動遷移開始
     const timer = setTimeout(() => {
@@ -774,19 +835,19 @@ useEffect(() => {
 
     return () => clearTimeout(timer);
   }
-}, [gameStatus, board, playerSide, router]);
+}, [gameStatus, moveHistory, playerSide, router]);
 
 // JSX内: ゲーム終了時にフォールバックを表示
 {gameStatus.type === 'finished' && (
   <NavigationFallback
-    targetUrl={`/r/${side}/${encodedState}`}
-    timeoutMs={3000}
+    targetUrl={`/r/${side}/${encodedMoves}`}
+    timeoutMs={2000}
   />
 )}
 ```
 
 - 既存の「新しいゲームを開始」ボタンと結果表示 UI は削除（結果ページへ移行）
-- 500ms 後に自動遷移、3 秒経過で「結果を確認する」フォールバックボタン表示
+- 500ms 後に自動遷移、2 秒経過で「結果を確認する」フォールバックボタン表示
 - 自動遷移成功時はコンポーネントごとアンマウントされるためフォールバックは表示されない
 
 ## Data Models
@@ -802,12 +863,20 @@ erDiagram
     Cell {
         Player value "black | white | null"
     }
-    EncodedBoardState {
-        string encodedState "Base64URL 22 chars"
+    MoveHistory ||--o{ Position : contains
+    MoveHistory {
+        Position[] moves "ordered sequence"
+    }
+    Position {
+        number row "0-7"
+        number col "0-7"
+    }
+    EncodedMoves {
+        string encoded "Base64URL max 80 chars"
         string side "b | w"
     }
     ShareResult {
-        string encodedState
+        string encodedMoves
         string side
         number blackCount
         number whiteCount
@@ -817,46 +886,44 @@ erDiagram
         object bubble "LINE Flex Bubble"
     }
 
-    Board ||--|| EncodedBoardState : "encodes to"
-    EncodedBoardState ||--|| ShareResult : "includes"
+    MoveHistory ||--|| EncodedMoves : "encodes to"
+    EncodedMoves ||--|| Board : "replays to"
+    EncodedMoves ||--|| ShareResult : "includes"
     ShareResult ||--|| FlexMessage : "builds"
 ```
 
 **Entities**:
 
 - `Board`: 8x8 の Cell 配列（既存）
-- `EncodedBoardState`: URL パラメータ用のエンコード形式
+- `MoveHistory`: 手順の Position 配列（既存は string[] だが内部的に Position[] に変換）
+- `EncodedMoves`: URL パラメータ用のエンコード形式（WTHOR + Base64URL）
 - `ShareResult`: シェアに必要な全データを集約
 
 **Business Rules**:
 
 - 盤面は 64 セルで構成
 - 各セルは `black`、`white`、`null` のいずれか
-- `black` と `white` は重複不可（同じセルに両方置けない）
+- 手順を初期盤面から順に適用することで任意の盤面状態を復元可能
 
 ### Logical Data Model
 
-**EncodedBoardState Structure**:
+**EncodedMoves Structure**:
 
 ```typescript
-interface EncodedBoardState {
-  encodedState: string; // Base64URL, 22 chars
+interface EncodedMoves {
+  encodedMoves: string; // Base64URL, max ~80 chars
   side: 'b' | 'w'; // Player's side
 }
 ```
 
-**Bitboard Encoding**:
-
-- blackBits: 64-bit BigInt（黒石の位置をビットで表現）
-- whiteBits: 64-bit BigInt（白石の位置をビットで表現）
-- 合計 128 ビット = 16 バイト = 22 Base64URL 文字
+WTHOR エンコーディング仕様は MoveHistoryEncoder セクションを参照。
 
 **URL Structure**:
 
 ```
-/r/{side}/{encodedState}
+/r/{side}/{encodedMoves}
   |   |        |
-  |   |        +-- 22 chars Base64URL
+  |   |        +-- Base64URL encoded WTHOR moves (max ~80 chars)
   |   +-- b (black/先攻) or w (white/後攻)
   +-- result route prefix
 ```
@@ -866,7 +933,7 @@ interface EncodedBoardState {
 **OG Image URL**:
 
 ```
-/r/{side}/{encodedState}/opengraph-image
+/r/{side}/{encodedMoves}/opengraph-image
 ```
 
 - Content-Type: `image/png`
@@ -911,8 +978,9 @@ interface EncodedBoardState {
 | Error                | Cause                   | Response                        |
 | -------------------- | ----------------------- | ------------------------------- |
 | Invalid side         | URL の side が b/w 以外 | エラーページ + ゲームへのリンク |
-| Invalid encodedState | Base64URL デコード失敗  | エラーページ + ゲームへのリンク |
-| Invalid bitboard     | 黒石と白石が重複        | エラーページ + ゲームへのリンク |
+| Invalid encodedMoves | Base64URL デコード失敗  | エラーページ + ゲームへのリンク |
+| Invalid position     | WTHOR 位置が範囲外      | エラーページ + ゲームへのリンク |
+| Invalid move         | 手順の途中で不正な手    | エラーページ + ゲームへのリンク |
 
 **System Errors (5xx)**:
 
@@ -939,15 +1007,16 @@ interface EncodedBoardState {
 
 ### Unit Tests
 
-1. **BoardEncoder**: エンコード/デコードの可逆性、不正入力のバリデーション
-2. **FlexMessageBuilder**: 生成される Flex Message の構造検証
-3. **ShareService**: API 呼び出しのモック、エラーハンドリング
-4. **countStones / determineWinner**: スコア計算と勝者判定
-5. **NavigationFallback**: タイムアウト後のボタン表示、手動遷移動作
+1. **MoveHistoryEncoder**: エンコード/デコードの可逆性、WTHOR 形式変換、不正入力のバリデーション
+2. **replayMoves**: 手順からの盤面復元、パス処理、不正手検出
+3. **FlexMessageBuilder**: 生成される Flex Message の構造検証
+4. **ShareService**: API 呼び出しのモック、エラーハンドリング
+5. **countStones / determineWinner**: スコア計算と勝者判定
+6. **NavigationFallback**: タイムアウト後のボタン表示、手動遷移動作
 
 ### Integration Tests
 
-1. **ResultPage + BoardEncoder**: URL パラメータからの盤面復元
+1. **ResultPage + MoveHistoryEncoder**: URL パラメータからの盤面復元
 2. **useShare + ShareService**: シェアフロー全体
 3. **opengraph-image.tsx**: OG 画像生成（スナップショット）
 
@@ -970,12 +1039,14 @@ interface EncodedBoardState {
 
 | Operation               | Target        | Strategy                                   |
 | ----------------------- | ------------- | ------------------------------------------ |
-| 盤面エンコード          | <10ms         | 軽量 BigInt 演算                           |
+| 手順エンコード          | <10ms         | 軽量なバイト配列操作                       |
+| 手順デコード            | <10ms         | 軽量なバイト配列操作                       |
+| 盤面復元（60手）        | <50ms         | 既存 applyMove の連続適用                  |
 | OG 画像初回生成         | <3s (要件)    | ImageResponse 最適化、フォント事前読み込み |
 | OG 画像キャッシュヒット | <100ms        | ISR Full Route Cache                       |
 | 結果ページ表示          | <1s           | 軽量ページ構成                             |
 | 自動遷移開始            | <500ms (要件) | 500ms 後に遷移実行                         |
-| フォールバック表示      | 3s            | 自動遷移タイムアウト後にボタン表示         |
+| フォールバック表示      | 2s            | 自動遷移タイムアウト後にボタン表示         |
 
 ### Caching Strategy
 
@@ -987,11 +1058,11 @@ interface EncodedBoardState {
 
 ### Threat Analysis
 
-| Threat     | Risk | Mitigation                         |
-| ---------- | ---- | ---------------------------------- |
-| 盤面改ざん | 低   | 黒石と白石の重複チェックで検出可能 |
-| 不正 URL   | 低   | バリデーションでエラーページ表示   |
-| XSS        | なし | ユーザー入力なし（盤面データのみ） |
+| Threat     | Risk | Mitigation                          |
+| ---------- | ---- | ----------------------------------- |
+| 手順改ざん | 低   | 不正な手は replayMoves でエラー検出 |
+| 不正 URL   | 低   | バリデーションでエラーページ表示    |
+| XSS        | なし | ユーザー入力なし（手順データのみ）  |
 
 ### Data Protection
 
@@ -1003,20 +1074,17 @@ interface EncodedBoardState {
 
 ### Phase 1: 設定変更 + Core Components
 
-**設定変更（ISR サポートと BigInt 互換性のため必須）**:
+**設定変更（ISR サポートのため必須）**:
 
 1. `next.config.ts` から `output: 'export'` 設定を削除
    - **理由**: Static Export モードでは ISR と `ImageResponse` による動的 OG 画像生成が使用不可
    - **影響**: ビルド出力が `/out` ディレクトリから `.next` に変更、Vercel での ISR サポートが有効化
-2. `tsconfig.json` の `target` を `ES2017` から `ES2020` に変更
-   - **理由**: BigInt 演算（盤面のビットボードエンコード）に ES2020 以上が必要
-   - **影響**: 生成される JavaScript が ES2020 構文を使用
 
 **Core Components 実装**:
 
-3. `BoardEncoder` 実装 + テスト
-4. 結果ページ（`/src/app/r/[side]/[encodedState]/page.tsx`）実装
-5. `opengraph-image.tsx` 実装
+2. `MoveHistoryEncoder` 実装 + テスト（WTHOR 形式エンコード/デコード + 盤面復元）
+3. 結果ページ（`/src/app/r/[side]/[encodedMoves]/page.tsx`）実装
+4. `opengraph-image.tsx` 実装
 
 ### Phase 2: Share Functionality
 
@@ -1049,20 +1117,6 @@ sample-flex-message.json を参照。実装時は以下の点を調整:
 
 ### Configuration Changes
 
-#### tsconfig.json
-
-BigInt サポートのため `target` を `ES2020` に更新:
-
-```diff
-// tsconfig.json
-{
-  "compilerOptions": {
--   "target": "ES2017"
-+   "target": "ES2020"
-  }
-}
-```
-
 #### next.config.ts
 
 ISR と動的 OG 画像生成のため `output: 'export'` を削除:
@@ -1081,4 +1135,8 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 ```
 
-**Note**: これらの設定変更により、プロジェクトは Static Export から Hybrid Static/ISR アーキテクチャ（`tech.md` 参照）に移行する。Vercel では ISR が自動的にサポートされ、追加設定は不要。
+**Note**: この設定変更により、プロジェクトは Static Export から Hybrid Static/ISR アーキテクチャ（`tech.md` 参照）に移行する。Vercel では ISR が自動的にサポートされ、追加設定は不要。
+
+### WTHOR Format Reference
+
+WTHOR 形式の詳細仕様は MoveHistoryEncoder セクションを参照。

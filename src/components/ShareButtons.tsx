@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { SiLine } from 'react-icons/si';
 import { FiShare2 } from 'react-icons/fi';
 import { useShare } from '@/hooks/useShare';
+import { MessageBox } from '@/components/MessageBox';
 import type { ShareResult } from '@/lib/share/flex-message-builder';
 import './ShareButtons.css';
 
@@ -32,8 +33,14 @@ export function ShareButtons({
   result,
   baseUrl,
 }: ShareButtonsProps): React.ReactElement {
-  const { isSharing, canShareLine, canShareWeb, shareToLine, shareToWeb } =
-    useShare(baseUrl);
+  const {
+    isSharing,
+    canShareLine,
+    canShareWeb,
+    shareToLine,
+    shareToWeb,
+    messageQueue,
+  } = useShare(baseUrl);
 
   // Track if component has mounted to avoid hydration mismatch
   // Web Share API availability differs between server (false) and client (true)
@@ -59,35 +66,43 @@ export function ShareButtons({
   };
 
   return (
-    <div className="share-buttons">
-      {/* LINE Share Button */}
-      <button
-        type="button"
-        className="share-button share-button-line"
-        onClick={handleLineShare}
-        disabled={isSharing || !canShareLine}
-        data-testid="share-line-button"
-        aria-label="LINEでシェア"
-        style={{ backgroundColor: '#06C755' }}
-      >
-        <SiLine className="share-button-icon" aria-hidden="true" />
-        <span className="share-button-text">LINE</span>
-      </button>
+    <>
+      {/* Toast notification for share results */}
+      <MessageBox
+        message={messageQueue.currentMessage}
+        testId="share-message-box"
+      />
 
-      {/* Web Share Button - Hidden when not available, only shown after mount to avoid hydration mismatch */}
-      {isMounted && canShareWeb && (
+      <div className="share-buttons">
+        {/* LINE Share Button */}
         <button
           type="button"
-          className="share-button share-button-web"
-          onClick={handleWebShare}
-          disabled={isSharing}
-          data-testid="share-web-button"
-          aria-label="その他でシェア"
+          className="share-button share-button-line"
+          onClick={handleLineShare}
+          disabled={isSharing || !canShareLine}
+          data-testid="share-line-button"
+          aria-label="LINEでシェア"
+          style={{ backgroundColor: '#06C755' }}
         >
-          <FiShare2 className="share-button-icon" aria-hidden="true" />
-          <span className="share-button-text">シェア</span>
+          <SiLine className="share-button-icon" aria-hidden="true" />
+          <span className="share-button-text">LINE</span>
         </button>
-      )}
-    </div>
+
+        {/* Web Share Button - Hidden when not available, only shown after mount to avoid hydration mismatch */}
+        {isMounted && canShareWeb && (
+          <button
+            type="button"
+            className="share-button share-button-web"
+            onClick={handleWebShare}
+            disabled={isSharing}
+            data-testid="share-web-button"
+            aria-label="その他でシェア"
+          >
+            <FiShare2 className="share-button-icon" aria-hidden="true" />
+            <span className="share-button-text">シェア</span>
+          </button>
+        )}
+      </div>
+    </>
   );
 }

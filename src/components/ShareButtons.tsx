@@ -5,7 +5,9 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { SiLine } from 'react-icons/si';
+import { FiShare2 } from 'react-icons/fi';
 import { useShare } from '@/hooks/useShare';
 import type { ShareResult } from '@/lib/share/flex-message-builder';
 import './ShareButtons.css';
@@ -33,6 +35,17 @@ export function ShareButtons({
   const { isSharing, canShareLine, canShareWeb, shareToLine, shareToWeb } =
     useShare(baseUrl);
 
+  // Track if component has mounted to avoid hydration mismatch
+  // Web Share API availability differs between server (false) and client (true)
+  // This is a legitimate pattern - the effect synchronizes React state with
+  // the external "mounted" status which only exists on the client
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional: sync with client-only mounted state
+    setIsMounted(true);
+  }, []);
+
   const handleLineShare = () => {
     if (!isSharing) {
       shareToLine(result);
@@ -57,12 +70,12 @@ export function ShareButtons({
         aria-label="LINEでシェア"
         style={{ backgroundColor: '#06C755' }}
       >
-        <span className="share-button-icon">LINE</span>
-        <span className="share-button-text">LINEでシェア</span>
+        <SiLine className="share-button-icon" aria-hidden="true" />
+        <span className="share-button-text">LINE</span>
       </button>
 
-      {/* Web Share Button - Hidden when not available */}
-      {canShareWeb && (
+      {/* Web Share Button - Hidden when not available, only shown after mount to avoid hydration mismatch */}
+      {isMounted && canShareWeb && (
         <button
           type="button"
           className="share-button share-button-web"
@@ -71,7 +84,8 @@ export function ShareButtons({
           data-testid="share-web-button"
           aria-label="その他でシェア"
         >
-          <span className="share-button-text">その他でシェア</span>
+          <FiShare2 className="share-button-icon" aria-hidden="true" />
+          <span className="share-button-text">シェア</span>
         </button>
       )}
     </div>

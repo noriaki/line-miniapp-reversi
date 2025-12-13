@@ -5,10 +5,10 @@
 
 .share-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  gap: 8px;
   width: 100%;
-  max-width: 280px;
+  max-width: 320px;
   margin: 0 auto;
 }
 
@@ -16,12 +16,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 14px 20px;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -48,8 +49,10 @@
   color: white;
 }
 
-.share-button-line .share-button-icon {
-  font-weight: bold;
+.share-button-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 /* Web Share Button */

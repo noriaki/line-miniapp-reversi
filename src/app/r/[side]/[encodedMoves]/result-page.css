@@ -97,6 +97,15 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+.score-stone.stone-black {
+  background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
+}
+
+.score-stone.stone-white {
+  background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+  border: 1px solid #ddd;
+}
+
 .score-label {
   font-size: 0.875rem;
   color: #6b7280;
@@ -209,25 +218,5 @@
 
   .score-value {
     font-size: 1.25rem;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .result-title {
-    color: #ffffff;
-  }
-
-  .score-display {
-    background-color: #2d2d2d;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .score-value {
-    color: #ffffff;
-  }
-
-  .score-label {
-    color: #9ca3af;
   }
 }

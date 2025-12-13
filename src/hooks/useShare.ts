@@ -14,6 +14,7 @@ import {
 } from '@/lib/share/share-service';
 import type { ShareResult } from '@/lib/share/flex-message-builder';
 import { useMessageQueue } from './useMessageQueue';
+import { useLiff } from './useLiff';
 
 /** Toast display duration in milliseconds */
 const TOAST_TIMEOUT_MS = 3000;
@@ -48,9 +49,10 @@ export interface UseShareReturn {
 export function useShare(baseUrl: string): UseShareReturn {
   const [isSharing, setIsSharing] = useState(false);
   const messageQueue = useMessageQueue();
+  const { isReady: liffIsReady } = useLiff();
 
-  // Check share availability (memoized to avoid recalculation)
-  const canShareLine = useMemo(() => canShareToLine(), []);
+  // Check share availability (re-evaluate when LIFF becomes ready)
+  const canShareLine = useMemo(() => canShareToLine(), [liffIsReady]);
   const canShareWeb = useMemo(() => canShareToWeb(), []);
 
   /**

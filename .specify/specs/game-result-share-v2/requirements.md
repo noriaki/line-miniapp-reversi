@@ -51,11 +51,12 @@
 2. The 結果ページ shall 最終盤面、スコア（黒/白の石数）、勝敗結果を表示する
 3. When sideパラメータが `b`（先攻/黒）の場合, the 結果ページ shall プレイヤーを上部（黒側）、AIを下部（白側）に表示する
 4. When sideパラメータが `w`（後攻/白）の場合, the 結果ページ shall プレイヤーを下部（白側）、AIを上部（黒側）に表示する
-5. The 結果ページ shall 「LINEでシェア」ボタン（LINE緑色）と「その他でシェア」ボタンを表示する
-6. If Web Share API が利用不可能な環境, then the 結果ページ shall 「その他でシェア」ボタンを非表示にする
-7. The 結果ページ shall 「もう一度遊ぶ」ボタン（ゲーム開始へのCTA）を表示する
-8. When ユーザーが「もう一度遊ぶ」ボタンをタップする, the 結果ページ shall ゲームページに遷移する
-9. If 不正なエンコード文字列またはsideパラメータでアクセスされた, then the 結果ページ shall エラーメッセージと共にゲームページへの導線を表示する
+5. The 結果ページ shall スコア表示において、プレイヤー側に「プレーヤー」、AI側に「AI」というラベルを表示する
+6. The 結果ページ shall 「LINEでシェア」ボタン（LINE緑色）と「その他でシェア」ボタンを表示する
+7. If Web Share API が利用不可能な環境, then the 結果ページ shall 「その他でシェア」ボタンを非表示にする
+8. The 結果ページ shall 「もう一度遊ぶ」ボタン（ゲーム開始へのCTA）を表示する
+9. When ユーザーが「もう一度遊ぶ」ボタンをタップする, the 結果ページ shall ゲームページに遷移する
+10. If 不正なエンコード文字列またはsideパラメータでアクセスされた, then the 結果ページ shall エラーメッセージと共にゲームページへの導線を表示する
 
 ### Requirement 5: LINEシェアフロー
 
@@ -63,12 +64,13 @@
 
 #### Acceptance Criteria (Req5)
 
-1. When ユーザーが「LINEでシェア」ボタンをタップする, the Share Service shall `liff.shareTargetPicker()` を呼び出す
-2. When `liff.shareTargetPicker()` が呼び出される, the Share Service shall Flex Message形式でシェアコンテンツを送信する
-3. The Flex Message shall 結果ページURL、結果テキスト（「黒の勝ち」「白の勝ち」「引き分け」）、スコア、プレイを促すCTAを含む
-4. When シェアが正常に完了した, the Share Service shall 成功トーストを表示する
-5. If ユーザーがシェアをキャンセルした, then the Share Service shall 元の結果ページに戻る（エラー表示なし）
-6. If `liff.shareTargetPicker()` がエラーを返した, then the Share Service shall エラートーストを表示する
+1. The Share Service shall LINEログイン済みかつ `shareTargetPicker` が利用可能なすべてのユーザーにシェア機能を提供する（ゲームをプレイした本人に限定しない）
+2. When ユーザーが「LINEでシェア」ボタンをタップする, the Share Service shall `liff.shareTargetPicker()` を呼び出す
+3. When `liff.shareTargetPicker()` が呼び出される, the Share Service shall Flex Message形式でシェアコンテンツを送信する
+4. The Flex Message shall 結果ページURL、結果テキスト（「黒の勝ち」「白の勝ち」「引き分け」）、スコア、プレイを促すCTAを含む
+5. When シェアが正常に完了した, the Share Service shall 成功トーストを表示する
+6. If ユーザーがシェアをキャンセルした, then the Share Service shall 元の結果ページに戻る（エラー表示なし）
+7. If `liff.shareTargetPicker()` がエラーを返した, then the Share Service shall エラートーストを表示する
 
 ### Requirement 6: Web Shareフロー
 

@@ -29,6 +29,14 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+.board-display-stone.stone-black {
+  background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
+}
+
+.board-display-stone.stone-white {
+  background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+}
+
 /* Responsive design for mobile */
 @media (max-width: 640px) {
   .board-display-grid {

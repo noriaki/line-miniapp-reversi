@@ -445,7 +445,7 @@ function buildFlexMessage(result: ShareResult, baseUrl: string): FlexMessage;
 | Field        | Detail                                       |
 | ------------ | -------------------------------------------- |
 | Intent       | LINE シェアと Web Share の実行ロジックを提供 |
-| Requirements | 5.1, 6.1, 6.2, 6.3                           |
+| Requirements | 5.1, 5.2, 6.1, 6.2, 6.3                      |
 
 **Responsibilities & Constraints**
 
@@ -453,6 +453,7 @@ function buildFlexMessage(result: ShareResult, baseUrl: string): FlexMessage;
 - `navigator.share` API の呼び出し
 - API 利用可能性のチェック
 - エラーハンドリング（キャンセル、API エラー）
+- シェア権限: LINE ログイン済みかつ `shareTargetPicker` が利用可能なすべてのユーザーがシェア可能（ゲームをプレイした本人に限定しない、ユーザー認証チェックなし）
 
 **Dependencies**
 
@@ -567,15 +568,16 @@ function useShare(): UseShareReturn;
 
 #### ResultPage
 
-| Field        | Detail                                           |
-| ------------ | ------------------------------------------------ |
-| Intent       | 結果ページの表示と OGP メタデータ生成            |
-| Requirements | 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 7.6 |
+| Field        | Detail                                                 |
+| ------------ | ------------------------------------------------------ |
+| Intent       | 結果ページの表示と OGP メタデータ生成                  |
+| Requirements | 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 7.6 |
 
 **Responsibilities & Constraints**
 
 - URL パラメータから手順をデコードして盤面を復元・表示
 - side パラメータに基づくレイアウト切り替え
+- スコア表示ラベル: プレイヤー側は「プレーヤー」、AI側は「AI」と表示（静的ラベル、アクセス経路によらず固定）
 - シェアボタンと「もう一度遊ぶ」ボタンの表示
 - 不正パラメータ時のエラー表示
 

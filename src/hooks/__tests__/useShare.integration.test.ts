@@ -12,14 +12,13 @@ import liff from '@line/liff';
 // We test the actual integration between useShare and shareService
 // Only external dependencies (LIFF, navigator) are mocked
 
-// Mock LIFF module
-jest.mock('@line/liff', () => ({
-  isApiAvailable: jest.fn(),
-  shareTargetPicker: jest.fn(),
-}));
-
-// Get mocked liff for type-safe access
-const mockedLiff = jest.mocked(liff);
+// Type assertion for liff.$mock API (available when @line/liff-mock is installed)
+type LiffWithMock = typeof liff & {
+  $mock: {
+    set: (data: Record<string, unknown>) => void;
+    clear: () => void;
+  };
+};
 
 // Mock useMessageQueue to capture toast messages
 const mockMessages: Array<{ type: string; text: string; timeout: number }> = [];
@@ -29,6 +28,19 @@ jest.mock('../useMessageQueue', () => ({
     currentMessage: null,
     addMessage: mockAddMessage,
     clearMessage: jest.fn(),
+  }),
+}));
+
+// Mock useLiff to provide LIFF context
+jest.mock('../useLiff', () => ({
+  useLiff: () => ({
+    isReady: true,
+    error: null,
+    isInClient: false,
+    isLoggedIn: true,
+    profile: null,
+    login: jest.fn(),
+    logout: jest.fn(),
   }),
 }));
 
@@ -51,6 +63,9 @@ describe('useShare Integration', () => {
     jest.clearAllMocks();
     mockMessages.length = 0;
 
+    // Clear liff-mock state using official @line/liff-mock API
+    (liff as LiffWithMock).$mock.clear();
+
     // Setup navigator mock
     Object.defineProperty(global, 'navigator', {
       value: {
@@ -63,6 +78,9 @@ describe('useShare Integration', () => {
   });
 
   afterEach(() => {
+    // Clean up liff-mock state using official API
+    (liff as LiffWithMock).$mock.clear();
+
     Object.defineProperty(global, 'navigator', {
       value: originalNavigator,
       writable: true,
@@ -72,8 +90,12 @@ describe('useShare Integration', () => {
 
   describe('LINE Share flow with real FlexMessage building', () => {
     it('should build correct FlexMessage when sharing to LINE', async () => {
-      mockedLiff.isApiAvailable.mockReturnValue(true);
-      mockedLiff.shareTargetPicker.mockResolvedValue(undefined);
+      const isApiAvailableSpy = jest
+        .spyOn(liff, 'isApiAvailable')
+        .mockReturnValue(true);
+      const shareTargetPickerSpy = jest
+        .spyOn(liff, 'shareTargetPicker')
+        .mockResolvedValue(undefined);
 
       const { result } = renderHook(() => useShare(baseUrl));
 
@@ -82,7 +104,7 @@ describe('useShare Integration', () => {
       });
 
       // Verify shareTargetPicker was called with properly built FlexMessage
-      expect(mockedLiff.shareTargetPicker).toHaveBeenCalledWith(
+      expect(shareTargetPickerSpy).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({
             type: 'flex',
@@ -93,11 +115,18 @@ describe('useShare Integration', () => {
           }),
         ])
       );
+
+      isApiAvailableSpy.mockRestore();
+      shareTargetPickerSpy.mockRestore();
     });
 
     it('should include OG image URL in FlexMessage', async () => {
-      mockedLiff.isApiAvailable.mockReturnValue(true);
-      mockedLiff.shareTargetPicker.mockResolvedValue(undefined);
+      const isApiAvailableSpy = jest
+        .spyOn(liff, 'isApiAvailable')
+        .mockReturnValue(true);
+      const shareTargetPickerSpy = jest
+        .spyOn(liff, 'shareTargetPicker')
+        .mockResolvedValue(undefined);
 
       const { result } = renderHook(() => useShare(baseUrl));
 
@@ -106,12 +135,15 @@ describe('useShare Integration', () => {
       });
 
       // Check the call arguments for hero image URL
-      const callArgs = mockedLiff.shareTargetPicker.mock.calls[0][0][0] as {
+      const callArgs = shareTargetPickerSpy.mock.calls[0][0][0] as {
         contents: { hero?: { url: string } };
       };
       const heroUrl = callArgs.contents.hero?.url;
       expect(heroUrl).toContain('/r/b/');
       expect(heroUrl).toContain('opengraph-image');
+
+      isApiAvailableSpy.mockRestore();
+      shareTargetPickerSpy.mockRestore();
     });
 
     it('should verify FlexMessage structure matches LIFF spec', () => {
@@ -167,8 +199,12 @@ describe('useShare Integration', () => {
 
   describe('Toast notification integration', () => {
     it('should show success toast with correct content after LINE share', async () => {
-      mockedLiff.isApiAvailable.mockReturnValue(true);
-      mockedLiff.shareTargetPicker.mockResolvedValue(undefined);
+      const isApiAvailableSpy = jest
+        .spyOn(liff, 'isApiAvailable')
+        .mockReturnValue(true);
+      const shareTargetPickerSpy = jest
+        .spyOn(liff, 'shareTargetPicker')
+        .mockResolvedValue(undefined);
 
       const { result } = renderHook(() => useShare(baseUrl));
 
@@ -182,11 +218,18 @@ describe('useShare Integration', () => {
           timeout: 3000,
         })
       );
+
+      isApiAvailableSpy.mockRestore();
+      shareTargetPickerSpy.mockRestore();
     });
 
     it('should show error toast when LINE share fails', async () => {
-      mockedLiff.isApiAvailable.mockReturnValue(true);
-      mockedLiff.shareTargetPicker.mockRejectedValue(new Error('API error'));
+      const isApiAvailableSpy = jest
+        .spyOn(liff, 'isApiAvailable')
+        .mockReturnValue(true);
+      const shareTargetPickerSpy = jest
+        .spyOn(liff, 'shareTargetPicker')
+        .mockRejectedValue(new Error('API error'));
 
       const { result } = renderHook(() => useShare(baseUrl));
 
@@ -199,13 +242,20 @@ describe('useShare Integration', () => {
           type: 'warning',
         })
       );
+
+      isApiAvailableSpy.mockRestore();
+      shareTargetPickerSpy.mockRestore();
     });
 
     it('should not show toast when user cancels share', async () => {
-      mockedLiff.isApiAvailable.mockReturnValue(true);
+      const isApiAvailableSpy = jest
+        .spyOn(liff, 'isApiAvailable')
+        .mockReturnValue(true);
       const cancelError = new Error('User cancelled');
       (cancelError as Error & { code?: string }).code = 'cancel';
-      mockedLiff.shareTargetPicker.mockRejectedValue(cancelError);
+      const shareTargetPickerSpy = jest
+        .spyOn(liff, 'shareTargetPicker')
+        .mockRejectedValue(cancelError);
 
       const { result } = renderHook(() => useShare(baseUrl));
 
@@ -214,6 +264,9 @@ describe('useShare Integration', () => {
       });
 
       expect(mockAddMessage).not.toHaveBeenCalled();
+
+      isApiAvailableSpy.mockRestore();
+      shareTargetPickerSpy.mockRestore();
     });
 
     it('should show success toast after Web share', async () => {
@@ -236,13 +289,17 @@ describe('useShare Integration', () => {
 
   describe('State management integration', () => {
     it('should properly track sharing state through complete flow', async () => {
-      mockedLiff.isApiAvailable.mockReturnValue(true);
+      const isApiAvailableSpy = jest
+        .spyOn(liff, 'isApiAvailable')
+        .mockReturnValue(true);
 
       let resolveShare: () => void;
       const sharePromise = new Promise<void>((resolve) => {
         resolveShare = resolve;
       });
-      mockedLiff.shareTargetPicker.mockReturnValue(sharePromise);
+      const shareTargetPickerSpy = jest
+        .spyOn(liff, 'shareTargetPicker')
+        .mockReturnValue(sharePromise);
 
       const { result } = renderHook(() => useShare(baseUrl));
 
@@ -265,17 +322,24 @@ describe('useShare Integration', () => {
 
       // Should no longer be sharing
       expect(result.current.isSharing).toBe(false);
+
+      isApiAvailableSpy.mockRestore();
+      shareTargetPickerSpy.mockRestore();
     });
 
     it('should block concurrent shares across LINE and Web', async () => {
-      mockedLiff.isApiAvailable.mockReturnValue(true);
+      const isApiAvailableSpy = jest
+        .spyOn(liff, 'isApiAvailable')
+        .mockReturnValue(true);
       mockNavigatorCanShare.mockReturnValue(true);
 
       let resolveLineShare: () => void;
       const lineSharePromise = new Promise<void>((resolve) => {
         resolveLineShare = resolve;
       });
-      mockedLiff.shareTargetPicker.mockReturnValue(lineSharePromise);
+      const shareTargetPickerSpy = jest
+        .spyOn(liff, 'shareTargetPicker')
+        .mockReturnValue(lineSharePromise);
 
       const { result } = renderHook(() => useShare(baseUrl));
 
@@ -297,16 +361,23 @@ describe('useShare Integration', () => {
         resolveLineShare!();
         await lineSharePromise;
       });
+
+      isApiAvailableSpy.mockRestore();
+      shareTargetPickerSpy.mockRestore();
     });
   });
 
   describe('API availability integration', () => {
     it('should correctly detect LINE share availability', () => {
-      mockedLiff.isApiAvailable.mockReturnValue(true);
+      const isApiAvailableSpy = jest
+        .spyOn(liff, 'isApiAvailable')
+        .mockReturnValue(true);
 
       const { result } = renderHook(() => useShare(baseUrl));
 
       expect(result.current.canShareLine).toBe(true);
+
+      isApiAvailableSpy.mockRestore();
     });
 
     it('should correctly detect Web Share availability', () => {
@@ -318,7 +389,9 @@ describe('useShare Integration', () => {
     });
 
     it('should return error status when LINE API is unavailable', async () => {
-      mockedLiff.isApiAvailable.mockReturnValue(false);
+      const isApiAvailableSpy = jest
+        .spyOn(liff, 'isApiAvailable')
+        .mockReturnValue(false);
 
       const { result } = renderHook(() => useShare(baseUrl));
 
@@ -332,6 +405,8 @@ describe('useShare Integration', () => {
           type: 'warning',
         })
       );
+
+      isApiAvailableSpy.mockRestore();
     });
 
     it('should return error status when Web Share API is unavailable', async () => {
@@ -359,8 +434,12 @@ describe('useShare Integration', () => {
 
   describe('Complete share flow with real data', () => {
     it('should complete full LINE share flow with actual result data', async () => {
-      mockedLiff.isApiAvailable.mockReturnValue(true);
-      mockedLiff.shareTargetPicker.mockResolvedValue(undefined);
+      const isApiAvailableSpy = jest
+        .spyOn(liff, 'isApiAvailable')
+        .mockReturnValue(true);
+      const shareTargetPickerSpy = jest
+        .spyOn(liff, 'shareTargetPicker')
+        .mockResolvedValue(undefined);
 
       const realResult: ShareResult = {
         encodedMoves: 'MzQzMw', // d3, c3 encoded
@@ -377,9 +456,12 @@ describe('useShare Integration', () => {
       });
 
       // Verify complete flow executed
-      expect(mockedLiff.shareTargetPicker).toHaveBeenCalled();
+      expect(shareTargetPickerSpy).toHaveBeenCalled();
       expect(mockAddMessage).toHaveBeenCalled();
       expect(result.current.isSharing).toBe(false);
+
+      isApiAvailableSpy.mockRestore();
+      shareTargetPickerSpy.mockRestore();
     });
 
     it('should complete full Web Share flow with actual result data', async () => {

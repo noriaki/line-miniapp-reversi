@@ -13,6 +13,8 @@ import {
   replayMoves,
   determineWinner,
 } from '@/lib/share/move-encoder';
+import type { ShareResult } from '@/lib/share/flex-message-builder';
+import { ShareButtonsWrapper } from './ShareButtonsWrapper';
 import './result-page.css';
 
 // ISR configuration: No pre-generated pages, generate on-demand
@@ -25,6 +27,23 @@ type PageParams = {
   side: string;
   encodedMoves: string;
 };
+
+/**
+ * Get base URL for share functionality
+ * Priority: NEXT_PUBLIC_BASE_URL (explicit) > VERCEL_URL (auto) > localhost
+ */
+function getBaseUrl(): string {
+  // Explicit base URL (highest priority)
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
+  // Vercel Production/Preview deployments (auto-generated)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  // Local development fallback
+  return 'http://localhost:3000';
+}
 
 /**
  * Validate side parameter
@@ -46,7 +65,7 @@ function getWinnerText(
 
   const playerColor = playerSide === 'b' ? 'black' : 'white';
   if (winner === playerColor) {
-    return 'あなたの勝ち!';
+    return 'プレーヤーの勝ち!';
   } else {
     return 'AIの勝ち!';
   }
@@ -114,6 +133,10 @@ export async function generateMetadata({
         ? '黒の勝ち'
         : '白の勝ち';
 
+  // Build absolute OGP image URL
+  const baseUrl = getBaseUrl();
+  const ogImageUrl = `${baseUrl}/r/${side}/${encodedMoves}/opengraph-image`;
+
   return {
     title: `LINE Reversi - ${winnerText} (黒${blackCount} - 白${whiteCount})`,
     description: `リバーシ対戦結果: ${winnerText}! 黒${blackCount} - 白${whiteCount}`,
@@ -121,6 +144,20 @@ export async function generateMetadata({
       title: `リバーシ対戦結果: ${winnerText}`,
       description: `黒${blackCount} - 白${whiteCount} で${winnerText}!`,
       type: 'website',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: 'リバーシ対戦結果',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `リバーシ対戦結果: ${winnerText}`,
+      description: `黒${blackCount} - 白${whiteCount} で${winnerText}!`,
+      images: [ogImageUrl],
     },
   };
 }
@@ -199,7 +236,7 @@ export default async function ResultPage({
           <>
             <div className="score-item">
               <div className="score-stone stone-black" />
-              <span className="score-label">あなた</span>
+              <span className="score-label">プレーヤー</span>
               <span className="score-value">{blackCount}</span>
             </div>
             <div className="score-divider">vs</div>
@@ -220,7 +257,7 @@ export default async function ResultPage({
             <div className="score-divider">vs</div>
             <div className="score-item">
               <div className="score-stone stone-white" />
-              <span className="score-label">あなた</span>
+              <span className="score-label">プレーヤー</span>
               <span className="score-value">{whiteCount}</span>
             </div>
           </>
@@ -229,6 +266,20 @@ export default async function ResultPage({
 
       {/* Board Display */}
       <BoardDisplay board={board} />
+
+      {/* Share Buttons */}
+      <ShareButtonsWrapper
+        result={
+          {
+            side: playerSide,
+            winner,
+            blackCount,
+            whiteCount,
+            encodedMoves,
+          } satisfies ShareResult
+        }
+        serverBaseUrl={getBaseUrl()}
+      />
 
       {/* Action Buttons */}
       <div className="result-actions">

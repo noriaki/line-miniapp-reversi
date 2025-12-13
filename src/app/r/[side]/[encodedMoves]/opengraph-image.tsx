@@ -153,6 +153,7 @@ function renderScore(
       {/* Winner text */}
       <div
         style={{
+          display: 'flex',
           fontSize: 48,
           fontWeight: 700,
           color: resultColor,
@@ -189,6 +190,7 @@ function renderScore(
           />
           <div
             style={{
+              display: 'flex',
               fontSize: 56,
               fontWeight: 700,
               color: COLORS.text,
@@ -201,6 +203,7 @@ function renderScore(
         {/* Separator */}
         <div
           style={{
+            display: 'flex',
             fontSize: 36,
             fontWeight: 700,
             color: COLORS.subtext,
@@ -230,6 +233,7 @@ function renderScore(
           />
           <div
             style={{
+              display: 'flex',
               fontSize: 56,
               fontWeight: 700,
               color: COLORS.text,
@@ -257,6 +261,7 @@ function renderBrand() {
     >
       <div
         style={{
+          display: 'flex',
           fontSize: 24,
           fontWeight: 700,
           color: COLORS.brand,

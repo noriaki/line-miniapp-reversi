@@ -24,6 +24,19 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock useLiff to provide LIFF context for ShareButtons
+jest.mock('@/hooks/useLiff', () => ({
+  useLiff: () => ({
+    isReady: true,
+    error: null,
+    isInClient: false,
+    isLoggedIn: true,
+    profile: null,
+    login: jest.fn(),
+    logout: jest.fn(),
+  }),
+}));
+
 /**
  * Test fixtures for various game scenarios
  * Note: These are valid Reversi move sequences that follow game rules
@@ -233,7 +246,7 @@ describe('Result Page Integration', () => {
 
       // Verify score labels match player perspective
       const scoreDisplay = screen.getByTestId('score-display');
-      expect(scoreDisplay.textContent).toContain('あなた');
+      expect(scoreDisplay.textContent).toContain('プレーヤー');
       expect(scoreDisplay.textContent).toContain('AI');
     });
 

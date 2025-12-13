@@ -140,7 +140,7 @@ test.describe('E2E Test - Result Page', () => {
 
       // Check score display contains player labels
       const scoreDisplay = page.locator(SELECTORS.scoreDisplay);
-      await expect(scoreDisplay).toContainText('あなた');
+      await expect(scoreDisplay).toContainText('プレーヤー');
       await expect(scoreDisplay).toContainText('AI');
     });
 
@@ -318,7 +318,7 @@ test.describe('E2E Test - Result Page', () => {
 
       // Text content should be one of the expected outcomes
       const text = await resultText.textContent();
-      expect(text).toMatch(/あなたの勝ち|AIの勝ち|引き分け/);
+      expect(text).toMatch(/プレーヤーの勝ち|AIの勝ち|引き分け/);
     });
   });
 

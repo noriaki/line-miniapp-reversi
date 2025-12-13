@@ -20,6 +20,22 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock useShare hook
+jest.mock('@/hooks/useShare', () => ({
+  useShare: () => ({
+    isSharing: false,
+    canShareLine: true,
+    canShareWeb: true,
+    shareToLine: jest.fn(),
+    shareToWeb: jest.fn(),
+    messageQueue: {
+      messages: [],
+      addMessage: jest.fn(),
+      dismissMessage: jest.fn(),
+    },
+  }),
+}));
+
 // Sample valid game moves (opening moves)
 const sampleMoves: Position[] = [
   { row: 2, col: 3 }, // d3
@@ -116,6 +132,19 @@ describe('ResultPage', () => {
       });
       expect(playAgainButton).toBeInTheDocument();
       expect(playAgainButton).toHaveAttribute('href', '/');
+    });
+
+    it('should render share buttons', async () => {
+      const encodedMoves = encodeMoves(sampleMoves);
+      const page = await ResultPage({
+        params: Promise.resolve({ side: 'b', encodedMoves }),
+      });
+
+      render(page);
+
+      // Share buttons should be displayed
+      expect(screen.getByTestId('share-line-button')).toBeInTheDocument();
+      expect(screen.getByTestId('share-web-button')).toBeInTheDocument();
     });
   });
 

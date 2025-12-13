@@ -26,6 +26,19 @@ jest.mock('../useMessageQueue', () => ({
   }),
 }));
 
+// Mock useLiff to provide LIFF context
+jest.mock('../useLiff', () => ({
+  useLiff: () => ({
+    isReady: true,
+    error: null,
+    isInClient: false,
+    isLoggedIn: true,
+    profile: null,
+    login: jest.fn(),
+    logout: jest.fn(),
+  }),
+}));
+
 describe('useShare', () => {
   const baseUrl = 'https://example.com';
   const mockResult: ShareResult = {

@@ -9,9 +9,9 @@
 ## Core Technologies
 
 - **Language**: TypeScript 5.x (strict mode enabled)
-- **Framework**: Next.js 16.0.4 (App Router, Static Export mode)
+- **Framework**: Next.js 16.0.10 (App Router, Static Export mode)
 - **Runtime**: Node.js 24.9.0 (development), Static HTML/JS (production)
-- **UI Library**: React 19.2.0 (client components for interactivity)
+- **UI Library**: React 19.2.3 (client components for interactivity)
 - **Package Manager**: pnpm 10.23.0
 
 ## Key Libraries
@@ -79,6 +79,6 @@
 
 ---
 
-_Updated: 2025-11-29 (E2E mobile-only strategy documented)_
+_Updated: 2025-12-13 (Security update: Next.js 16.0.10, React 19.2.3)_
 
 _Document standards and patterns, not every dependency_

@@ -6,6 +6,18 @@ import GameBoard from '../GameBoard';
 import * as gameLogic from '@/lib/game/game-logic';
 import { useGameInconsistencyDetector } from '@/hooks/useGameInconsistencyDetector';
 
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
+
+// Mock move-encoder
+jest.mock('@/lib/share/move-encoder', () => ({
+  encodeMoves: jest.fn().mockReturnValue('testEncodedMoves'),
+}));
+
 // Mock useAIPlayer hook to avoid import.meta issues in tests
 jest.mock('@/hooks/useAIPlayer', () => ({
   useAIPlayer: () => ({

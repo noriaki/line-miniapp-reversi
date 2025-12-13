@@ -1,0 +1,165 @@
+{
+  "type": "bubble",
+  "hero": {
+    "type": "image",
+    "url": "https://placehold.jp/A8D8B9/24936E/1200x630.png",
+    "size": "full",
+    "aspectRatio": "1200:630",
+    "aspectMode": "fit"
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "👑",
+                    "size": "sm",
+                    "flex": 0
+                  },
+                  {
+                    "type": "text",
+                    "text": "プレーヤー",
+                    "size": "sm",
+                    "flex": 0,
+                    "margin": "xs"
+                  }
+                ],
+                "justifyContent": "center"
+              },
+              {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "●",
+                    "size": "md",
+                    "flex": 0
+                  },
+                  {
+                    "type": "text",
+                    "text": "36",
+                    "size": "xxl",
+                    "weight": "bold",
+                    "flex": 0,
+                    "margin": "sm"
+                  }
+                ],
+                "justifyContent": "center",
+                "margin": "sm",
+                "alignItems": "center"
+              }
+            ],
+            "flex": 1,
+            "alignItems": "center"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "vs",
+                "size": "xs",
+                "color": "#888888",
+                "align": "center"
+              },
+              {
+                "type": "text",
+                "text": "-",
+                "size": "xl",
+                "color": "#888888",
+                "align": "center",
+                "margin": "sm"
+              }
+            ],
+            "flex": 0,
+            "justifyContent": "center",
+            "margin": "lg"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "AI",
+                "size": "sm",
+                "align": "center"
+              },
+              {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "28",
+                    "size": "xxl",
+                    "weight": "bold",
+                    "flex": 0
+                  },
+                  {
+                    "type": "text",
+                    "text": "○",
+                    "size": "md",
+                    "flex": 0,
+                    "margin": "sm"
+                  }
+                ],
+                "justifyContent": "center",
+                "margin": "sm",
+                "alignItems": "center"
+              }
+            ],
+            "flex": 1,
+            "alignItems": "center",
+            "margin": "lg"
+          }
+        ],
+        "alignItems": "center"
+      },
+      {
+        "type": "separator",
+        "margin": "xl"
+      },
+      {
+        "type": "text",
+        "text": "AIに勝てるかな？",
+        "size": "sm",
+        "align": "center",
+        "color": "#888888",
+        "margin": "lg"
+      }
+    ],
+    "paddingAll": "lg"
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "button",
+        "action": {
+          "type": "uri",
+          "label": "かんたんリバーシをプレイ",
+          "uri": "https://liff.line.me/xxxx"
+        },
+        "style": "primary",
+        "color": "#06C755"
+      }
+    ]
+  }
+}

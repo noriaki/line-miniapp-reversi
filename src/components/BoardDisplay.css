@@ -1,0 +1,54 @@
+/* BoardDisplay - Read-only board display for result page */
+
+.board-display-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  background-color: #1e3a0f;
+  padding: 4px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 1;
+}
+
+.board-display-cell {
+  aspect-ratio: 1;
+  background-color: #4a9932;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.board-display-stone {
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.board-display-stone.stone-black {
+  background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
+}
+
+.board-display-stone.stone-white {
+  background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+}
+
+/* Responsive design for mobile */
+@media (max-width: 640px) {
+  .board-display-grid {
+    max-width: 100%;
+    padding: 4px;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 375px) {
+  .board-display-grid {
+    padding: 2px;
+    gap: 1px;
+  }
+}

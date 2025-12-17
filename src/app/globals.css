@@ -7,13 +7,6 @@
   --foreground: #1a1a1a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1a1a1a;
-    --foreground: #ffffff;
-  }
-}
-
 * {
   box-sizing: border-box;
   padding: 0;

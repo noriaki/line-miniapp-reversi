@@ -1,12 +1,20 @@
 'use client';
 
-import React, { useCallback, useEffect, useState, type JSX } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useMemo,
+  type JSX,
+} from 'react';
+import { useRouter } from 'next/navigation';
 import { useGameState } from '@/hooks/useGameState';
 import { useAIPlayer } from '@/hooks/useAIPlayer';
 import { useGameInconsistencyDetector } from '@/hooks/useGameInconsistencyDetector';
 import { useMessageQueue } from '@/hooks/useMessageQueue';
 import { useLiff } from '@/hooks/useLiff';
 import { MessageBox } from '@/components/MessageBox';
+import { NavigationFallback } from '@/components/NavigationFallback';
 import {
   applyMove,
   validateMove,
@@ -14,8 +22,20 @@ import {
 } from '@/lib/game/game-logic';
 import { checkGameEnd } from '@/lib/game/game-end';
 import { generateCellId } from '@/lib/game/cell-id';
+import { encodeMoves } from '@/lib/share/move-encoder';
 import type { Position } from '@/lib/game/types';
 import './GameBoard.css';
+
+/**
+ * Convert chess notation (e.g., "e3") to Position object
+ * @param notation - Chess notation string (column letter + row number)
+ * @returns Position object with row and col
+ */
+function notationToPosition(notation: string): Position {
+  const col = notation.charCodeAt(0) - 'a'.charCodeAt(0);
+  const row = parseInt(notation[1], 10) - 1;
+  return { row, col };
+}
 
 export interface GameBoardProps {
   initialSettings?: Record<string, unknown>; // Future settings can be added here
@@ -26,6 +46,7 @@ export interface GameBoardProps {
  * Manages the entire game UI and user interaction
  */
 export default function GameBoard(): JSX.Element {
+  const router = useRouter();
   const {
     board,
     currentPlayer,
@@ -35,6 +56,7 @@ export default function GameBoard(): JSX.Element {
     whiteCount,
     isAIThinking,
     consecutivePassCount,
+    moveHistory,
     notationString,
     lastMove,
     updateBoard,
@@ -47,6 +69,29 @@ export default function GameBoard(): JSX.Element {
   } = useGameState();
 
   const { calculateMove } = useAIPlayer();
+
+  // Player is always black (first player)
+  const playerSide = 'b' as const;
+
+  // Calculate result page URL when game ends
+  const resultPageUrl = useMemo(() => {
+    if (gameStatus.type !== 'finished') return null;
+    const positions = moveHistory.map(notationToPosition);
+    const encodedMoves = encodeMoves(positions);
+    return `/r/${playerSide}/${encodedMoves}`;
+  }, [gameStatus, moveHistory]);
+
+  // Auto-navigation effect when game ends
+  useEffect(() => {
+    if (gameStatus.type !== 'finished' || !resultPageUrl) return;
+
+    // Navigate to result page after 500ms delay
+    const timer = setTimeout(() => {
+      router.push(resultPageUrl);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [gameStatus, resultPageUrl, router]);
 
   const { hasInconsistency, clearInconsistency, getInconsistencyMessage } =
     useGameInconsistencyDetector(); // Phase 3: Separated inconsistency detection
@@ -484,13 +529,9 @@ export default function GameBoard(): JSX.Element {
         </div>
       )}
 
-      {/* Game Over Screen */}
-      {gameStatus.type === 'finished' && (
-        <div className="game-result" data-testid="game-result">
-          <button onClick={resetGame} className="reset-button">
-            新しいゲームを開始
-          </button>
-        </div>
+      {/* Game Over - NavigationFallback for result page */}
+      {gameStatus.type === 'finished' && resultPageUrl && (
+        <NavigationFallback targetUrl={resultPageUrl} timeoutMs={2000} />
       )}
     </div>
   );

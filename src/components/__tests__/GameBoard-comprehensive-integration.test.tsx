@@ -19,6 +19,18 @@ import userEvent from '@testing-library/user-event';
 import GameBoard from '../GameBoard';
 import * as gameLogic from '@/lib/game/game-logic';
 
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
+
+// Mock move-encoder
+jest.mock('@/lib/share/move-encoder', () => ({
+  encodeMoves: jest.fn().mockReturnValue('testEncodedMoves'),
+}));
+
 // Mock useAIPlayer to avoid Worker issues in Jest
 jest.mock('@/hooks/useAIPlayer', () => ({
   useAIPlayer: () => ({

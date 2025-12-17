@@ -15,6 +15,18 @@ import { useGameState } from '@/hooks/useGameState';
 import * as gameLogic from '@/lib/game/game-logic';
 import * as gameEnd from '@/lib/game/game-end';
 
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
+
+// Mock move-encoder
+jest.mock('@/lib/share/move-encoder', () => ({
+  encodeMoves: jest.fn().mockReturnValue('testEncodedMoves'),
+}));
+
 // Mock AI worker
 jest.mock('@/hooks/useAIPlayer', () => ({
   useAIPlayer: () => ({

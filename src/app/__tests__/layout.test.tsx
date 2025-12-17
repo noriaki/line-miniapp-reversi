@@ -12,10 +12,12 @@ jest.mock('@/contexts/LiffProvider', () => ({
 
 describe('RootLayout (Server Component)', () => {
   it('should have correct metadata', () => {
-    expect(metadata).toEqual({
-      title: 'LINE Reversi - リバーシゲーム',
-      description: 'LINEミニアプリで遊べるリバーシゲーム。AIと対戦しよう!',
-    });
+    expect(metadata.title).toBe('Easy Reversi - かんたんリバーシ');
+    expect(metadata.description).toBe(
+      'LINEミニアプリで遊べるリバーシゲーム。AIと対戦しよう!'
+    );
+    // metadataBase is set dynamically based on environment
+    expect(metadata.metadataBase).toBeDefined();
   });
 
   it('should have correct viewport settings', () => {

@@ -19,6 +19,18 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import GameBoard from '../GameBoard';
 
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
+
+// Mock move-encoder
+jest.mock('@/lib/share/move-encoder', () => ({
+  encodeMoves: jest.fn().mockReturnValue('testEncodedMoves'),
+}));
+
 // Mock useAIPlayer hook to avoid import.meta issues in tests
 jest.mock('@/hooks/useAIPlayer', () => ({
   useAIPlayer: () => ({

@@ -44,6 +44,38 @@ export async function getAIMove(board: Board, level: number): Promise<Position>;
 export type { Profile } from '@line/liff';
 ```
 
+### Share Domain (`/src/lib/share/`)
+
+**Purpose**: Game result sharing - move encoding/decoding, LINE Flex Messages, Web Share API
+**Pattern**: Pure functions for data transformation, service functions for external APIs, barrel exports
+**Example**:
+
+```typescript
+// move-encoder.ts - WTHOR format encoding/decoding, board replay
+export function encodeMoves(positions: Position[]): string;
+export function decodeMoves(encoded: string): DecodeResult;
+export function replayMoves(positions: Position[]): ReplayResult;
+
+// flex-message-builder.ts - LINE Flex Message construction
+export function buildFlexMessage(
+  result: ShareResult,
+  permalink: string
+): FlexMessage;
+
+// share-service.ts - Share operation orchestration
+export async function shareToLine(
+  result: ShareResult,
+  permalink: string
+): Promise<ShareOutcome>;
+export async function shareToWeb(
+  result: ShareResult,
+  shareUrl: string
+): Promise<ShareOutcome>;
+
+// url-builder.ts - URL construction utilities
+export function buildPermalink(liffId: string, path: string): string;
+```
+
 ### Shared Types (`/src/types/`)
 
 **Purpose**: Cross-domain type definitions and interfaces
@@ -62,7 +94,7 @@ export interface MessageBoxProps {
 
 ### React State Management (`/src/hooks/`)
 
-**Purpose**: Custom React hooks for game state, AI player, LIFF integration, message queue
+**Purpose**: Custom React hooks for game state, AI player, LIFF integration, message queue, sharing
 **Pattern**: Encapsulate stateful logic, consume pure lib functions
 **Example**:
 
@@ -72,17 +104,20 @@ export interface MessageBoxProps {
 // useLiff.ts - LIFF context consumer
 // useMessageQueue.ts - Message display queue with timeout management
 // useGameInconsistencyDetector.ts - Game state validation and error detection
+// useShare.ts - Share operation state, exclusion control, toast notifications
 // worker-factory.ts - Worker instantiation abstraction (testable)
 ```
 
 ### UI Components (`/src/components/`)
 
 **Purpose**: Presentational components with visual logic
-**Pattern**: Receive props from hooks, render UI, emit events
+**Pattern**: Receive props from hooks, render UI, emit events. CSS files co-located with components.
 **Example**:
 
 ```typescript
 // GameBoard.tsx - Game grid with animations (uses GameBoard.css)
+// BoardDisplay.tsx - Static board visualization for result pages
+// ShareButtons.tsx - LINE/Web share buttons with availability detection
 // MessageBox.tsx - Unified message display (info/warning)
 // ErrorBoundary.tsx - React error boundary wrapper
 // WASMErrorHandler.tsx - WASM-specific error handling
@@ -139,9 +174,23 @@ test.describe('Stone Placement and Flipping', () => {
 
 ### Next.js App Router (`/src/app/`)
 
-**Purpose**: Server Components, layouts, page routes
-**Pattern**: Minimal logic - layout wraps client components
-**Example**: `layout.tsx` (wraps app with `<LiffProvider>`), `page.tsx` (renders `<GameBoard>`)
+**Purpose**: Server Components, layouts, page routes, dynamic route handlers
+**Pattern**: Minimal logic in static pages, Server Components for ISR pages with dynamic data
+**Example**:
+
+```typescript
+// layout.tsx - App wrapper with LiffProvider
+// page.tsx - Game board page (renders GameBoard)
+// r/[side]/[encodedMoves]/page.tsx - ISR result page with OGP
+// r/[side]/[encodedMoves]/opengraph-image.tsx - Dynamic OG image generation
+```
+
+**ISR Route Pattern** (`/r/[side]/[encodedMoves]/`):
+
+- `generateStaticParams()` returns empty array (on-demand generation)
+- `generateMetadata()` for dynamic OGP with ImageResponse
+- Server Components process URL params, render result UI
+- Client wrapper components for interactive elements (ShareButtonsWrapper)
 
 ## Naming Conventions
 
@@ -192,6 +241,6 @@ import type { Board, Position } from './types';
 
 ---
 
-_Updated: 2025-12-07 (Updated /app/ to /src/app/ path after directory migration)_
+_Updated: 2025-12-14 (Added Share domain, ISR route patterns, useShare hook, share-related components)_
 
 _Document patterns, not file trees. New files following patterns shouldn't require updates_

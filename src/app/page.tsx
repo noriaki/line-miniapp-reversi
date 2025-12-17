@@ -10,7 +10,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center bg-line-light text-gray-900">
       {/* Header */}
       <header className="w-full bg-line-green text-white py-4 px-4 shadow-md">
-        <h1 className="text-2xl font-bold text-center">リバーシ</h1>
+        <h1 className="text-2xl font-bold text-center">かんたんリバーシ</h1>
       </header>
 
       {/* Game Content */}

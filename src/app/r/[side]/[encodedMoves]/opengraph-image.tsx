@@ -20,6 +20,9 @@ export const size = {
   height: 630,
 };
 
+// ISR configuration: Cache indefinitely after first generation
+export const revalidate = false;
+
 export const contentType = 'image/png';
 
 // Page params type

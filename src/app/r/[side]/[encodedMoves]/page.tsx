@@ -13,6 +13,7 @@ import {
   replayMoves,
   determineWinner,
 } from '@/lib/share/move-encoder';
+import { getBaseUrl } from '@/lib/env';
 import type { ShareResult } from '@/lib/share/flex-message-builder';
 import { ShareButtonsWrapper } from './ShareButtonsWrapper';
 import './result-page.css';
@@ -27,27 +28,6 @@ type PageParams = {
   side: string;
   encodedMoves: string;
 };
-
-/**
- * Get base URL for share functionality
- * Priority: BASE_URL > VERCEL_URL (preview) > VERCEL_PROJECT_PRODUCTION_URL > localhost
- */
-function getBaseUrl(): string {
-  // Explicit base URL (highest priority, server-side only)
-  if (process.env.BASE_URL) {
-    return `https://${process.env.BASE_URL}`;
-  }
-  // Preview environment: use deployment-specific URL
-  if (process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  // Production environment: use production URL
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  }
-  // Local development fallback
-  return 'http://localhost:3000';
-}
 
 /**
  * Validate side parameter

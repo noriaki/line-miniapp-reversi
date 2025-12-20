@@ -15,8 +15,8 @@
 ## Core Technologies
 
 - **Language**: TypeScript 5.x (strict mode enabled)
-- **Framework**: Next.js 16.0.10 (App Router, Hybrid Static/ISR mode)
-- **Runtime**: Node.js 24.9.0 (development), Static HTML/JS (production)
+- **Framework**: Next.js 16.1.0 (App Router, Hybrid Static/ISR mode)
+- **Runtime**: Node.js 24.12.0 (development), Static HTML/JS (production)
 - **UI Library**: React 19.2.3 (client components for interactivity)
 - **Package Manager**: pnpm 10.23.0
 
@@ -67,7 +67,7 @@
 
 ### Required Tools
 
-- Node.js 24.9.0 (managed via nodenv)
+- Node.js 24.12.0 (managed via nodenv)
 - pnpm 10.23.0
 - Optional: dev3000 for AI-assisted debugging
 
@@ -100,6 +100,6 @@
 
 ---
 
-_Updated: 2025-12-14 (Added Share domain, react-icons, LINE Share integration pattern)_
+_Updated: 2025-12-20 (Node.js 24.9.0 -> 24.12.0, Next.js 16.0.10 -> 16.1.0)_
 
 _Document standards and patterns, not every dependency_

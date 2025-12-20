@@ -293,45 +293,43 @@ function generateImageWithBoard(
   const boardSize = 480;
 
   return new ImageResponse(
-    (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        backgroundColor: '#f5f5f5',
+        padding: 40,
+      }}
+    >
+      {/* Left side: Board */}
       <div
         style={{
-          width: '100%',
-          height: '100%',
           display: 'flex',
-          backgroundColor: '#f5f5f5',
-          padding: 40,
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: 1,
         }}
       >
-        {/* Left side: Board */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flex: 1,
-          }}
-        >
-          {renderBoard(board, boardSize)}
-        </div>
-
-        {/* Right side: Score and Brand */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flex: 1,
-            paddingTop: 40,
-            paddingBottom: 40,
-          }}
-        >
-          {renderScore(blackCount, whiteCount, winner)}
-          {renderBrand()}
-        </div>
+        {renderBoard(board, boardSize)}
       </div>
-    ),
+
+      {/* Right side: Score and Brand */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flex: 1,
+          paddingTop: 40,
+          paddingBottom: 40,
+        }}
+      >
+        {renderScore(blackCount, whiteCount, winner)}
+        {renderBrand()}
+      </div>
+    </div>,
     {
       ...size,
     }

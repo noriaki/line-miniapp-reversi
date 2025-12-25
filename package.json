@@ -25,6 +25,7 @@
     "prepare": "husky && next typegen"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.958.0",
     "@line/liff": "^2.27.2",
     "next": "16.1.0",
     "react": "19.2.3",

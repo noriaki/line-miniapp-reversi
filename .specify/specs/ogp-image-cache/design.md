@@ -605,11 +605,6 @@ og/{side}/{encodedMoves}.png
 - API Route: 無効な棋譜で400返却
 - API Route: R2エラー時の適切なエラーハンドリング
 
-### E2E Tests (if applicable)
-
-- 結果ページ表示時にOgImagePrefetchが呼び出される
-- シェアボタンのOG画像URLがR2ドメインを参照
-
 ## Optional Sections
 
 ### Security Considerations
@@ -637,7 +632,7 @@ og/{side}/{encodedMoves}.png
 2. **Phase 2**: API Route実装・OgImagePrefetchコンポーネント追加
 3. **Phase 3**: generateMetadata・FlexMessageBuilder更新
 4. **Phase 4**: opengraph-image.tsx削除
-5. **Phase 5**: E2Eテスト・本番デプロイ
+5. **Phase 5**: 本番デプロイ
 
 **Rollback Trigger**: R2接続エラーが継続する場合は既存のopengraph-image.tsxにロールバック
 

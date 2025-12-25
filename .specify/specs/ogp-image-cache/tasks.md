@@ -2,7 +2,7 @@
 
 ## Tasks
 
-- [ ] 1. 依存パッケージのインストールと環境変数設定
+- [x] 1. 依存パッケージのインストールと環境変数設定
   - AWS SDK S3クライアントパッケージをプロジェクトに追加
   - R2接続に必要な環境変数テンプレートを.env.exampleに追記（R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_DOMAIN）
   - _Requirements: 4.1, 4.2, 5.3_

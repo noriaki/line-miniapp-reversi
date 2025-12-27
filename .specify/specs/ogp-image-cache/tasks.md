@@ -92,7 +92,7 @@
   - og:imageと同一のR2 URLを参照することを確認
   - _Requirements: 3.1, 3.2_
 
-- [ ] 8. 既存opengraph-image.tsx規約ファイルの削除
+- [x] 8. 既存opengraph-image.tsx規約ファイルの削除
   - opengraph-image.tsx規約ファイルを削除
   - 関連するインポートや参照がないことを確認
   - _Requirements: 7.2_

@@ -128,16 +128,26 @@ export async function generateMetadata({
         ? '黒の勝ち'
         : '白の勝ち';
 
+  // Build absolute URL for og:url
+  const absoluteUrl = `${getBaseUrl()}/r/${side}/${encodedMoves}`;
+
   // Build R2 direct URL for OGP image
   const ogImageUrl = buildOgImageUrl(side, encodedMoves);
 
+  // Optimized OGP metadata for better engagement
+  const ogTitle = `黒${blackCount} - 白${whiteCount} の対局結果｜盤面をチェック`;
+  const ogDescription = `${winnerText}！最終盤面を確認して、あなたもかんたんリバーシで対局してみませんか？`;
+
   return {
-    title: `Easy Reversi - ${winnerText} (黒${blackCount} - 白${whiteCount})`,
-    description: `リバーシ対局結果: ${winnerText}! 黒${blackCount} - 白${whiteCount}`,
+    title: `黒${blackCount} - 白${whiteCount} の対局結果 | かんたんリバーシ/Easy Reversi`,
+    description: ogDescription,
     openGraph: {
-      title: `リバーシ対局結果: ${winnerText}`,
-      description: `黒${blackCount} - 白${whiteCount} で${winnerText}!`,
-      type: 'website',
+      title: ogTitle,
+      description: ogDescription,
+      type: 'article',
+      url: absoluteUrl,
+      siteName: 'かんたんリバーシ',
+      locale: 'ja_JP',
       images: [
         {
           url: ogImageUrl,
@@ -149,8 +159,8 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: `リバーシ対局結果: ${winnerText}`,
-      description: `黒${blackCount} - 白${whiteCount} で${winnerText}!`,
+      title: ogTitle,
+      description: ogDescription,
       images: [ogImageUrl],
     },
   };

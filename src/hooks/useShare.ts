@@ -49,10 +49,12 @@ export interface UseShareReturn {
 
 /** Configuration for useShare hook */
 export interface UseShareConfig {
-  /** Base URL for endpoint access (OGP images) */
+  /** Base URL for endpoint access (OGP images) - fallback when ogImageUrl is not provided */
   readonly baseUrl: string;
   /** LIFF ID for permalink construction */
   readonly liffId: string | undefined;
+  /** R2 public domain URL for OGP image (optional - uses baseUrl fallback if not provided) */
+  readonly ogImageUrl?: string;
 }
 
 /**
@@ -61,7 +63,11 @@ export interface UseShareConfig {
  * @param config - Configuration object with baseUrl and liffId
  * @returns Share state and operations
  */
-export function useShare({ baseUrl, liffId }: UseShareConfig): UseShareReturn {
+export function useShare({
+  baseUrl,
+  liffId,
+  ogImageUrl: providedOgImageUrl,
+}: UseShareConfig): UseShareReturn {
   const [isSharing, setIsSharing] = useState(false);
   const messageQueue = useMessageQueue();
   const { isReady: liffIsReady } = useLiff();
@@ -114,9 +120,15 @@ export function useShare({ baseUrl, liffId }: UseShareConfig): UseShareReturn {
         // Build URLs
         const path = buildResultPath(result.side, result.encodedMoves);
         const permalinkUrl = buildPermalink(liffId, path);
-        const ogImagePath = buildOgImagePath(result.side, result.encodedMoves);
-        const ogImageUrl = buildEndpointUrl(baseUrl, ogImagePath);
         const homeUrl = buildHomeUrl(liffId);
+
+        // Use provided R2 URL if available, otherwise fall back to endpoint URL
+        const ogImageUrl =
+          providedOgImageUrl ??
+          buildEndpointUrl(
+            baseUrl,
+            buildOgImagePath(result.side, result.encodedMoves)
+          );
 
         const outcome = await shareToLineService(
           result,
@@ -140,7 +152,14 @@ export function useShare({ baseUrl, liffId }: UseShareConfig): UseShareReturn {
         setIsSharing(false);
       }
     },
-    [isSharing, liffId, baseUrl, showSuccessToast, showErrorToast]
+    [
+      isSharing,
+      liffId,
+      baseUrl,
+      providedOgImageUrl,
+      showSuccessToast,
+      showErrorToast,
+    ]
   );
 
   /**

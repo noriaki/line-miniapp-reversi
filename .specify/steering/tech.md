@@ -44,6 +44,10 @@
 - **Formatting**: Prettier enforced on all commits
 - **Pure Functions**: Game logic implemented as stateless pure functions for testability
 
+### Specification Workflow
+
+- **Accurate Timestamps**: When updating `spec.json` dates (e.g., `startedAt`, `completedAt`), always run `date` command first to get the current time. Never estimate or use stale timestamps.
+
 ### Testing
 
 - **Unit Tests**: Jest 30.x + React Testing Library (90%+ coverage target)
@@ -100,6 +104,6 @@
 
 ---
 
-_Updated: 2025-12-20 (Node.js 24.9.0 -> 24.12.0, Next.js 16.0.10 -> 16.1.0)_
+<!-- Updated: 2025-12-26 (Added Specification Workflow: accurate timestamps rule) -->
 
-_Document standards and patterns, not every dependency_
+<!-- Focus on patterns and purpose, not exhaustive feature lists -->

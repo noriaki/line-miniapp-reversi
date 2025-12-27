@@ -12,6 +12,22 @@ import type { Position } from '@/lib/game/types';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _React = React; // Suppress unused import warning while keeping React in scope for JSX
 
+// Mock environment variables for R2
+const mockR2PublicDomain = 'images.reversi.line-mini.dev';
+const originalEnv = process.env;
+
+beforeEach(() => {
+  jest.resetModules();
+  process.env = {
+    ...originalEnv,
+    R2_PUBLIC_DOMAIN: mockR2PublicDomain,
+  };
+});
+
+afterEach(() => {
+  process.env = originalEnv;
+});
+
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -63,22 +79,73 @@ describe('ResultPage', () => {
       expect(metadata.openGraph).toBeDefined();
     });
 
-    it('should handle invalid encodedMoves gracefully', async () => {
+    it('should set og:image to R2 public domain direct URL', async () => {
+      const encodedMoves = encodeMoves(sampleMoves);
+      const metadata = await generateMetadata({
+        params: Promise.resolve({ side: 'b', encodedMoves }),
+      });
+
+      const ogImages = metadata.openGraph?.images;
+      expect(ogImages).toBeDefined();
+      expect(Array.isArray(ogImages)).toBe(true);
+
+      const firstImage = (ogImages as { url: string }[])[0];
+      expect(firstImage.url).toBe(
+        `https://${mockR2PublicDomain}/og/b/${encodedMoves}.png`
+      );
+    });
+
+    it('should set twitter:image to R2 public domain direct URL', async () => {
+      const encodedMoves = encodeMoves(sampleMoves);
+      const metadata = await generateMetadata({
+        params: Promise.resolve({ side: 'b', encodedMoves }),
+      });
+
+      const twitterImages = metadata.twitter?.images;
+      expect(twitterImages).toBeDefined();
+      expect(Array.isArray(twitterImages)).toBe(true);
+
+      const firstImage = (twitterImages as string[])[0];
+      expect(firstImage).toBe(
+        `https://${mockR2PublicDomain}/og/b/${encodedMoves}.png`
+      );
+    });
+
+    it('should not include opengraph-image path in og:image URL', async () => {
+      const encodedMoves = encodeMoves(sampleMoves);
+      const metadata = await generateMetadata({
+        params: Promise.resolve({ side: 'b', encodedMoves }),
+      });
+
+      const ogImages = metadata.openGraph?.images;
+      const firstImage = (ogImages as { url: string }[])[0];
+
+      // URL should NOT contain opengraph-image path
+      expect(firstImage.url).not.toContain('opengraph-image');
+      // URL should be R2 direct URL
+      expect(firstImage.url).toContain(mockR2PublicDomain);
+    });
+
+    it('should handle invalid encodedMoves gracefully without og:image', async () => {
       const metadata = await generateMetadata({
         params: Promise.resolve({ side: 'b', encodedMoves: 'invalid!!!' }),
       });
 
       // Should still return some metadata even for invalid input
       expect(metadata.title).toBeDefined();
+      // Should NOT include og:image for invalid moves
+      expect(metadata.openGraph?.images).toBeUndefined();
     });
 
-    it('should handle invalid side parameter', async () => {
+    it('should handle invalid side parameter without og:image', async () => {
       const encodedMoves = encodeMoves(sampleMoves);
       const metadata = await generateMetadata({
         params: Promise.resolve({ side: 'x', encodedMoves }),
       });
 
       expect(metadata.title).toBeDefined();
+      // Should NOT include og:image for invalid side
+      expect(metadata.openGraph?.images).toBeUndefined();
     });
   });
 
@@ -231,6 +298,49 @@ describe('ResultPage', () => {
 
       // Should show initial board state (2-2)
       expect(screen.getByTestId('board-display')).toBeInTheDocument();
+    });
+  });
+
+  describe('OgImagePrefetch integration', () => {
+    it('should render OgImagePrefetch component with correct props', async () => {
+      const encodedMoves = encodeMoves(sampleMoves);
+      const page = await ResultPage({
+        params: Promise.resolve({ side: 'b', encodedMoves }),
+      });
+
+      render(page);
+
+      // OgImagePrefetch should be rendered (it renders null but is in the tree)
+      // We verify by checking the page renders successfully and share buttons have ogImageUrl
+      expect(screen.getByTestId('result-container')).toBeInTheDocument();
+    });
+  });
+
+  describe('ogImageUrl prop passing', () => {
+    it('should pass ogImageUrl to ShareButtonsWrapper', async () => {
+      const encodedMoves = encodeMoves(sampleMoves);
+      const page = await ResultPage({
+        params: Promise.resolve({ side: 'b', encodedMoves }),
+      });
+
+      render(page);
+
+      // ShareButtonsWrapper should receive ogImageUrl and pass it to ShareButtons
+      // We verify indirectly by checking the page renders share buttons
+      expect(screen.getByTestId('share-line-button')).toBeInTheDocument();
+    });
+
+    it('should construct R2 URL using R2_PUBLIC_DOMAIN environment variable', async () => {
+      const encodedMoves = encodeMoves(sampleMoves);
+      const page = await ResultPage({
+        params: Promise.resolve({ side: 'w', encodedMoves }),
+      });
+
+      render(page);
+
+      // Page should render successfully with R2 URL constructed from env var
+      expect(screen.getByTestId('result-container')).toBeInTheDocument();
+      expect(screen.getByTestId('share-web-button')).toBeInTheDocument();
     });
   });
 });

@@ -227,4 +227,45 @@ describe('ShareButtons', () => {
       expect(screen.getByTestId('share-web-button')).toBeInTheDocument();
     });
   });
+
+  describe('ogImageUrl prop', () => {
+    it('should pass ogImageUrl to useShare when provided', () => {
+      const ogImageUrl = 'https://images.reversi.line-mini.dev/og/b/ABC123.png';
+
+      render(
+        <ShareButtons
+          result={mockResult}
+          baseUrl={baseUrl}
+          liffId={liffId}
+          ogImageUrl={ogImageUrl}
+        />
+      );
+
+      // Verify useShare was called with ogImageUrl
+      expect(mockUseShare).toHaveBeenCalledWith(
+        expect.objectContaining({
+          baseUrl,
+          liffId,
+          ogImageUrl,
+        })
+      );
+    });
+
+    it('should call useShare without ogImageUrl when not provided', () => {
+      render(
+        <ShareButtons result={mockResult} baseUrl={baseUrl} liffId={liffId} />
+      );
+
+      // Verify useShare was called without ogImageUrl (undefined)
+      expect(mockUseShare).toHaveBeenCalledWith(
+        expect.objectContaining({
+          baseUrl,
+          liffId,
+        })
+      );
+      // Ensure ogImageUrl is not passed or is undefined
+      const callArgs = mockUseShare.mock.calls[0][0];
+      expect(callArgs.ogImageUrl).toBeUndefined();
+    });
+  });
 });

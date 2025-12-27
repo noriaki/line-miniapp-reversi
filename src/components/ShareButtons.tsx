@@ -21,6 +21,8 @@ export interface ShareButtonsProps {
   baseUrl: string;
   /** LIFF ID for permalink generation */
   liffId: string | undefined;
+  /** R2 public domain URL for OGP image (optional for backward compatibility) */
+  ogImageUrl?: string;
 }
 
 /**
@@ -35,6 +37,7 @@ export function ShareButtons({
   result,
   baseUrl,
   liffId,
+  ogImageUrl,
 }: ShareButtonsProps): React.ReactElement {
   const {
     isSharing,
@@ -43,7 +46,7 @@ export function ShareButtons({
     shareToLine,
     shareToWeb,
     messageQueue,
-  } = useShare({ baseUrl, liffId });
+  } = useShare({ baseUrl, liffId, ogImageUrl });
 
   // Track if component has mounted to avoid hydration mismatch
   // Web Share API availability differs between server (false) and client (true)

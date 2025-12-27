@@ -2,6 +2,9 @@
  * OG Image Generator
  * Generates Open Graph images for game result sharing
  * Uses Next.js ImageResponse for server-side image generation
+ *
+ * This module extracts the image generation logic from the original
+ * opengraph-image.tsx convention file for use with R2 storage caching.
  */
 
 import React from 'react';
@@ -14,21 +17,13 @@ import {
 import { createInitialBoard } from '@/lib/game';
 import type { Board, Cell } from '@/lib/game/types';
 
-// Image dimensions (OGP standard)
-export const size = {
+/** OGP standard image dimensions */
+export const OG_IMAGE_SIZE = {
   width: 1200,
   height: 630,
-};
+} as const;
 
-export const contentType = 'image/png';
-
-// Page params type
-type PageParams = {
-  side: string;
-  encodedMoves: string;
-};
-
-// Colors
+/** Color palette for OG image rendering */
 const COLORS = {
   boardBackground: '#1e3a0f',
   cellBackground: '#4a9932',
@@ -40,10 +35,7 @@ const COLORS = {
   resultWin: '#059142',
   resultLose: '#dc2626',
   resultDraw: '#6b7280',
-};
-
-// Static alt text for the OG image
-export const alt = 'リバーシ対局結果';
+} as const;
 
 /**
  * Render a single cell for the board
@@ -274,22 +266,14 @@ function renderBrand() {
 }
 
 /**
- * Generate fallback image for error cases
+ * Create ImageResponse from board state
  */
-function generateFallbackImage() {
-  const board = createInitialBoard();
-  return generateImageWithBoard(board, 2, 2, 'draw');
-}
-
-/**
- * Generate image with specific board state
- */
-function generateImageWithBoard(
+function createImageResponse(
   board: Board,
   blackCount: number,
   whiteCount: number,
   winner: 'black' | 'white' | 'draw'
-) {
+): ImageResponse {
   const boardSize = 480;
 
   return new ImageResponse(
@@ -331,35 +315,61 @@ function generateImageWithBoard(
       </div>
     </div>,
     {
-      ...size,
+      ...OG_IMAGE_SIZE,
     }
   );
 }
 
 /**
- * Default export: Generate the OG image
+ * Generate OG image buffer from encoded moves
+ *
+ * @param encodedMoves - Base64URL encoded move history
+ * @returns Buffer containing PNG image data
+ * @throws Error if moves are invalid or replay fails
  */
-export default async function Image({
-  params,
-}: {
-  params: Promise<PageParams>;
-}) {
-  const { encodedMoves } = await params;
-
+export async function generateOgImageBuffer(
+  encodedMoves: string
+): Promise<Buffer> {
   // Decode moves
   const decodeResult = decodeMoves(encodedMoves);
   if (!decodeResult.success) {
-    return generateFallbackImage();
+    throw new Error(`Failed to decode moves: ${decodeResult.error}`);
   }
 
   // Replay moves to get final board state
   const replayResult = replayMoves(decodeResult.value);
   if (!replayResult.success) {
-    return generateFallbackImage();
+    throw new Error(
+      `Failed to replay moves: ${replayResult.error}${replayResult.moveIndex !== undefined ? ` at move ${replayResult.moveIndex}` : ''}`
+    );
   }
 
-  const { board, blackCount, whiteCount } = replayResult;
+  // Handle empty moves (initial board)
+  let board: Board;
+  let blackCount: number;
+  let whiteCount: number;
+
+  if (decodeResult.value.length === 0) {
+    board = createInitialBoard();
+    blackCount = 2;
+    whiteCount = 2;
+  } else {
+    board = replayResult.board;
+    blackCount = replayResult.blackCount;
+    whiteCount = replayResult.whiteCount;
+  }
+
   const winner = determineWinner(blackCount, whiteCount);
 
-  return generateImageWithBoard(board, blackCount, whiteCount, winner);
+  // Generate ImageResponse
+  const imageResponse = createImageResponse(
+    board,
+    blackCount,
+    whiteCount,
+    winner
+  );
+
+  // Convert to Buffer
+  const arrayBuffer = await imageResponse.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }

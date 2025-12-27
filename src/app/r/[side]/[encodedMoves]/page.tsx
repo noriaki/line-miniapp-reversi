@@ -13,8 +13,10 @@ import {
   replayMoves,
   determineWinner,
 } from '@/lib/share/move-encoder';
+import { getBaseUrl } from '@/lib/env';
 import type { ShareResult } from '@/lib/share/flex-message-builder';
 import { ShareButtonsWrapper } from './ShareButtonsWrapper';
+import { OgImagePrefetch } from '@/components/OgImagePrefetch';
 import './result-page.css';
 
 // ISR configuration: No pre-generated pages, generate on-demand
@@ -27,23 +29,6 @@ type PageParams = {
   side: string;
   encodedMoves: string;
 };
-
-/**
- * Get base URL for share functionality
- * Priority: BASE_URL > VERCEL_PROJECT_PRODUCTION_URL > localhost
- */
-function getBaseUrl(): string {
-  // Explicit base URL (highest priority, server-side only)
-  if (process.env.BASE_URL) {
-    return `https://${process.env.BASE_URL}`;
-  }
-  // Vercel deployments (always production URL, even from preview)
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  }
-  // Local development fallback
-  return 'http://localhost:3000';
-}
 
 /**
  * Validate side parameter
@@ -91,7 +76,17 @@ function getResultColorClass(
 }
 
 /**
+ * Build R2 public URL for OGP image
+ * Uses R2_PUBLIC_DOMAIN environment variable
+ */
+function buildOgImageUrl(side: 'b' | 'w', encodedMoves: string): string {
+  const imageKey = `og/${side}/${encodedMoves}.png`;
+  return `https://${process.env.R2_PUBLIC_DOMAIN}/${imageKey}`;
+}
+
+/**
  * Generate metadata for OGP
+ * Pure function - no side effects, uses R2 direct URL
  */
 export async function generateMetadata({
   params,
@@ -100,7 +95,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { side, encodedMoves } = await params;
 
-  // Default metadata for error cases
+  // Default metadata for error cases (without og:image)
   const defaultMetadata: Metadata = {
     title: 'Easy Reversi - 対局結果',
     description: 'リバーシ対局結果を確認しよう!',
@@ -133,17 +128,26 @@ export async function generateMetadata({
         ? '黒の勝ち'
         : '白の勝ち';
 
-  // Build absolute OGP image URL
-  const baseUrl = getBaseUrl();
-  const ogImageUrl = `${baseUrl}/r/${side}/${encodedMoves}/opengraph-image`;
+  // Build absolute URL for og:url
+  const absoluteUrl = `${getBaseUrl()}/r/${side}/${encodedMoves}`;
+
+  // Build R2 direct URL for OGP image
+  const ogImageUrl = buildOgImageUrl(side, encodedMoves);
+
+  // Optimized OGP metadata for better engagement
+  const ogTitle = `黒${blackCount} - 白${whiteCount} の対局結果｜盤面をチェック`;
+  const ogDescription = `${winnerText}！最終盤面を確認して、あなたもかんたんリバーシで対局してみませんか？`;
 
   return {
-    title: `Easy Reversi - ${winnerText} (黒${blackCount} - 白${whiteCount})`,
-    description: `リバーシ対局結果: ${winnerText}! 黒${blackCount} - 白${whiteCount}`,
+    title: `黒${blackCount} - 白${whiteCount} の対局結果 | かんたんリバーシ/Easy Reversi`,
+    description: ogDescription,
     openGraph: {
-      title: `リバーシ対局結果: ${winnerText}`,
-      description: `黒${blackCount} - 白${whiteCount} で${winnerText}!`,
-      type: 'website',
+      title: ogTitle,
+      description: ogDescription,
+      type: 'article',
+      url: absoluteUrl,
+      siteName: 'かんたんリバーシ',
+      locale: 'ja_JP',
       images: [
         {
           url: ogImageUrl,
@@ -155,8 +159,8 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: `リバーシ対局結果: ${winnerText}`,
-      description: `黒${blackCount} - 白${whiteCount} で${winnerText}!`,
+      title: ogTitle,
+      description: ogDescription,
       images: [ogImageUrl],
     },
   };
@@ -212,12 +216,18 @@ export default async function ResultPage({
   const winnerText = getWinnerText(winner, playerSide);
   const resultColorClass = getResultColorClass(winner, playerSide);
 
+  // Build R2 URL for OG image (same as generateMetadata)
+  const ogImageUrl = buildOgImageUrl(playerSide, encodedMoves);
+
   return (
     <div
       className="result-page"
       data-testid="result-container"
       data-player-side={playerSide === 'b' ? 'black' : 'white'}
     >
+      {/* OGP Image Prefetch - triggers background image generation */}
+      <OgImagePrefetch side={playerSide} encodedMoves={encodedMoves} />
+
       {/* Game Result Header */}
       <div className="result-header">
         <h1 className="result-title">ゲーム終了!</h1>
@@ -279,6 +289,7 @@ export default async function ResultPage({
           } satisfies ShareResult
         }
         serverBaseUrl={getBaseUrl()}
+        ogImageUrl={ogImageUrl}
       />
 
       {/* Action Buttons */}

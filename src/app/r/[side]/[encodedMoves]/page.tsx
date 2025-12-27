@@ -16,6 +16,7 @@ import {
 import { getBaseUrl } from '@/lib/env';
 import type { ShareResult } from '@/lib/share/flex-message-builder';
 import { ShareButtonsWrapper } from './ShareButtonsWrapper';
+import { OgImagePrefetch } from '@/components/OgImagePrefetch';
 import './result-page.css';
 
 // ISR configuration: No pre-generated pages, generate on-demand
@@ -75,7 +76,17 @@ function getResultColorClass(
 }
 
 /**
+ * Build R2 public URL for OGP image
+ * Uses R2_PUBLIC_DOMAIN environment variable
+ */
+function buildOgImageUrl(side: 'b' | 'w', encodedMoves: string): string {
+  const imageKey = `og/${side}/${encodedMoves}.png`;
+  return `https://${process.env.R2_PUBLIC_DOMAIN}/${imageKey}`;
+}
+
+/**
  * Generate metadata for OGP
+ * Pure function - no side effects, uses R2 direct URL
  */
 export async function generateMetadata({
   params,
@@ -84,7 +95,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { side, encodedMoves } = await params;
 
-  // Default metadata for error cases
+  // Default metadata for error cases (without og:image)
   const defaultMetadata: Metadata = {
     title: 'Easy Reversi - 対局結果',
     description: 'リバーシ対局結果を確認しよう!',
@@ -117,9 +128,8 @@ export async function generateMetadata({
         ? '黒の勝ち'
         : '白の勝ち';
 
-  // Build absolute OGP image URL
-  const baseUrl = getBaseUrl();
-  const ogImageUrl = `${baseUrl}/r/${side}/${encodedMoves}/opengraph-image`;
+  // Build R2 direct URL for OGP image
+  const ogImageUrl = buildOgImageUrl(side, encodedMoves);
 
   return {
     title: `Easy Reversi - ${winnerText} (黒${blackCount} - 白${whiteCount})`,
@@ -196,12 +206,18 @@ export default async function ResultPage({
   const winnerText = getWinnerText(winner, playerSide);
   const resultColorClass = getResultColorClass(winner, playerSide);
 
+  // Build R2 URL for OG image (same as generateMetadata)
+  const ogImageUrl = buildOgImageUrl(playerSide, encodedMoves);
+
   return (
     <div
       className="result-page"
       data-testid="result-container"
       data-player-side={playerSide === 'b' ? 'black' : 'white'}
     >
+      {/* OGP Image Prefetch - triggers background image generation */}
+      <OgImagePrefetch side={playerSide} encodedMoves={encodedMoves} />
+
       {/* Game Result Header */}
       <div className="result-header">
         <h1 className="result-title">ゲーム終了!</h1>
@@ -263,6 +279,7 @@ export default async function ResultPage({
           } satisfies ShareResult
         }
         serverBaseUrl={getBaseUrl()}
+        ogImageUrl={ogImageUrl}
       />
 
       {/* Action Buttons */}

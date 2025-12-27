@@ -65,14 +65,14 @@
   - _Requirements: 6.2_
 
 - [ ] 6. 結果ページの統合
-- [ ] 6.1 generateMetadataのR2 URL対応
+- [x] 6.1 generateMetadataのR2 URL対応
   - og:imageとtwitter:imageにR2公開ドメインを使用した直接URLを設定
   - 既存のopengraph-image規約ファイルパスへの参照を削除
   - 無効な棋譜時はog:imageを含まないデフォルトメタデータを返却
   - Server Component内でR2_PUBLIC_DOMAIN環境変数を使用してURL構築
   - _Requirements: 2.1, 2.2, 2.3, 6.1, 9.1_
 
-- [ ] 6.2 page.tsxのPrefetchとogImageUrl受渡し
+- [x] 6.2 page.tsxのPrefetchとogImageUrl受渡し
   - Server ComponentでR2 URLを構築し、ogImageUrlとしてShareButtonsWrapperに渡す
   - OgImagePrefetchコンポーネントをページに配置
   - _Requirements: 3.1, 3.2, 6.2_

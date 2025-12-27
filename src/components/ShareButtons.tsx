@@ -21,6 +21,8 @@ export interface ShareButtonsProps {
   baseUrl: string;
   /** LIFF ID for permalink generation */
   liffId: string | undefined;
+  /** R2 public domain URL for OGP image (optional for backward compatibility) */
+  ogImageUrl?: string;
 }
 
 /**
@@ -35,6 +37,8 @@ export function ShareButtons({
   result,
   baseUrl,
   liffId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  ogImageUrl,
 }: ShareButtonsProps): React.ReactElement {
   const {
     isSharing,

@@ -8,9 +8,15 @@ interface Props {
   result: ShareResult;
   /** Fallback base URL from server for SSR */
   serverBaseUrl: string;
+  /** R2 public domain URL for OGP image */
+  ogImageUrl: string;
 }
 
-export function ShareButtonsWrapper({ result, serverBaseUrl }: Props) {
+export function ShareButtonsWrapper({
+  result,
+  serverBaseUrl,
+  ogImageUrl,
+}: Props) {
   // Prefer actual window origin on client, fall back to server-provided URL
   const baseUrl =
     typeof window !== 'undefined' ? window.location.origin : serverBaseUrl;
@@ -18,5 +24,12 @@ export function ShareButtonsWrapper({ result, serverBaseUrl }: Props) {
   // LIFF ID for permalink generation
   const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
 
-  return <ShareButtons result={result} baseUrl={baseUrl} liffId={liffId} />;
+  return (
+    <ShareButtons
+      result={result}
+      baseUrl={baseUrl}
+      liffId={liffId}
+      ogImageUrl={ogImageUrl}
+    />
+  );
 }

@@ -64,7 +64,7 @@
   - 重複リクエストは許容（R2のHeadObjectチェックで重複アップロード防止済み）
   - _Requirements: 6.2_
 
-- [ ] 6. 結果ページの統合
+- [x] 6. 結果ページの統合
 - [x] 6.1 generateMetadataのR2 URL対応
   - og:imageとtwitter:imageにR2公開ドメインを使用した直接URLを設定
   - 既存のopengraph-image規約ファイルパスへの参照を削除
@@ -97,7 +97,7 @@
   - 関連するインポートや参照がないことを確認
   - _Requirements: 7.2_
 
-- [ ] 9. 全体統合の検証
+- [x] 9. 全体統合の検証
   - 結果ページアクセス時にPrefetchが発火し、R2に画像が保存されることを検証
   - generateMetadataが返却するog:image URLがR2直接URLであることを検証
   - LINEシェア時のFlex Messageがog:imageと同一のR2 URLを参照することを検証

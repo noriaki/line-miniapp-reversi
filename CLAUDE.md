@@ -139,3 +139,48 @@ When implementation reaches a milestone:
   2. Switch back to `main` branch
   3. Pull latest changes from remote
   4. Delete both local and remote feature branches
+
+### PR Merge Strategy
+
+**Rebase merge is prohibited** (to avoid history rewriting risks).
+
+Choose between Merge commit and Squash merge:
+
+| Strategy         | When to Use                                                      | Rationale                       |
+| ---------------- | ---------------------------------------------------------------- | ------------------------------- |
+| **Squash merge** | PR contains WIP/fixup, `docs(spec):`, or trial-and-error commits | Keep history clean              |
+| **Merge commit** | Each commit is logically independent and individually buildable  | Enables fine-grained git bisect |
+
+**Decision Flow**:
+
+1. Review PR commit list
+2. Contains `docs(spec):`, WIP, fixup, or typo fix commits → **Squash**
+3. All commits follow semantic commit format and are independently meaningful → **Merge commit**
+
+**Squash Merge** (`--body` required):
+
+```bash
+gh pr merge <PR#> --squash --delete-branch --body "$(cat <<'EOF'
+<type>(<scope>): <summary> (#<PR#>)
+
+<concise description of the feature/fix>
+
+Key changes:
+- <change 1>
+- <change 2>
+- <change 3>
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+EOF
+)"
+```
+
+⚠️ Omitting `--body` results in all commit messages being concatenated (avoid this)
+
+**Merge Commit**:
+
+```bash
+gh pr merge <PR#> --merge --delete-branch
+```

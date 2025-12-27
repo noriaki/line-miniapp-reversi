@@ -77,17 +77,17 @@
   - OgImagePrefetchコンポーネントをページに配置
   - _Requirements: 3.1, 3.2, 6.2_
 
-- [ ] 7. シェア機能のR2 URL対応
-- [ ] 7.1 ShareButtonsWrapperのogImageUrl prop追加
+- [x] 7. シェア機能のR2 URL対応
+- [x] 7.1 ShareButtonsWrapperのogImageUrl prop追加
   - ogImageUrl propを追加で受け取り、ShareButtonsに伝播
   - 既存のserverBaseUrlパターンを踏襲
   - _Requirements: 3.1, 3.2_
 
-- [ ] 7.2 ShareButtonsのogImageUrl prop追加
+- [x] 7.2 ShareButtonsのogImageUrl prop追加
   - ogImageUrl propを受け取り、FlexMessageBuilderに渡す
   - _Requirements: 3.1, 3.2_
 
-- [ ] 7.3 FlexMessageBuilderの画像URL更新
+- [x] 7.3 FlexMessageBuilderの画像URL更新
   - 画像URLにprops経由で受け取ったR2 URLを使用
   - og:imageと同一のR2 URLを参照することを確認
   - _Requirements: 3.1, 3.2_

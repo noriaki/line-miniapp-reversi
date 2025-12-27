@@ -229,6 +229,29 @@ describe('useShare', () => {
         `https://miniapp.line.me/${liffId}`
       );
     });
+
+    it('should use provided ogImageUrl when available', async () => {
+      (shareService.shareToLine as jest.Mock).mockResolvedValue({
+        status: 'success',
+      });
+
+      const r2OgImageUrl =
+        'https://images.reversi.line-mini.dev/og/b/ABC123.png';
+      const configWithOgImageUrl = { ...config, ogImageUrl: r2OgImageUrl };
+      const { result } = renderHook(() => useShare(configWithOgImageUrl));
+
+      await act(async () => {
+        await result.current.shareToLine(mockResult);
+      });
+
+      // Verify shareToLine was called with R2 URL instead of endpoint URL
+      expect(shareService.shareToLine).toHaveBeenCalledWith(
+        mockResult,
+        expect.stringContaining('miniapp.line.me/test-liff-id/r/'),
+        r2OgImageUrl, // R2 direct URL
+        `https://miniapp.line.me/${liffId}`
+      );
+    });
   });
 
   describe('shareToWeb', () => {

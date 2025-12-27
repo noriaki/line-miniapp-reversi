@@ -37,7 +37,6 @@ export function ShareButtons({
   result,
   baseUrl,
   liffId,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ogImageUrl,
 }: ShareButtonsProps): React.ReactElement {
   const {
@@ -47,7 +46,7 @@ export function ShareButtons({
     shareToLine,
     shareToWeb,
     messageQueue,
-  } = useShare({ baseUrl, liffId });
+  } = useShare({ baseUrl, liffId, ogImageUrl });
 
   // Track if component has mounted to avoid hydration mismatch
   // Web Share API availability differs between server (false) and client (true)

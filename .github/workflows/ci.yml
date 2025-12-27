@@ -39,6 +39,12 @@ jobs:
 
       - name: Build
         run: pnpm run build
+        env:
+          R2_ACCOUNT_ID: dummy-account-id
+          R2_ACCESS_KEY_ID: dummy-access-key-id
+          R2_SECRET_ACCESS_KEY: dummy-secret-access-key
+          R2_BUCKET: dummy-bucket
+          R2_PUBLIC_DOMAIN: dummy.example.com
 
   unit-tests:
     runs-on: ubuntu-latest

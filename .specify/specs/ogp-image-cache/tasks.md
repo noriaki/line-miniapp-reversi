@@ -42,8 +42,8 @@
   - 生成画像のサイズ（1200x630）を検証
   - _Requirements: 8.3_
 
-- [ ] 4. OG画像生成APIルート
-- [ ] 4.1 OG画像生成API Routeの実装
+- [x] 4. OG画像生成APIルート
+- [x] 4.1 OG画像生成API Routeの実装
   - Dynamic route segmentsでsideとencodedMovesを受け取り
   - R2に画像が存在する場合はスキップしてexistsステータスを返却
   - R2に画像が存在しない場合は画像を生成してR2にアップロードし、createdステータスを返却
@@ -51,7 +51,7 @@
   - R2接続エラーの場合は500エラーを返却しログ記録
   - _Requirements: 1.2, 6.3, 6.4, 9.2, 9.3_
 
-- [ ] 4.2 API Routeの統合テスト
+- [x] 4.2 API Routeの統合テスト
   - R2に画像存在時のexistsレスポンスを検証
   - R2に画像未存在時の生成・アップロード・createdレスポンスを検証
   - 無効な棋譜での400エラーレスポンスを検証
